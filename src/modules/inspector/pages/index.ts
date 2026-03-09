@@ -1,0 +1,7 @@
+export { TasksPage } from './TasksPage'
+export { ActivePage } from './ActivePage'
+export { CertifiedPage } from './CertifiedPage'
+export { InspectorProfilePage } from './InspectorProfilePage'
+export { ImageVerificationPage } from './ImageVerificationPage'
+export { InspectionFormPage } from './InspectionFormPage'
+export { CertificationPage } from './CertificationPage'
