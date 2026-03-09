@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { Plus, Search, LayoutGrid, List, Pencil, Trash2, Star, Package } from 'lucide-react'
-import { Button, Card, Badge, Modal, PaginationBar } from '@/components'
+import { Button, Card, Badge, Modal, PaginationBar, CarImage } from '@/components'
 import { Loader2 } from 'lucide-react'
 import { showroomApi } from '@/api/showroomApi'
 import { carsApi } from '@/api/carsApi'
@@ -29,10 +29,8 @@ const CarListingCard = React.memo(function CarListingCard({
 }) {
   return (
     <Card className="overflow-hidden">
-      <div className="relative aspect-[4/3] bg-gray-200">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-gray-400 text-sm">Car Image</span>
-        </div>
+      <div className="relative">
+        <CarImage car={car} />
         <div className="absolute bottom-2 right-2">
           <Badge variant="primary">{car.views ?? 0} views</Badge>
         </div>

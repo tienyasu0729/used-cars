@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, Button } from '@/components'
-import { staffApi } from '@/api/staffApi'
+import { staffApi, type MediaItem } from '@/api/staffApi'
 import { Copy, Trash2, Upload } from 'lucide-react'
 
 export function MediaPage() {
@@ -30,7 +30,7 @@ export function MediaPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {media.map((item) => (
+        {media.map((item: MediaItem) => (
           <Card key={item.id} className="overflow-hidden group">
             <div className="aspect-square bg-gray-200 flex items-center justify-center">
               {item.type === 'image' ? (

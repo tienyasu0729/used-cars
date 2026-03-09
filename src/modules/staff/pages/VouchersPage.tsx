@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Modal, Input } from '@/components'
-import { staffApi } from '@/api/staffApi'
+import { staffApi, type StaffVoucher } from '@/api/staffApi'
 import { Plus, Pencil } from 'lucide-react'
 
 export function VouchersPage() {
@@ -37,7 +37,7 @@ export function VouchersPage() {
             </tr>
           </thead>
           <tbody>
-            {vouchers.map((v) => (
+            {vouchers.map((v: StaffVoucher) => (
               <tr key={v.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="py-3 px-4 font-mono font-medium">{v.code}</td>
                 <td className="py-3 px-4">{v.discountPercent}%</td>

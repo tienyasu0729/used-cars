@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Card } from '@/components'
-import { staffApi } from '@/api/staffApi'
+import { staffApi, type ChangeLog } from '@/api/staffApi'
 
 export function ChangeHistoryPage() {
   const { data: logs = [] } = useQuery({
@@ -24,7 +24,7 @@ export function ChangeHistoryPage() {
             </tr>
           </thead>
           <tbody>
-            {logs.map((log) => (
+            {logs.map((log: ChangeLog) => (
               <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="py-3 px-4 font-medium">{log.user}</td>
                 <td className="py-3 px-4">{log.action}</td>

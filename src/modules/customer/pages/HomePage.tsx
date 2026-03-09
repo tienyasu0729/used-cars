@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Menu, ChevronLeft, ChevronRight } from 'lucide-react'
 import heroBg from '@/img/z7599596914984_98d41116cae9612422b759f9bb7d76ea.jpg'
-import { Button, Card } from '@/components'
+import { Button, Card, CarImage } from '@/components'
 import { customerApi } from '@/api/customerApi'
 import { useQuery } from '@tanstack/react-query'
 import type { Car } from '@/types'
@@ -12,8 +12,11 @@ function CarCard({ car }: { car: Car }) {
   return (
     <Card className="overflow-hidden group">
       <Link to={`/cars/${car.id}`}>
-        <div className="aspect-[4/3] bg-gray-200 flex items-center justify-center relative overflow-hidden">
-          <span className="text-gray-400 text-sm">Car Image</span>
+        <div className="relative overflow-hidden">
+          <CarImage car={car} />
+          <span className="absolute top-2 right-2 bg-[#FF6600] text-white text-xs px-2 py-0.5 rounded font-medium">
+            SCUDN Certified
+          </span>
           <span className="absolute top-2 right-2 bg-[#FF6600] text-white text-xs px-2 py-0.5 rounded font-medium">
             SCUDN Certified
           </span>

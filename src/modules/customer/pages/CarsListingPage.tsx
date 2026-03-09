@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Grid3X3, List, Search } from 'lucide-react'
-import { Card, PaginationBar } from '@/components'
+import { Card, PaginationBar, CarImage } from '@/components'
 import { customerApi } from '@/api/customerApi'
 import { useQuery } from '@tanstack/react-query'
 import { formatVnd } from '@/utils/formatters'
@@ -204,11 +204,9 @@ export function CarsListingPage() {
                   }`}
                 >
                   <div
-                    className={`bg-gray-200 flex items-center justify-center ${
-                      viewMode === 'list' ? 'w-48 shrink-0 aspect-video' : 'aspect-[4/3]'
-                    }`}
+                    className={viewMode === 'list' ? 'w-48 shrink-0' : ''}
                   >
-                    <span className="text-gray-400 text-sm">Image</span>
+                    <CarImage car={car} aspectRatio={viewMode === 'list' ? 'video' : '4/3'} />
                   </div>
                   <div className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
                     <span className="inline-block bg-[#FF6600] text-white text-xs px-2 py-0.5 rounded mb-2">

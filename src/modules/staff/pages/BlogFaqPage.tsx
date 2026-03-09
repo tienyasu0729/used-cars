@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, Button, Input } from '@/components'
-import { staffApi } from '@/api/staffApi'
+import { staffApi, type BlogPost } from '@/api/staffApi'
 import { Plus, Pencil, Eye } from 'lucide-react'
 
 export function BlogFaqPage() {
@@ -13,7 +13,7 @@ export function BlogFaqPage() {
     queryFn: () => staffApi.getBlogPosts(),
   })
 
-  const selected = posts.find((p) => p.id === selectedId)
+  const selected = posts.find((p: BlogPost) => p.id === selectedId)
 
   useEffect(() => {
     if (selected) setForm({ title: selected.title, content: selected.content, category: selected.category, status: selected.status })
@@ -32,7 +32,7 @@ export function BlogFaqPage() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="space-y-4">
-          {posts.map((post) => (
+          {posts.map((post: BlogPost) => (
             <Card key={post.id} className="p-4">
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button, Card, Modal } from '@/components'
+import { Button, Card, Modal, CarImage } from '@/components'
 import { customerApi } from '@/api/customerApi'
 import { useQuery } from '@tanstack/react-query'
 import { formatVnd } from '@/utils/formatters'
@@ -16,7 +16,7 @@ const INSPECTION_SECTIONS = [
 
 export function CarDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [, setImageIndex] = useState(0)
+  const [imageIndex, setImageIndex] = useState(0)
   const [showNegotiateModal, setShowNegotiateModal] = useState(false)
   const [showBookingModal, setShowBookingModal] = useState(false)
   const [showQrModal, setShowQrModal] = useState(false)
@@ -45,22 +45,26 @@ export function CarDetailPage() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="grid lg:grid-cols-2 gap-8 mb-12">
         <div>
-          <div className="aspect-video bg-gray-200 rounded-xl flex items-center justify-center relative overflow-hidden">
-            <span className="text-gray-400">Car Image</span>
-            <button
-              type="button"
-              onClick={() => setImageIndex((i) => Math.max(0, i - 1))}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setImageIndex((i) => i + 1)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+          <div className="relative overflow-hidden rounded-xl">
+            <CarImage car={car} index={imageIndex % (car.images?.length ?? 1)} aspectRatio="video" />
+            {(car.images?.length ?? 0) > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setImageIndex((i) => Math.max(0, i - 1))}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageIndex((i) => (i + 1) % (car.images?.length ?? 1))}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Card, Button, Badge } from '@/components'
-import { staffApi } from '@/api/staffApi'
+import { staffApi, type AppointmentFlowItem } from '@/api/staffApi'
 import { Eye, Phone, Flag } from 'lucide-react'
 
 export function AppointmentFlowPage() {
@@ -27,7 +27,7 @@ export function AppointmentFlowPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((row) => (
+            {items.map((row: AppointmentFlowItem) => (
               <tr
                 key={row.id}
                 className={`border-b border-gray-100 hover:bg-gray-50 ${row.suspicious ? 'bg-red-50' : ''}`}

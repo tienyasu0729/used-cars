@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, Button, Modal } from '@/components'
+import { Card, Button, Modal, CarImage } from '@/components'
 import { staffApi } from '@/api/staffApi'
 import { mockCars } from '@/mock/mockCars'
 import { formatVnd } from '@/utils/formatters'
-import { Flame, Trash2, Loader2 } from 'lucide-react'
+import { Trash2, Loader2 } from 'lucide-react'
 
 export function HotCarsPage() {
   const queryClient = useQueryClient()
@@ -52,8 +52,8 @@ export function HotCarsPage() {
           {hotCars.map((car) => (
             <Card key={car.id} className="p-4">
               <div className="flex gap-4">
-                <div className="w-20 h-16 bg-gray-200 rounded shrink-0 flex items-center justify-center">
-                  <Flame className="w-6 h-6 text-[#FF6600]" />
+                <div className="w-20 h-16 rounded shrink-0 overflow-hidden">
+                  <CarImage car={car} aspectRatio="fill" className="h-full w-full" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-gray-900 truncate">{car.name} {car.model}</h3>
@@ -89,8 +89,8 @@ export function HotCarsPage() {
           {availableCars.slice(0, 6).map((car) => (
             <Card key={car.id} className="p-4">
               <div className="flex gap-4">
-                <div className="w-20 h-16 bg-gray-200 rounded shrink-0 flex items-center justify-center">
-                  <span className="text-gray-400 text-xs">Ảnh</span>
+                <div className="w-20 h-16 rounded shrink-0 overflow-hidden">
+                  <CarImage car={car} aspectRatio="fill" className="h-full w-full" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-gray-900 truncate">{car.name} {car.model}</h3>

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Card, Button, Input } from '@/components'
-import { staffApi } from '@/api/staffApi'
+import { staffApi, type SeoPage as SeoPageType } from '@/api/staffApi'
 
 export function SeoPage() {
   const { data: pages = [] } = useQuery({
@@ -13,7 +13,7 @@ export function SeoPage() {
       <h1 className="text-2xl font-bold text-[#FF6600] mb-6">SEO Metadata</h1>
 
       <div className="space-y-6">
-        {pages.map((page) => (
+        {pages.map((page: SeoPageType) => (
           <Card key={page.id} className="p-6">
             <h3 className="font-semibold text-gray-900 mb-4">{page.pageUrl}</h3>
             <div className="grid gap-4 md:grid-cols-2">

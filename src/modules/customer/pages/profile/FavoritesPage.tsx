@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Button, Card } from '@/components'
+import { Button, Card, CarImage } from '@/components'
 import { customerApi } from '@/api/customerApi'
 import { useQuery } from '@tanstack/react-query'
 import type { Car } from '@/types'
@@ -9,8 +9,8 @@ function CarCard({ car }: { car: Car }) {
   return (
     <Card className="overflow-hidden group">
       <div className="flex">
-        <div className="w-32 h-24 bg-gray-200 shrink-0 flex items-center justify-center">
-          <span className="text-gray-400 text-xs">Img</span>
+        <div className="w-32 h-24 shrink-0 overflow-hidden rounded">
+          <CarImage car={car} aspectRatio="fill" className="h-full w-full" />
         </div>
         <div className="p-4 flex-1">
           <h3 className="font-semibold text-gray-900">{car.name} {car.model}</h3>

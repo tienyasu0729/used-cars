@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { Button, Card } from '@/components'
+import { Button, Card, CarImage } from '@/components'
 import { customerApi } from '@/api/customerApi'
 import { useQuery } from '@tanstack/react-query'
 import { formatVnd } from '@/utils/formatters'
@@ -43,8 +43,8 @@ export function CheckoutPage() {
       <Card className="p-6 mb-6">
         <h2 className="font-semibold text-gray-900 mb-4">Thông tin xe</h2>
         <div className="flex gap-4">
-          <div className="w-32 h-24 bg-gray-200 rounded flex items-center justify-center shrink-0">
-            <span className="text-gray-400 text-xs">Car</span>
+          <div className="w-32 h-24 rounded shrink-0 overflow-hidden">
+            <CarImage car={car} aspectRatio="fill" className="h-full w-full" />
           </div>
           <div>
             <p className="font-medium text-gray-900">{car.name} {car.model}</p>

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Card, Button, Badge } from '@/components'
-import { staffApi } from '@/api/staffApi'
+import { staffApi, type ShowroomApplication } from '@/api/staffApi'
 import { Eye, Check, Send } from 'lucide-react'
 
 export function ShowroomSupportPage() {
@@ -26,7 +26,7 @@ export function ShowroomSupportPage() {
             </tr>
           </thead>
           <tbody>
-            {applications.map((app) => (
+            {applications.map((app: ShowroomApplication) => (
               <tr key={app.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="py-3 px-4 font-medium">{app.showroomName}</td>
                 <td className="py-3 px-4">{app.owner}</td>

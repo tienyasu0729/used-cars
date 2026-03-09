@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button, Card } from '@/components'
-import { inspectorApi } from '@/api/inspectorApi'
+import { inspectorApi, type InspectionGroup } from '@/api/inspectorApi'
 import { Check, X, ChevronDown, ChevronUp } from 'lucide-react'
 
 export function InspectionFormPage() {
@@ -70,7 +70,7 @@ export function InspectionFormPage() {
       />
 
       <div className="space-y-2">
-        {checklist.map((group) => (
+        {checklist.map((group: InspectionGroup) => (
           <Card key={group.id} className="overflow-hidden">
             <button
               type="button"
@@ -82,7 +82,7 @@ export function InspectionFormPage() {
             </button>
             {expandedGroup === group.id && (
               <div className="border-t px-4 py-3 space-y-4">
-                {group.items.map((item) => (
+                {group.items.map((item: { id: string; label: string; critical?: boolean }) => (
                   <div key={item.id}>
                     <p className="text-sm font-medium">{item.label} {item.critical && <span className="text-red-500">*</span>}</p>
                     <div className="flex gap-2 mt-2">
