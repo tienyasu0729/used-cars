@@ -1,6 +1,0 @@
-export { FinanceDashboardPage } from './FinanceDashboardPage'
-export { FinanceProfilePage } from './FinanceProfilePage'
-export { ProductsManagePage } from './ProductsManagePage'
-export { LeadsManagePage } from './LeadsManagePage'
-export { FinanceChatPage } from './FinanceChatPage'
-export { AffiliateReportPage } from './AffiliateReportPage'

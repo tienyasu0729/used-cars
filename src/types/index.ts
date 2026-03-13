@@ -1,6 +1,0 @@
-export * from './auth'
-export * from './payment'
-export * from './car'
-export * from './showroom'
-export * from './transaction'
-export * from './user'
