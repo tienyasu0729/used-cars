@@ -35,22 +35,22 @@ export function LoginPage() {
     }
   }
 
-  const handleDemoLogin = async () => {
-    setError('')
-    setLoading(true)
-    try {
-      const { user, token } = await authApi.login({
-        email: 'customer@test.com',
-        password: '123456',
-      })
-      login(user, token)
-      navigate(from, { replace: true })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
-    } finally {
-      setLoading(false)
-    }
-  }
+  // const handleDemoLogin = async () => {
+  //   setError('')
+  //   setLoading(true)
+  //   try {
+  //     const { user, token } = await authApi.login({
+  //       email: 'customer@test.com',
+  //       password: '123456',
+  //     })
+  //     login(user, token)
+  //     navigate(from, { replace: true })
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
 
   return (
     <div className="w-full max-w-md">
@@ -89,7 +89,7 @@ export function LoginPage() {
         <Button type="submit" variant="primary" className="w-full" disabled={loading}>
           {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
         </Button>
-        <Button
+        {/* <Button
           type="button"
           variant="outline"
           className="w-full"
@@ -97,7 +97,7 @@ export function LoginPage() {
           disabled={loading}
         >
           Đăng nhập demo
-        </Button>
+        </Button> */}
       </form>
       <div className="mt-4 flex items-center gap-2">
         <div className="flex-1 border-t border-gray-200" />
