@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MapPin, Phone, Mail } from 'lucide-react'
+import { MapPin, Phone, Mail, Clock } from 'lucide-react'
 import { BrandLogo } from '@/components/common/BrandLogo'
 
 const quickLinks = [
@@ -12,33 +11,24 @@ const quickLinks = [
 ]
 
 export function PublicFooter() {
-  const [email, setEmail] = useState('')
-
-  const handleNewsletter = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (email.trim()) {
-      setEmail('')
-    }
-  }
-
   return (
-    <footer className="mt-20 border-t border-slate-200 bg-white py-12">
+    <footer className="mt-20 border-t border-white/10 bg-[#1A3C6E] py-16 text-slate-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 mb-16">
           <div>
-            <div className="mb-4">
-              <BrandLogo variant="light" linkTo="/" logoHeight={36} />
+            <div className="mb-6">
+              <BrandLogo variant="dark" linkTo="/" logoHeight={36} />
             </div>
-            <p className="text-sm leading-relaxed text-slate-500">
-              Chuyên mua bán, trao đổi các dòng xe ô tô đã qua sử dụng uy tín hàng đầu tại Đà Nẵng.
+            <p className="text-sm leading-relaxed mb-6">
+              Hệ thống mua bán xe ô tô uy tín hàng đầu miền Trung, chuyên cung cấp các dòng xe lướt, xe đã qua kiểm định chất lượng cao.
             </p>
           </div>
           <div>
-            <h4 className="mb-4 font-bold text-slate-900">Liên kết nhanh</h4>
-            <ul className="space-y-2 text-sm text-slate-500">
+            <h5 className="mb-6 font-bold text-white">Liên kết nhanh</h5>
+            <ul className="space-y-4 text-sm">
               {quickLinks.map((link) => (
                 <li key={link.to}>
-                  <Link to={link.to} className="hover:text-[#1A3C6E]">
+                  <Link to={link.to} className="hover:text-white transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -46,46 +36,33 @@ export function PublicFooter() {
             </ul>
           </div>
           <div>
-            <h4 className="mb-4 font-bold text-slate-900">Thông tin liên hệ</h4>
-            <ul className="space-y-3 text-sm text-slate-500">
-              <li className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 shrink-0 text-[#1A3C6E]" />
-                Hải Châu, Đà Nẵng
+            <h5 className="mb-6 font-bold text-white">Thông tin liên hệ</h5>
+            <ul className="space-y-4 text-sm">
+              <li className="flex gap-3">
+                <MapPin className="h-5 w-5 shrink-0 text-[#E8612A]" />
+                123 Nguyễn Hữu Thọ, Đà Nẵng
               </li>
-              <li className="flex items-center gap-2">
-                <Phone className="h-4 w-4 shrink-0 text-[#1A3C6E]" />
-                1900 6868
+              <li className="flex gap-3">
+                <Phone className="h-5 w-5 shrink-0 text-[#E8612A]" />
+                0905 XXX XXX
               </li>
-              <li className="flex items-center gap-2">
-                <Mail className="h-4 w-4 shrink-0 text-[#1A3C6E]" />
-                contact@scudn.vn
+              <li className="flex gap-3">
+                <Mail className="h-5 w-5 shrink-0 text-[#E8612A]" />
+                info@banxeotodanang.com
+              </li>
+              <li className="flex gap-3">
+                <Clock className="h-5 w-5 shrink-0 text-[#E8612A]" />
+                Thứ 2 - CN: 08:00 - 20:00
               </li>
             </ul>
           </div>
-          <div>
-            <h4 className="mb-4 font-bold text-slate-900">Đăng ký nhận tin</h4>
-            <p className="mb-3 text-sm text-slate-500">
-              Nhận thông tin xe mới và ưu đãi qua email.
-            </p>
-            <form onSubmit={handleNewsletter} className="flex gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email của bạn"
-                className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#1A3C6E] focus:outline-none focus:ring-1 focus:ring-[#1A3C6E]/20"
-              />
-              <button
-                type="submit"
-                className="rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-bold text-white hover:bg-[#152d52]"
-              >
-                Đăng ký
-              </button>
-            </form>
-          </div>
         </div>
-        <div className="mt-12 border-t border-slate-100 pt-8 text-center text-xs text-slate-400">
-          © 2024 SCUDN. Bảo lưu mọi quyền.
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+          <p>© 2025 BanXeOTo Da Nang. All rights reserved.</p>
+          <div className="flex gap-6">
+            <Link to="/terms" className="hover:text-white">Điều khoản sử dụng</Link>
+            <Link to="/privacy" className="hover:text-white">Chính sách bảo mật</Link>
+          </div>
         </div>
       </div>
     </footer>

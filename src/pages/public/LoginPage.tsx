@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { authApi } from '@/services/authApi'
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'
 
@@ -9,21 +10,46 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/dashboard'
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     if (!email || !password) {
       setError('Vui lòng nhập email và mật khẩu')
       return
     }
-    login(
-      { id: '1', name: 'User', email, phone: '', role: 'Customer' },
-      'mock-token'
-    )
-    navigate('/dashboard')
+    setLoading(true)
+    try {
+      const { user, token } = await authApi.login({ email, password })
+      login(user, token)
+      navigate(from, { replace: true })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDemoLogin = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      const { user, token } = await authApi.login({
+        email: 'customer@test.com',
+        password: '123456',
+      })
+      login(user, token)
+      navigate(from, { replace: true })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -60,8 +86,17 @@ export function LoginPage() {
           </Link>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button type="submit" variant="primary" className="w-full">
-          Đăng Nhập
+        <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+          {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={handleDemoLogin}
+          disabled={loading}
+        >
+          Đăng nhập demo
         </Button>
       </form>
       <div className="mt-4 flex items-center gap-2">

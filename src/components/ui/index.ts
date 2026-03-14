@@ -1,6 +1,7 @@
 export { Button } from './Button'
 export { Badge, VehicleStatusBadge } from './Badge'
 export { Input } from './Input'
+export { Select } from './Select'
 export { Modal } from './Modal'
 export { Spinner } from './Spinner'
 export { EmptyState } from './EmptyState'

@@ -6,6 +6,8 @@ import { useBranch } from '@/hooks/useBranches'
 import { formatPrice, formatMileage } from '@/utils/format'
 import { VehicleStatusBadge } from '@/components/ui'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
+import { BookTestDriveModal } from '@/features/vehicles/components/BookTestDriveModal'
+import { DepositWizardModal } from '@/features/vehicles/components/DepositWizardModal'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useCompareStore } from '@/store/compareStore'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -20,6 +22,8 @@ export function VehicleDetailPage() {
   const similarVehicles = data?.data?.filter((v) => v.brand === vehicle?.brand && v.id !== vehicle?.id).slice(0, 4) ?? []
   const [activeTab, setActiveTab] = useState('specs')
   const [saved, setSaved] = useState(false)
+  const [bookingOpen, setBookingOpen] = useState(false)
+  const [depositOpen, setDepositOpen] = useState(false)
 
   const isComparing = vehicle ? vehicles.some((v) => v.id === vehicle.id) : false
 
@@ -211,10 +215,16 @@ export function VehicleDetailPage() {
             )}
 
             <div className="mt-6 space-y-2">
-              <button className="w-full rounded-lg bg-[#1A3C6E] py-3 font-bold text-white hover:bg-[#152d52]">
+              <button
+                onClick={() => setBookingOpen(true)}
+                className="w-full rounded-lg bg-[#1A3C6E] py-3 font-bold text-white hover:bg-[#152d52]"
+              >
                 Đặt Lịch Lái Thử
               </button>
-              <button className="w-full rounded-lg bg-[#E8612A] py-3 font-bold text-white hover:bg-orange-600">
+              <button
+                onClick={() => setDepositOpen(true)}
+                className="w-full rounded-lg bg-[#E8612A] py-3 font-bold text-white hover:bg-orange-600"
+              >
                 Đặt Cọc Ngay
               </button>
               <button className="w-full rounded-lg border-2 border-[#1A3C6E] py-3 font-bold text-[#1A3C6E] hover:bg-slate-50">
@@ -264,6 +274,24 @@ export function VehicleDetailPage() {
           </div>
         </div>
       </div>
+      {vehicle && branch && (
+        <>
+          <BookTestDriveModal
+            isOpen={bookingOpen}
+            onClose={() => setBookingOpen(false)}
+            vehicleId={vehicle.id}
+            branchId={branch.id}
+            vehicleName={`${vehicle.brand} ${vehicle.model}`}
+          />
+          <DepositWizardModal
+            isOpen={depositOpen}
+            onClose={() => setDepositOpen(false)}
+            vehicleId={vehicle.id}
+            vehicleName={`${vehicle.brand} ${vehicle.model}`}
+            vehiclePrice={vehicle.price}
+          />
+        </>
+      )}
     </div>
   )
 }

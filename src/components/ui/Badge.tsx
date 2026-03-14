@@ -1,6 +1,6 @@
 import type { VehicleStatus } from '@/types'
 
-type BadgeVariant = 'available' | 'reserved' | 'sold' | 'pending' | 'confirmed'
+type BadgeVariant = 'available' | 'reserved' | 'sold' | 'pending' | 'confirmed' | 'default'
 
 interface BadgeProps {
   variant: BadgeVariant
@@ -14,6 +14,7 @@ const variants: Record<BadgeVariant, string> = {
   sold: 'bg-gray-100 text-gray-600 border-gray-200',
   pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
   confirmed: 'bg-blue-100 text-blue-700 border-blue-200',
+  default: 'bg-gray-100 text-gray-600 border-gray-200',
 }
 
 export function Badge({ variant, children, className = '' }: BadgeProps) {

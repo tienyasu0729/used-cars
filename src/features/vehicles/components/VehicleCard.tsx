@@ -51,7 +51,7 @@ export function VehicleCard({ vehicle, compact, showNewBadge }: VehicleCardProps
             {vehicle.brand} {vehicle.model} {vehicle.trim || ''} {vehicle.year}
           </h3>
         </Link>
-        <p className="mb-3 text-lg font-extrabold text-[#1A3C6E]">{formatPrice(vehicle.price)}</p>
+        <p className="mb-3 text-lg font-extrabold text-[#E8612A]">{formatPrice(vehicle.price)}</p>
         <div className={`grid grid-cols-3 gap-2 border-y border-slate-100 py-3 ${compact ? 'mb-3' : 'mb-5'}`}>
           <div className="flex flex-col items-center">
             <Gauge className="mb-0.5 h-5 w-5 text-slate-400" />
