@@ -32,6 +32,9 @@ export function useVehicles() {
     queryKey: ['vehicles', isMockMode()],
     queryFn: fetchVehicles,
     staleTime: isMockMode() ? Infinity : 1000 * 60 * 5,
+    initialData: isMockMode()
+      ? { data: mockVehicles, total: mockVehicles.length }
+      : undefined,
   })
 }
 

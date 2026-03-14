@@ -4,6 +4,7 @@ export type Transmission = 'Automatic' | 'Manual'
 
 export interface Vehicle {
   id: string
+  code?: string
   brand: string
   model: string
   year: number

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Check, Calendar, X } from 'lucide-react'
+import { Check, Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useStaffBookings } from '@/hooks/useStaffBookings'
 import { useBranches } from '@/hooks/useBranches'
 import { useVehicles } from '@/hooks/useVehicles'
@@ -26,10 +26,9 @@ function formatTime(slot: string) {
   return `${String(h - 12).padStart(2, '0')}:${String(m).padStart(2, '0')} chiều`
 }
 
-function maskPhone(phone: string) {
-  if (!phone || phone.length < 4) return '*** *** ***'
-  const first4 = phone.slice(0, 4)
-  return `${first4} *** ***`
+function formatPhone(phone: string) {
+  if (!phone || phone.length < 10) return '*** *** ***'
+  return `${phone.slice(0, 4)} ${phone.slice(4, 7)} ${phone.slice(7)}`
 }
 
 export function StaffBookingsPage() {
@@ -44,13 +43,15 @@ export function StaffBookingsPage() {
   const queryClient = useQueryClient()
 
   const filteredBookings = useMemo(() => {
-    return (bookings ?? []).filter((b) => {
+    const list = (bookings ?? []).filter((b) => {
       if (activeTab === 0) return true
       if (activeTab === 1) return b.status === 'Pending'
       if (activeTab === 2) return b.status === 'Confirmed'
       if (activeTab === 3) return b.status === 'Cancelled'
       return true
     })
+    const order = { Pending: 0, Confirmed: 1, Completed: 2, Cancelled: 3 }
+    return list.sort((a, b) => (order[a.status as keyof typeof order] ?? 4) - (order[b.status as keyof typeof order] ?? 4))
   }, [bookings, activeTab])
 
   const paginated = useMemo(() => {
@@ -68,9 +69,9 @@ export function StaffBookingsPage() {
   const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   const getStatusBadge = (status: string) => {
-    if (status === 'Pending') return <Badge variant="pending">Chờ xác nhận</Badge>
-    if (status === 'Confirmed') return <Badge variant="confirmed">Đã xác nhận</Badge>
-    if (status === 'Cancelled') return <span className="text-sm text-slate-500">Đã hủy</span>
+    if (status === 'Pending') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Chờ xác nhận</span>
+    if (status === 'Confirmed') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">Đã xác nhận</span>
+    if (status === 'Cancelled') return <span className="text-sm font-medium text-slate-500">Đã hủy</span>
     return <Badge variant="available">Hoàn thành</Badge>
   }
 
@@ -152,11 +153,11 @@ export function StaffBookingsPage() {
           <table className="w-full text-left">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Mẫu xe</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Khách hàng</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Ngày & Giờ</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Trạng thái</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Thao tác</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">MẪU XE</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">KHÁCH HÀNG</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">NGÀY & GIỜ</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">TRẠNG THÁI</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -179,7 +180,7 @@ export function StaffBookingsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-medium text-slate-900">{cust?.name ?? `Khách #${b.customerId}`}</p>
-                      <p className="text-xs text-slate-500">{cust?.phone ? maskPhone(cust.phone) : '*** *** ***'}</p>
+                      <p className="text-xs text-slate-500">{cust?.phone ? formatPhone(cust.phone) : '*** *** ***'}</p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-slate-700">{formatDate(b.date)}</p>
@@ -190,7 +191,7 @@ export function StaffBookingsPage() {
                       {b.status === 'Cancelled' ? (
                         <button
                           onClick={() => setDetailBooking(b)}
-                          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
                         >
                           Xem chi tiết
                         </button>
@@ -199,24 +200,24 @@ export function StaffBookingsPage() {
                           {b.status === 'Pending' && (
                             <button
                               onClick={() => handleConfirm(b)}
-                              className="rounded-lg p-2 text-green-600 hover:bg-green-50"
-                              title="Xác nhận"
+                              className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200"
+                              title="Chấp nhận"
                             >
                               <Check className="h-5 w-5" />
                             </button>
                           )}
                           <button
                             onClick={() => setDetailBooking(b)}
-                            className="rounded-lg p-2 text-blue-600 hover:bg-blue-50"
-                            title="Sửa lịch"
+                            className="rounded-lg bg-blue-100 p-2 text-blue-700 hover:bg-blue-200"
+                            title="Sửa lịch hẹn"
                           >
                             <Calendar className="h-5 w-5" />
                           </button>
                           {b.status !== 'Cancelled' && (
                             <button
                               onClick={() => window.confirm('Hủy lịch hẹn này?') && handleCancel(b)}
-                              className="rounded-lg p-2 text-red-600 hover:bg-red-50"
-                              title="Hủy"
+                              className="rounded-lg bg-red-100 p-2 text-red-600 hover:bg-red-200"
+                              title="Hủy lịch hẹn"
                             >
                               <X className="h-5 w-5" />
                             </button>
@@ -239,9 +240,9 @@ export function StaffBookingsPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm disabled:opacity-50"
+              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent"
             >
-              &lt;
+              <ChevronLeft className="h-5 w-5" />
             </button>
             {Array.from({ length: Math.min(6, totalPages) }, (_, i) => {
               const p = totalPages <= 6 ? i + 1 : (page <= 3 ? i + 1 : page <= totalPages - 2 ? page - 2 + i : totalPages - 5 + i)
@@ -250,7 +251,7 @@ export function StaffBookingsPage() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`min-w-[32px] rounded-lg px-3 py-1.5 text-sm font-medium ${
+                  className={`min-w-[36px] rounded-lg px-3 py-2 text-sm font-medium ${
                     page === p ? 'bg-[#1A3C6E] text-white' : 'border border-slate-200 hover:bg-slate-50'
                   }`}
                 >
@@ -261,9 +262,9 @@ export function StaffBookingsPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm disabled:opacity-50"
+              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent"
             >
-              &gt;
+              <ChevronRight className="h-5 w-5" />
             </button>
           </div>
         </div>

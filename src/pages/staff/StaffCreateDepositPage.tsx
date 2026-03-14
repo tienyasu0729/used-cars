@@ -2,14 +2,15 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
-import { Search, Calendar, UserPlus, FileText, Info, AlertCircle } from 'lucide-react'
+import { Calendar, UserPlus, FileText, Info, AlertCircle } from 'lucide-react'
 import { mockUsers } from '@/mock'
 import { useInventory } from '@/hooks/useInventory'
 import { depositApi } from '@/services/depositApi'
 import { useToastStore } from '@/store/toastStore'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui'
-import { formatPriceNumber } from '@/utils/format'
+import { CustomerSearchSelect } from '@/features/staff/components/CustomerSearchSelect'
+import { VehicleSearchSelect } from '@/features/staff/components/VehicleSearchSelect'
 
 const schema = z.object({
   vehicleId: z.string().min(1, 'Chọn xe'),
@@ -37,7 +38,8 @@ export function StaffCreateDepositPage() {
   const navigate = useNavigate()
   const toast = useToastStore()
   const queryClient = useQueryClient()
-  const { available: branchVehicles } = useInventory()
+  const { data: inventory, available } = useInventory()
+  const branchVehicles = (available?.length ? available : inventory) ?? []
 
   const today = toDateStr(new Date())
   const defaultExpiry = toDateStr(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
@@ -96,26 +98,13 @@ export function StaffCreateDepositPage() {
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Chọn Xe <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <select
-                  {...form.register('vehicleId')}
-                  value={form.watch('vehicleId')}
-                  onChange={(e) => form.setValue('vehicleId', e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 py-2 pl-10 pr-10 text-sm"
-                >
-                  <option value="">Tìm kiếm xe theo tên hoặc mã VIN...</option>
-                  {filteredVehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.brand} {v.model} {v.year} - {formatPriceNumber(v.price)}
-                    </option>
-                  ))}
-                </select>
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">▼</span>
-              </div>
-              {form.formState.errors.vehicleId && (
-                <p className="mt-1 text-xs text-red-600">{form.formState.errors.vehicleId.message}</p>
-              )}
+              <VehicleSearchSelect
+                vehicles={filteredVehicles ?? []}
+                value={form.watch('vehicleId')}
+                onChange={(id) => form.setValue('vehicleId', id)}
+                placeholder="Tìm kiếm xe theo tên hoặc mã VIN..."
+                error={form.formState.errors.vehicleId?.message}
+              />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Số tiền đặt cọc (VND) <span className="text-red-500">*</span></label>
@@ -167,30 +156,19 @@ export function StaffCreateDepositPage() {
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Khách hàng <span className="text-red-500">*</span></label>
               <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <select
-                    {...form.register('customerId')}
+                <div className="flex-1">
+                  <CustomerSearchSelect
+                    customers={filteredCustomers}
                     value={form.watch('customerId')}
-                    onChange={(e) => form.setValue('customerId', e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 py-2 pl-10 pr-10 text-sm"
-                  >
-                    <option value="">Tìm khách hàng...</option>
-                    {filteredCustomers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} - {(c as { phone?: string }).phone || c.email}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">▼</span>
+                    onChange={(id) => form.setValue('customerId', id)}
+                    placeholder="Nhập tên hoặc SĐT để tìm..."
+                    error={form.formState.errors.customerId?.message}
+                  />
                 </div>
                 <Button type="button" variant="outline" size="sm" className="shrink-0 px-3" title="Thêm khách hàng">
                   <UserPlus className="h-5 w-5" />
                 </Button>
               </div>
-              {form.formState.errors.customerId && (
-                <p className="mt-1 text-xs text-red-600">{form.formState.errors.customerId.message}</p>
-              )}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Phương thức thanh toán</label>

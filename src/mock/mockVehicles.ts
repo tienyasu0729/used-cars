@@ -3,6 +3,7 @@ import type { Vehicle } from '@/types'
 export const mockVehicles: Vehicle[] = [
   {
     id: 'v1',
+    code: 'TC-2020-001',
     brand: 'Toyota',
     model: 'Camry',
     year: 2020,
@@ -24,6 +25,7 @@ export const mockVehicles: Vehicle[] = [
   },
   {
     id: 'v2',
+    code: 'HC-2021-002',
     brand: 'Honda',
     model: 'Civic',
     year: 2021,
@@ -43,6 +45,7 @@ export const mockVehicles: Vehicle[] = [
   },
   {
     id: 'v3',
+    code: 'FR-2022-003',
     brand: 'Ford',
     model: 'Ranger',
     year: 2022,
@@ -62,6 +65,7 @@ export const mockVehicles: Vehicle[] = [
   },
   {
     id: 'v4',
+    code: 'MC-2019-004',
     brand: 'Mazda',
     model: 'CX-5',
     year: 2019,
@@ -81,6 +85,7 @@ export const mockVehicles: Vehicle[] = [
   },
   {
     id: 'v5',
+    code: 'FR-2022-005',
     brand: 'Ford',
     model: 'Ranger',
     year: 2022,
@@ -96,6 +101,7 @@ export const mockVehicles: Vehicle[] = [
   },
   {
     id: 'v6',
+    code: 'TCC-2022-006',
     brand: 'Toyota',
     model: 'Corolla Cross',
     year: 2022,

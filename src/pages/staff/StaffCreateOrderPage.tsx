@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Input, Button } from '@/components/ui'
 import { formatPrice } from '@/utils/format'
 import { CreateOrderStepDetails } from '@/features/staff/components/CreateOrderStepDetails'
+import { VehicleSearchSelect } from '@/features/staff/components/VehicleSearchSelect'
 
 const step3Schema = z.object({
   customerName: z.string().min(2, 'Tối thiểu 2 ký tự'),
@@ -37,7 +38,8 @@ export function StaffCreateOrderPage() {
   const navigate = useNavigate()
   const toast = useToastStore()
   const queryClient = useQueryClient()
-  const { available: branchVehicles } = useInventory()
+  const { data: inventory, available } = useInventory()
+  const branchVehicles = (available?.length ? available : inventory) ?? []
 
   const selectedVehicle = branchVehicles.find((v) => v.id === vehicleId)
   const vehiclePrice = selectedVehicle?.price ?? 0
@@ -137,18 +139,12 @@ export function StaffCreateOrderPage() {
             <h3 className="mb-4 text-lg font-bold text-slate-900">Chọn xe</h3>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Xe</label>
-              <select
+              <VehicleSearchSelect
+                vehicles={branchVehicles ?? []}
                 value={vehicleId}
-                onChange={(e) => setVehicleId(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              >
-                <option value="">-- Chọn xe --</option>
-                {branchVehicles.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.brand} {v.model} {v.year} - {formatPrice(v.price)}
-                  </option>
-                ))}
-              </select>
+                onChange={setVehicleId}
+                placeholder="Tìm kiếm xe theo tên, mã xe hoặc VIN..."
+              />
             </div>
           </div>
           <div className="flex gap-2">

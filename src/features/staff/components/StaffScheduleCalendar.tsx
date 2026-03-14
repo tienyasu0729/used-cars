@@ -51,6 +51,7 @@ interface StaffScheduleCalendarProps {
 }
 
 export function StaffScheduleCalendar({ schedule, onAddAppointment }: StaffScheduleCalendarProps) {
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week')
   const [weekStart, setWeekStart] = useState(() => {
     const d = new Date()
     const day = d.getDay()
@@ -58,8 +59,32 @@ export function StaffScheduleCalendar({ schedule, onAddAppointment }: StaffSched
     d.setDate(d.getDate() + monOffset)
     return d
   })
+  const [monthRef, setMonthRef] = useState(() => new Date())
   const days = getWeekDays(weekStart)
   const todayStr = new Date().toISOString().slice(0, 10)
+
+  function getMonthDays(ref: Date) {
+    const year = ref.getFullYear()
+    const month = ref.getMonth()
+    const first = new Date(year, month, 1)
+    const last = new Date(year, month + 1, 0)
+    const startPad = (first.getDay() + 6) % 7
+    const days: (Date | null)[] = Array(startPad).fill(null)
+    for (let d = 1; d <= last.getDate(); d++) days.push(new Date(year, month, d))
+    while (days.length < 42) days.push(null)
+    return days
+  }
+  const monthDays = getMonthDays(monthRef)
+
+  const navPrev = () => {
+    if (viewMode === 'week') setWeekStart((d) => { const x = new Date(d); x.setDate(x.getDate() - 7); return x })
+    else setMonthRef((d) => new Date(d.getFullYear(), d.getMonth() - 1))
+  }
+  const navNext = () => {
+    if (viewMode === 'week') setWeekStart((d) => { const x = new Date(d); x.setDate(x.getDate() + 7); return x })
+    else setMonthRef((d) => new Date(d.getFullYear(), d.getMonth() + 1))
+  }
+  const displayDate = viewMode === 'week' ? weekStart : monthRef
 
   const getEventsForDay = (d: Date) => {
     const dateStr = d.toISOString().slice(0, 10)
@@ -81,17 +106,29 @@ export function StaffScheduleCalendar({ schedule, onAddAppointment }: StaffSched
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <button onClick={() => setWeekStart((d) => { const x = new Date(d); x.setDate(x.getDate() - 7); return x })} className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50">
+          <button onClick={navPrev} className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <span className="min-w-[140px] text-center font-medium text-slate-700">{formatMonthYear(weekStart)}</span>
-          <button onClick={() => setWeekStart((d) => { const x = new Date(d); x.setDate(x.getDate() + 7); return x })} className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50">
+          <span className="min-w-[140px] text-center font-medium text-slate-700">{formatMonthYear(displayDate)}</span>
+          <button onClick={navNext} className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50">
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-lg bg-[#1A3C6E] px-3 py-1.5 text-sm font-medium text-white">Tuần</span>
-          <span className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-500">Tháng</span>
+          <button
+            type="button"
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${viewMode === 'week' ? 'bg-[#1A3C6E] text-white' : 'border border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+            onClick={() => setViewMode('week')}
+          >
+            Tuần
+          </button>
+          <button
+            type="button"
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${viewMode === 'month' ? 'bg-[#1A3C6E] text-white' : 'border border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+            onClick={() => setViewMode('month')}
+          >
+            Tháng
+          </button>
           {onAddAppointment && (
             <button onClick={onAddAppointment} className="flex items-center gap-2 rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-medium text-white hover:bg-[#153058]">
               <Plus className="h-4 w-4" />
@@ -100,10 +137,11 @@ export function StaffScheduleCalendar({ schedule, onAddAppointment }: StaffSched
           )}
         </div>
       </div>
+      {viewMode === 'week' ? (
       <div className="overflow-x-auto">
         <div className="flex min-w-[600px] border border-slate-200">
           <div className="w-14 shrink-0 border-r border-slate-200 bg-slate-50 py-2">
-            <div className="px-1 text-center text-xs font-bold uppercase text-slate-500">Giờ</div>
+            <div className="px-1 text-center text-xs font-bold uppercase text-slate-500">GIỜ</div>
             <div className="mt-2">
               {Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => (
                 <div key={i} className="flex justify-end pr-1 text-xs text-slate-400" style={{ height: HOUR_HEIGHT }}>
@@ -138,6 +176,34 @@ export function StaffScheduleCalendar({ schedule, onAddAppointment }: StaffSched
           </div>
         </div>
       </div>
+      ) : (
+        <div className="grid grid-cols-7 border border-slate-200">
+          {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((h) => (
+            <div key={h} className="border-b border-r border-slate-200 bg-slate-50 px-2 py-2 text-center text-xs font-bold text-slate-600 last:border-r-0">
+              {h}
+            </div>
+          ))}
+          {monthDays.map((d, i) => {
+            if (!d) return <div key={i} className="min-h-[80px] border-b border-r border-slate-100 bg-slate-50/50 last:border-r-0" />
+            const dateStr = d.toISOString().slice(0, 10)
+            const events = getEventsForDay(d)
+            const isToday = dateStr === todayStr
+            return (
+              <div key={i} className={`min-h-[80px] border-b border-r border-slate-100 p-1 last:border-r-0 ${isToday ? 'bg-blue-50/50' : 'bg-white'}`}>
+                <span className={`text-xs font-medium ${isToday ? 'text-[#1A3C6E]' : 'text-slate-600'}`}>{d.getDate()}</span>
+                <div className="mt-1 space-y-0.5">
+                  {events.slice(0, 3).map((item) => (
+                    <div key={item.id} className={`truncate rounded px-1 py-0.5 text-[10px] ${TYPE_COLORS[item.type] || TYPE_COLORS.meeting}`}>
+                      {item.timeSlot} {TYPE_LABELS[item.type]}
+                    </div>
+                  ))}
+                  {events.length > 3 && <span className="text-[10px] text-slate-400">+{events.length - 3}</span>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
