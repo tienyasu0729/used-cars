@@ -34,6 +34,7 @@ function toUser(m: (typeof mockUsers)[0]): User {
     email: m.email,
     phone: '0900000000',
     role: roleMap[m.role] ?? 'Customer',
+    branchId: 'branchId' in m ? m.branchId : undefined,
   }
 }
 

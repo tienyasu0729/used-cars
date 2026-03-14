@@ -28,8 +28,8 @@ export function ChatLayout({
   }
 
   return (
-    <div className="flex h-[600px] overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div className="w-72 flex-shrink-0 border-r border-slate-200">
+    <div className="flex min-h-[calc(100vh-12rem)] overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="flex w-72 flex-shrink-0 flex-col border-r border-slate-200">
         <div className="border-b border-slate-200 p-3">
           <input
             type="text"
@@ -37,7 +37,7 @@ export function ChatLayout({
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#1A3C6E] focus:outline-none"
           />
         </div>
-        <div className="max-h-[540px] overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {conversations.map((c) => (
             <button
               key={c.id}

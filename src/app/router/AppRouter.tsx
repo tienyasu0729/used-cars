@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { PublicLayout } from '@/layouts/PublicLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { CustomerDashboardLayout } from '@/layouts/CustomerDashboardLayout'
+import { StaffDashboardLayout } from '@/layouts/StaffDashboardLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ScrollToTop } from '@/components/common/ScrollToTop'
 import { Spinner } from '@/components/ui'
@@ -31,6 +32,17 @@ const TransactionsPage = lazy(() => import('@/pages/customer/TransactionsPage').
 const ChatPage = lazy(() => import('@/pages/customer/ChatPage').then((m) => ({ default: m.ChatPage })))
 const NotificationsPage = lazy(() => import('@/pages/customer/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
 const SecurityPage = lazy(() => import('@/pages/customer/SecurityPage').then((m) => ({ default: m.SecurityPage })))
+
+const StaffDashboardPage = lazy(() => import('@/pages/staff/StaffDashboardPage').then((m) => ({ default: m.StaffDashboardPage })))
+const StaffSchedulePage = lazy(() => import('@/pages/staff/StaffSchedulePage').then((m) => ({ default: m.StaffSchedulePage })))
+const StaffBookingsPage = lazy(() => import('@/pages/staff/StaffBookingsPage').then((m) => ({ default: m.StaffBookingsPage })))
+const StaffConsultationsPage = lazy(() => import('@/pages/staff/StaffConsultationsPage').then((m) => ({ default: m.StaffConsultationsPage })))
+const StaffInventoryPage = lazy(() => import('@/pages/staff/StaffInventoryPage').then((m) => ({ default: m.StaffInventoryPage })))
+const StaffCreateOrderPage = lazy(() => import('@/pages/staff/StaffCreateOrderPage').then((m) => ({ default: m.StaffCreateOrderPage })))
+const StaffOrdersPage = lazy(() => import('@/pages/staff/StaffOrdersPage').then((m) => ({ default: m.StaffOrdersPage })))
+const StaffCreateDepositPage = lazy(() => import('@/pages/staff/StaffCreateDepositPage').then((m) => ({ default: m.StaffCreateDepositPage })))
+const StaffChatPage = lazy(() => import('@/pages/staff/StaffChatPage').then((m) => ({ default: m.StaffChatPage })))
+const StaffTransferRequestsPage = lazy(() => import('@/pages/staff/StaffTransferRequestsPage').then((m) => ({ default: m.StaffTransferRequestsPage })))
 
 const Fallback = () => (
   <div className="flex min-h-[400px] items-center justify-center">
@@ -89,12 +101,24 @@ const router = createBrowserRouter([
   {
     path: '/staff',
     element: (
-      <ProtectedRoute>
-        <div className="flex min-h-screen items-center justify-center p-8">
-          <p className="text-slate-500">Staff Dashboard (Prompt Set 3)</p>
-        </div>
+      <ProtectedRoute roles={['staff', 'SalesStaff']}>
+        <ScrollToTop />
+        <StaffDashboardLayout />
       </ProtectedRoute>
     ),
+    children: [
+      { index: true, element: <Suspense fallback={<Fallback />}><StaffDashboardPage /></Suspense> },
+      { path: 'dashboard', element: <Suspense fallback={<Fallback />}><StaffDashboardPage /></Suspense> },
+      { path: 'schedule', element: <Suspense fallback={<Fallback />}><StaffSchedulePage /></Suspense> },
+      { path: 'bookings', element: <Suspense fallback={<Fallback />}><StaffBookingsPage /></Suspense> },
+      { path: 'consultations', element: <Suspense fallback={<Fallback />}><StaffConsultationsPage /></Suspense> },
+      { path: 'inventory', element: <Suspense fallback={<Fallback />}><StaffInventoryPage /></Suspense> },
+      { path: 'orders/new', element: <Suspense fallback={<Fallback />}><StaffCreateOrderPage /></Suspense> },
+      { path: 'orders', element: <Suspense fallback={<Fallback />}><StaffOrdersPage /></Suspense> },
+      { path: 'deposits/new', element: <Suspense fallback={<Fallback />}><StaffCreateDepositPage /></Suspense> },
+      { path: 'chat', element: <Suspense fallback={<Fallback />}><StaffChatPage /></Suspense> },
+      { path: 'transfer-requests', element: <Suspense fallback={<Fallback />}><StaffTransferRequestsPage /></Suspense> },
+    ],
   },
   {
     path: '/manager',

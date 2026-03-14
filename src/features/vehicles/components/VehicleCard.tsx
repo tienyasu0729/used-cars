@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MapPin, Heart, GitCompare, Gauge, Calendar, Fuel } from 'lucide-react'
+import { MapPin, Heart, GitCompare, Gauge, Calendar, Fuel, Cog } from 'lucide-react'
 import type { Vehicle } from '@/types'
 import { formatPrice, formatMileage } from '@/utils/format'
 import { VehicleStatusBadge } from '@/components/ui'
@@ -52,7 +52,7 @@ export function VehicleCard({ vehicle, compact, showNewBadge }: VehicleCardProps
           </h3>
         </Link>
         <p className="mb-3 text-lg font-extrabold text-[#E8612A]">{formatPrice(vehicle.price)}</p>
-        <div className={`grid grid-cols-3 gap-2 border-y border-slate-100 py-3 ${compact ? 'mb-3' : 'mb-5'}`}>
+        <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2 border-y border-slate-100 py-3 ${compact ? 'mb-3' : 'mb-5'}`}>
           <div className="flex flex-col items-center">
             <Gauge className="mb-0.5 h-5 w-5 text-slate-400" />
             <span className="text-[10px] font-medium text-slate-500">{formatMileage(vehicle.mileage)}</span>
@@ -65,6 +65,12 @@ export function VehicleCard({ vehicle, compact, showNewBadge }: VehicleCardProps
             <Fuel className="mb-0.5 h-5 w-5 text-slate-400" />
             <span className="text-[10px] font-medium text-slate-500">
               {vehicle.fuelType === 'Gasoline' ? 'Xăng' : vehicle.fuelType === 'Diesel' ? 'Dầu' : vehicle.fuelType === 'Electric' ? 'Điện' : 'Hybrid'}
+            </span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Cog className="mb-0.5 h-5 w-5 text-slate-400" />
+            <span className="text-[10px] font-medium text-slate-500">
+              {vehicle.transmission === 'Automatic' ? 'Tự động' : 'Số sàn'}
             </span>
           </div>
         </div>

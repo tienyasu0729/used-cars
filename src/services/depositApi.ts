@@ -3,8 +3,10 @@ import { isMockMode } from '@/config/dataSource'
 
 export interface CreateDepositPayload {
   vehicleId: string
+  customerId: string
   amount: number
   paymentMethod: string
+  notes?: string
 }
 
 export interface CreateDepositResponse {

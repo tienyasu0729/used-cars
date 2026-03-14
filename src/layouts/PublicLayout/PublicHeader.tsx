@@ -123,7 +123,7 @@ export function PublicHeader() {
                 </button>
               </Link>
               <Link to="/register">
-                <button className="rounded-lg border-2 border-[#1A3C6E] bg-[#1A3C6E] px-4 py-2 text-sm font-bold text-white ring-2 ring-white/30 hover:bg-[#152d52]">
+                <button className="rounded-lg border-2 border-[#E8612A] bg-[#E8612A] px-4 py-2 text-sm font-bold text-white ring-2 ring-white/30 hover:bg-orange-600">
                   Đăng Ký
                 </button>
               </Link>
@@ -195,7 +195,7 @@ export function PublicHeader() {
                   <button className="w-full rounded-lg border border-white py-2 text-white">Đăng Nhập</button>
                 </Link>
                 <Link to="/register" className="flex-1" onClick={() => setMobileOpen(false)}>
-                  <button className="w-full rounded-lg bg-white py-2 font-bold text-[#1A3C6E]">Đăng Ký</button>
+                  <button className="w-full rounded-lg bg-[#E8612A] py-2 font-bold text-white">Đăng Ký</button>
                 </Link>
               </>
             )}

@@ -10,7 +10,7 @@ export function ChatPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[600px] items-center justify-center rounded-xl border border-slate-200 bg-white">
+      <div className="flex min-h-[calc(100vh-12rem)] items-center justify-center rounded-xl border border-slate-200 bg-white">
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#1A3C6E] border-t-transparent" />
       </div>
     )

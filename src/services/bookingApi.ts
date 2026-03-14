@@ -16,6 +16,16 @@ export interface CreateBookingResponse {
 
 export const bookingApi = {
   getBookings: () => api.get('/bookings'),
+  confirmBooking: async (id: string) => {
+    if (isMockMode()) return { success: true }
+    await api.patch(`/bookings/${id}/confirm`)
+    return { success: true }
+  },
+  cancelBooking: async (id: string) => {
+    if (isMockMode()) return { success: true }
+    await api.patch(`/bookings/${id}/cancel`)
+    return { success: true }
+  },
   createBooking: async (data: CreateBookingPayload): Promise<{ data: CreateBookingResponse }> => {
     if (isMockMode()) {
       return {

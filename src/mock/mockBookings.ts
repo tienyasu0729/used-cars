@@ -29,4 +29,13 @@ export const mockBookings: Booking[] = [
     timeSlot: '10:00',
     status: 'Completed',
   },
+  {
+    id: 'b4',
+    vehicleId: 'v1',
+    customerId: 'u1',
+    branchId: 'branch1',
+    date: '2025-03-14',
+    timeSlot: '09:00',
+    status: 'Confirmed',
+  },
 ]
