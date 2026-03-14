@@ -32,7 +32,7 @@ export function StaffDashboardLayout() {
     <div className="flex min-h-screen overflow-hidden">
       <StaffSidebar />
       <StaffMobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden lg:pl-64">
         <StaffTopbar title={title} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 overflow-y-auto bg-[#F6F7F8] p-6">
           <Outlet />

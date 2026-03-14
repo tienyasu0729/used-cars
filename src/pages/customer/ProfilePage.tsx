@@ -19,6 +19,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 function getDashboardPath(pathname: string): string {
+  if (pathname.startsWith('/admin')) return '/admin/dashboard'
   if (pathname.startsWith('/staff')) return '/staff/dashboard'
   if (pathname.startsWith('/manager')) return '/manager/dashboard'
   return '/dashboard'
@@ -150,7 +151,7 @@ export function ProfilePage() {
                   <p className="text-xs text-slate-500">Cập nhật lần cuối: {extras?.passwordUpdatedAt ?? 'Chưa cập nhật'}</p>
                 </div>
               </div>
-              <Link to={pathname.startsWith('/staff') ? '/staff/security' : pathname.startsWith('/manager') ? '/manager/security' : '/dashboard/security'} className="text-sm font-semibold text-[#1A3C6E] hover:underline">
+              <Link to={pathname.startsWith('/admin') ? '/admin/security' : pathname.startsWith('/staff') ? '/staff/security' : pathname.startsWith('/manager') ? '/manager/security' : '/dashboard/security'} className="text-sm font-semibold text-[#1A3C6E] hover:underline">
                 Đổi mật khẩu
               </Link>
             </div>

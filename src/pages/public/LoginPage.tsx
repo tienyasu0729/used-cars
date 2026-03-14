@@ -53,9 +53,9 @@ export function LoginPage() {
     }
     setLoading(true)
     try {
-      const { user, token } = await authApi.login({ email, password })
-      login(user, token)
-      const target = getRedirectForRole(user.role, from)
+      const { user: u, token } = await authApi.login({ email, password })
+      login(u, token)
+      const target = getRedirectForRole(u.role, from)
       navigate(target, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
@@ -64,25 +64,8 @@ export function LoginPage() {
     }
   }
 
-  // const handleDemoLogin = async () => {
-  //   setError('')
-  //   setLoading(true)
-  //   try {
-  //     const { user, token } = await authApi.login({
-  //       email: 'customer@test.com',
-  //       password: '123456',
-  //     })
-  //     login(user, token)
-  //     navigate(from, { replace: true })
-  //   } catch (err) {
-  //     setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
-
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
       <h1 className="text-2xl font-bold text-gray-900">Đăng Nhập</h1>
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <Input
@@ -118,23 +101,14 @@ export function LoginPage() {
         <Button type="submit" variant="primary" className="w-full" disabled={loading}>
           {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
         </Button>
-        {/* <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={handleDemoLogin}
-          disabled={loading}
-        >
-          Đăng nhập demo
-        </Button> */}
       </form>
       <div className="mt-4 flex items-center gap-2">
         <div className="flex-1 border-t border-gray-200" />
-        <span className="text-sm text-gray-500">hoặc đăng nhập bằng</span>
+        <span className="text-sm text-gray-500">hoặc</span>
         <div className="flex-1 border-t border-gray-200" />
       </div>
       <Button variant="outline" className="mt-4 w-full" type="button">
-        Google
+        Tiếp tục với Google
       </Button>
       <p className="mt-6 text-center text-sm text-gray-500">
         Chưa có tài khoản?{' '}

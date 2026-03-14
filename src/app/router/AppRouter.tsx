@@ -5,6 +5,7 @@ import { AuthLayout } from '@/layouts/AuthLayout'
 import { CustomerDashboardLayout } from '@/layouts/CustomerDashboardLayout'
 import { StaffDashboardLayout } from '@/layouts/StaffDashboardLayout'
 import { ManagerDashboardLayout } from '@/layouts/ManagerDashboardLayout'
+import { AdminDashboardLayout } from '@/layouts/AdminDashboardLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ScrollToTop } from '@/components/common/ScrollToTop'
 import { Spinner } from '@/components/ui'
@@ -59,6 +60,19 @@ const ManagerTransfersPage = lazy(() => import('@/pages/manager').then((m) => ({
 const ManagerReportsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerReportsPage })))
 const ManagerSettingsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerSettingsPage })))
 const ManagerNotificationsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerNotificationsPage })))
+
+const AdminDashboardPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminDashboardPage })))
+const AdminUsersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminUsersPage })))
+const AdminRolesPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminRolesPage })))
+const AdminBranchesPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminBranchesPage })))
+const AdminAddBranchPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminAddBranchPage })))
+const AdminCatalogPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminCatalogPage })))
+const AdminTransfersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminTransfersPage })))
+const AdminCMSPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminCMSPage })))
+const AdminConfigPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminConfigPage })))
+const AdminReportsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminReportsPage })))
+const AdminLogsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminLogsPage })))
+const AdminNotificationsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminNotificationsPage })))
 
 const Fallback = () => (
   <div className="flex min-h-[400px] items-center justify-center">
@@ -170,11 +184,27 @@ const router = createBrowserRouter([
     path: '/admin',
     element: (
       <ProtectedRoute roles={['admin', 'Admin']}>
-        <div className="flex min-h-screen items-center justify-center p-8">
-          <p className="text-slate-500">Admin Dashboard (Prompt Set 5)</p>
-        </div>
+        <ScrollToTop />
+        <AdminDashboardLayout />
       </ProtectedRoute>
     ),
+    children: [
+      { index: true, element: <Suspense fallback={<Fallback />}><AdminDashboardPage /></Suspense> },
+      { path: 'dashboard', element: <Suspense fallback={<Fallback />}><AdminDashboardPage /></Suspense> },
+      { path: 'users', element: <Suspense fallback={<Fallback />}><AdminUsersPage /></Suspense> },
+      { path: 'roles', element: <Suspense fallback={<Fallback />}><AdminRolesPage /></Suspense> },
+      { path: 'branches', element: <Suspense fallback={<Fallback />}><AdminBranchesPage /></Suspense> },
+      { path: 'branches/new', element: <Suspense fallback={<Fallback />}><AdminAddBranchPage /></Suspense> },
+      { path: 'catalog', element: <Suspense fallback={<Fallback />}><AdminCatalogPage /></Suspense> },
+      { path: 'transfers', element: <Suspense fallback={<Fallback />}><AdminTransfersPage /></Suspense> },
+      { path: 'cms', element: <Suspense fallback={<Fallback />}><AdminCMSPage /></Suspense> },
+      { path: 'config', element: <Suspense fallback={<Fallback />}><AdminConfigPage /></Suspense> },
+      { path: 'reports', element: <Suspense fallback={<Fallback />}><AdminReportsPage /></Suspense> },
+      { path: 'logs', element: <Suspense fallback={<Fallback />}><AdminLogsPage /></Suspense> },
+      { path: 'notifications', element: <Suspense fallback={<Fallback />}><AdminNotificationsPage /></Suspense> },
+      { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
+      { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
+    ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
 ])

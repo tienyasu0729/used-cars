@@ -22,6 +22,18 @@ export function AppointmentDetailModal({
         ? 'pending'
         : 'default'
 
+  const statusLabels: Record<string, string> = {
+    Confirmed: 'Đã Xác Nhận',
+    Pending: 'Chờ Xử Lý',
+  }
+  const typeLabels: Record<string, string> = {
+    test_drive: 'Lái Thử',
+    consultation: 'Tham Quan',
+    showroom: 'Tham Quan',
+    appraisal: 'Định Giá',
+    delivery: 'Bàn Giao',
+  }
+
   return (
     <Modal
       isOpen={isOpen}
@@ -38,13 +50,13 @@ export function AppointmentDetailModal({
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Badge variant={statusVariant}>{appointment.status}</Badge>
+          <Badge variant={statusVariant}>{statusLabels[appointment.status] ?? appointment.status}</Badge>
           <Badge
             variant={
               appointment.type === 'test_drive' ? 'confirmed' : 'pending'
             }
           >
-            {appointment.type === 'test_drive' ? 'Lái thử' : 'Tư vấn'}
+            {typeLabels[appointment.type] ?? appointment.type}
           </Badge>
         </div>
         <div>

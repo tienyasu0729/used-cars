@@ -25,7 +25,7 @@ export function StaffDetailModal({
   staff,
   isOpen,
   onClose,
-  onActivate,
+  onActivate: _onActivate,
   onDeactivate,
 }: StaffDetailModalProps) {
   if (!staff || !isOpen) return null

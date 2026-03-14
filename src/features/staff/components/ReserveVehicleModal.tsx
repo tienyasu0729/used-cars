@@ -2,9 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { Vehicle } from '@/types'
-import { Modal } from '@/components/ui'
-import { Input } from '@/components/ui'
-import { Button } from '@/components/ui'
+import { Modal, Button } from '@/components/ui'
 
 const schema = z.object({
   customerId: z.string().min(1, 'Chọn khách hàng'),

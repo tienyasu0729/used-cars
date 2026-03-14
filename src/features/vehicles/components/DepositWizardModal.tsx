@@ -40,7 +40,6 @@ export function DepositWizardModal({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setValue,
     watch,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -56,9 +55,11 @@ export function DepositWizardModal({
   }, [isOpen])
 
   const onSubmit = async (data: FormData) => {
+    if (!user?.id) return
     try {
       const res = await depositApi.createDeposit({
         vehicleId,
+        customerId: user.id,
         amount: data.amount,
         paymentMethod: data.paymentMethod,
       })

@@ -12,7 +12,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
       <h1 className="text-2xl font-bold text-gray-900">Đặt Lại Mật Khẩu</h1>
       <p className="mt-2 text-gray-500">Nhập mật khẩu mới cho tài khoản của bạn</p>
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">

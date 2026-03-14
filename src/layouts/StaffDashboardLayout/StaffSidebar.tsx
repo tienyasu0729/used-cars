@@ -37,7 +37,7 @@ export function StaffSidebar() {
   const unreadCount = notifications?.filter((n) => !n.read).length ?? 0
 
   return (
-    <aside className="hidden w-64 flex-shrink-0 flex-col bg-slate-900 lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-shrink-0 flex-col bg-slate-900 lg:flex">
       <div className="flex flex-col border-b border-slate-800 p-6">
         <BrandLogo variant="dark" linkTo="/" logoHeight={28} className="shrink-0" />
       </div>

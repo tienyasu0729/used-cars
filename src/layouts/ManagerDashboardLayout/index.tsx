@@ -10,7 +10,7 @@ const pageTitles: Record<string, string> = {
   '/manager/vehicles/new': 'Thêm Xe Mới',
   '/manager/staff': 'Quản Lý Nhân Viên',
   '/manager/staff/new': 'Tạo Tài Khoản Nhân Viên',
-  '/manager/appointments': 'Lịch Hẹn',
+  '/manager/appointments': 'Tổng Quan Lịch Hẹn',
   '/manager/transfers': 'Yêu Cầu Điều Chuyển',
   '/manager/reports': 'Báo Cáo Chi Nhánh',
   '/manager/notifications': 'Thông Báo',

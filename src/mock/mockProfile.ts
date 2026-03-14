@@ -30,6 +30,16 @@ export const mockProfileExtras: Record<string, ProfileExtras> = {
     memberSince: '01/2024',
     passwordUpdatedAt: '1 tháng trước',
   },
+  u3: {
+    userId: 'u3',
+    dateOfBirth: '1985-03-15',
+    address: 'Đà Nẵng',
+    gender: 'male',
+    verified: true,
+    vip: false,
+    memberSince: '01/2023',
+    passwordUpdatedAt: '1 tháng trước',
+  },
   u4: {
     userId: 'u4',
     dateOfBirth: '1988-08-10',

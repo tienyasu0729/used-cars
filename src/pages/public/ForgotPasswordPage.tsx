@@ -15,7 +15,7 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="w-full max-w-md text-center">
+      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm md:p-8">
         <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
         <h1 className="mt-4 text-xl font-bold">Kiểm tra email của bạn</h1>
         <p className="mt-2 text-gray-500">
@@ -29,7 +29,7 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
       <h1 className="text-2xl font-bold text-gray-900">Quên Mật Khẩu</h1>
       <p className="mt-2 text-gray-500">Nhập email để nhận link đặt lại mật khẩu</p>
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">

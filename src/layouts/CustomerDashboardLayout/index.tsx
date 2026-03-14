@@ -33,7 +33,7 @@ export function CustomerDashboardLayout() {
       <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col lg:ml-[220px]">
         <CustomerTopbar title={title} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 overflow-x-auto p-4 lg:p-6">
           <Outlet />
         </main>
       </div>
