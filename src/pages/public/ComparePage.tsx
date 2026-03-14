@@ -1,28 +1,52 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useCompareStore } from '@/store/compareStore'
 import { formatPrice, formatMileage } from '@/utils/format'
 import { VehicleStatusBadge } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { useBranches } from '@/hooks/useBranches'
-import { Filter, X, Plus, ArrowRight } from 'lucide-react'
+import { Filter, X, Plus, ArrowRight, ChevronRight, ChevronDown } from 'lucide-react'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import type { Vehicle } from '@/types'
+
+interface SpecDef {
+  key: string
+  label: string
+  get: (v: Vehicle) => string | React.ReactNode
+}
+
+const fuelLabel = (t: string) => (t === 'Gasoline' ? 'Xăng' : t === 'Diesel' ? 'Dầu' : t === 'Electric' ? 'Điện' : 'Hybrid')
+const transLabel = (t: string) => (t === 'Automatic' ? 'Số tự động vô cấp CVT' : 'Số sàn')
+const mileageLabel = (km: number) => (km < 100 ? 'Mới 100%' : formatMileage(km))
 
 export function ComparePage() {
   useDocumentTitle('So sánh xe')
   const { vehicles, removeVehicle } = useCompareStore()
   const { data: branches } = useBranches()
-
+  const [showDiffOnly, setShowDiffOnly] = useState(false)
   const branchList = Array.isArray(branches) ? branches : []
 
-  const specs = [
-    { key: 'brand', label: 'Hãng xe', get: (v: (typeof vehicles)[0]) => v.brand },
-    { key: 'year', label: 'Năm sản xuất', get: (v: (typeof vehicles)[0]) => String(v.year) },
-    { key: 'mileage', label: 'Số Kilômét', get: (v: (typeof vehicles)[0]) => formatMileage(v.mileage) },
-    { key: 'fuel', label: 'Nhiên liệu', get: (v: (typeof vehicles)[0]) => (v.fuelType === 'Gasoline' ? 'Xăng' : v.fuelType === 'Diesel' ? 'Dầu' : v.fuelType === 'Electric' ? 'Điện' : 'Hybrid') },
-    { key: 'transmission', label: 'Hộp số', get: (v: (typeof vehicles)[0]) => (v.transmission === 'Automatic' ? 'Số tự động' : 'Số sàn') },
-    { key: 'status', label: 'Trạng thái', get: (v: (typeof vehicles)[0]) => v.status },
-    { key: 'color', label: 'Màu', get: (v: (typeof vehicles)[0]) => v.exteriorColor || '-' },
+  const specs: SpecDef[] = [
+    { key: 'brand', label: 'Hãng xe', get: (v) => v.brand },
+    { key: 'year', label: 'Năm sản xuất', get: (v) => String(v.year) },
+    { key: 'mileage', label: 'Số Kilômét', get: (v) => mileageLabel(v.mileage) },
+    { key: 'engine', label: 'Động cơ', get: (v) => v.engine ?? '-' },
+    { key: 'horsepower', label: 'Công suất (Mã lực)', get: (v) => (v.horsepower ? `${v.horsepower} HP` : '-') },
+    { key: 'fuel', label: 'Nhiên liệu', get: (v) => fuelLabel(v.fuelType) },
+    { key: 'transmission', label: 'Hộp số', get: (v) => transLabel(v.transmission) },
+    { key: 'wheelbase', label: 'Chiều dài cơ sở (mm)', get: (v) => (v.wheelbaseMm ? String(v.wheelbaseMm) : '-') },
+    { key: 'airbags', label: 'Số túi khí', get: (v) => (v.airbags ? `${v.airbags} túi khí` : '-') },
+    { key: 'safety', label: 'Hệ thống an toàn chủ động', get: (v) => v.safetySystem ?? '-' },
+    { key: 'status', label: 'Trạng thái', get: (v) => v.status },
+    { key: 'color', label: 'Màu', get: (v) => v.exteriorColor || '-' },
   ]
+
+  const filteredSpecs = showDiffOnly
+    ? specs.filter((s) => {
+        const values = vehicles.map((v) => String(s.get(v)))
+        return new Set(values).size > 1
+      })
+    : specs
 
   const showAddSlot = vehicles.length < 3
   const colCount = vehicles.length + (showAddSlot ? 1 : 0)
@@ -30,6 +54,11 @@ export function ComparePage() {
   if (vehicles.length < 2) {
     return (
       <main className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8">
+        <nav className="mb-6 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
+          <Link to="/" className="hover:text-[#1A3C6E]">Trang chủ</Link>
+          <ChevronRight className="h-4 w-4" />
+          <span className="text-[#1A3C6E]">So sánh xe</span>
+        </nav>
         <h1 className="text-4xl font-black tracking-tight text-slate-900">So sánh xe trực quan</h1>
         <p className="mt-4 text-slate-500">Chọn ít nhất 2 xe để so sánh</p>
         <Link to="/vehicles" className="mt-6 inline-block">
@@ -46,19 +75,23 @@ export function ComparePage() {
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="flex flex-col gap-2">
           <nav className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
-            <Link to="/" className="hover:text-[#1A3C6E]">
-              Trang chủ
-            </Link>
-            <span>/</span>
+            <Link to="/" className="hover:text-[#1A3C6E]">Trang chủ</Link>
+            <ChevronRight className="h-4 w-4" />
             <span className="text-[#1A3C6E]">So sánh xe</span>
           </nav>
           <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-900">
             So sánh xe trực quan
           </h1>
           <p className="max-w-xl text-base text-slate-600">
-            Phân tích chi tiết thông số kỹ thuật, trang bị và giá lăn bánh của các dòng xe đang hot nhất tại thị trường Đà Nẵng.
+            Phân tích chi tiết thông số kỹ thuật, trang bị và giá lăn bánh của {vehicles.length} dòng xe đang hot nhất tại thị trường Đà Nẵng.
           </p>
         </div>
+        <Link to="/vehicles">
+          <Button variant="primary" size="lg" className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Thêm xe khác
+          </Button>
+        </Link>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
@@ -69,29 +102,31 @@ export function ComparePage() {
               {vehicles.map((_, i) => (
                 <col key={i} style={{ width: `${82 / colCount}%` }} />
               ))}
-              {showAddSlot && (
-                <col style={{ width: `${82 / colCount}%` }} />
-              )}
+              {showAddSlot && <col style={{ width: `${82 / colCount}%` }} />}
             </colgroup>
             <thead>
               <tr className="bg-slate-50">
-                <th className="sticky left-0 z-10 border-r border-slate-200 bg-slate-50 p-6 text-left">
+                <th className="sticky left-0 z-10 min-w-[240px] border-r border-slate-200 bg-slate-50 p-6 text-left">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Đặc tính kỹ thuật
                     </span>
-                    <div className="flex items-center gap-2 text-sm text-[#1A3C6E]">
+                    <button
+                      onClick={() => setShowDiffOnly(!showDiffOnly)}
+                      className="flex items-center gap-2 text-sm font-medium text-[#1A3C6E] hover:underline"
+                    >
                       <Filter className="h-4 w-4" />
+                      <ChevronDown className={`h-4 w-4 transition-transform ${showDiffOnly ? 'rotate-180' : ''}`} />
                       Hiện khác biệt
-                    </div>
+                    </button>
                   </div>
                 </th>
                 {vehicles.map((v) => (
-                  <th key={v.id} className="border-r border-slate-200 p-4 text-center">
-                    <div className="flex flex-col items-center gap-3">
+                  <th key={v.id} className="min-w-[300px] border-r border-slate-200 p-6 text-center">
+                    <div className="flex flex-col items-center gap-4">
                       <div className="relative w-full overflow-hidden rounded-lg bg-slate-200" style={{ aspectRatio: '16/10' }}>
                         <img
-                          src={v.images[0] || 'https://placehold.co/600x400'}
+                          src={v.images?.[0] || 'https://placehold.co/600x400'}
                           alt={v.brand + ' ' + v.model}
                           className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
                         />
@@ -103,10 +138,10 @@ export function ComparePage() {
                         </button>
                       </div>
                       <div className="flex flex-col gap-1">
-                        <h3 className="text-base font-bold leading-tight text-slate-900">
+                        <h3 className="text-lg font-bold leading-tight text-slate-900">
                           {v.brand} {v.model} {v.trim || ''}
                         </h3>
-                        <p className="text-lg font-extrabold text-[#1A3C6E]">{formatPrice(v.price)}</p>
+                        <p className="text-xl font-extrabold text-[#1A3C6E]">{formatPrice(v.price)}</p>
                       </div>
                       <Link to={`/vehicles/${v.id}`} className="w-full">
                         <button className="w-full rounded-lg border border-[#1A3C6E]/20 bg-[#1A3C6E]/10 py-2 text-sm font-bold text-[#1A3C6E] transition-all hover:bg-[#1A3C6E] hover:text-white">
@@ -117,7 +152,7 @@ export function ComparePage() {
                   </th>
                 ))}
                 {showAddSlot && (
-                  <th className="border border-dashed border-slate-300 p-4">
+                  <th className="min-w-[300px] border border-dashed border-slate-300 p-4">
                     <Link
                       to="/vehicles"
                       className="flex min-h-[180px] flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 hover:border-[#1A3C6E] hover:bg-slate-50"
@@ -130,8 +165,8 @@ export function ComparePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {specs.map((spec, i) => {
-                const values = vehicles.map((v) => spec.get(v))
+              {filteredSpecs.map((spec, i) => {
+                const values = vehicles.map((v) => String(spec.get(v)))
                 const hasDiff = new Set(values).size > 1
                 const diffBg = 'bg-[#FEF9C3]'
                 const baseRowBg = i % 2 === 1 ? 'bg-[#1A3C6E]/5' : 'bg-white'
@@ -153,9 +188,7 @@ export function ComparePage() {
                         )}
                       </td>
                     ))}
-                    {showAddSlot && (
-                      <td className="border border-dashed border-slate-300 bg-slate-50/30 p-4" />
-                    )}
+                    {showAddSlot && <td className="border border-dashed border-slate-300 bg-slate-50/30 p-4" />}
                   </tr>
                 )
               })}
@@ -171,9 +204,7 @@ export function ComparePage() {
                     </td>
                   )
                 })}
-                {showAddSlot && (
-                  <td className="border border-dashed border-slate-300 bg-slate-50/30 p-4" />
-                )}
+                {showAddSlot && <td className="border border-dashed border-slate-300 bg-slate-50/30 p-4" />}
               </tr>
             </tbody>
           </table>
@@ -188,7 +219,7 @@ export function ComparePage() {
               Chuyên viên của chúng tôi sẽ giúp bạn chọn chiếc xe phù hợp nhất với nhu cầu.
             </p>
           </div>
-          <a href="tel:19006868" className="inline-block rounded-lg bg-white px-6 py-2 text-sm font-bold text-[#1A3C6E] hover:bg-slate-100 transition-colors">
+          <a href="tel:19006868" className="inline-block rounded-lg bg-white px-6 py-2 text-sm font-bold text-[#1A3C6E] transition-colors hover:bg-slate-100">
             Gọi ngay 1900 6868
           </a>
         </div>

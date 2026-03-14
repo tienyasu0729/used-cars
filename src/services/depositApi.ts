@@ -6,6 +6,8 @@ export interface CreateDepositPayload {
   customerId: string
   amount: number
   paymentMethod: string
+  depositDate?: string
+  expiryDate?: string
   notes?: string
 }
 

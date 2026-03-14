@@ -15,4 +15,7 @@ export interface ChatConversation {
   lastMessage: string
   lastMessageAt: string
   unreadCount: number
+  vehicleInfo?: string
+  vehiclePrice?: string
+  isNewCustomer?: boolean
 }

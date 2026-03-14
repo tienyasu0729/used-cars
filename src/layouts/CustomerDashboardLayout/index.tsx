@@ -6,7 +6,7 @@ import { MobileSidebar } from './MobileSidebar'
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Tổng Quan',
-  '/dashboard/profile': 'Thông Tin Cá Nhân',
+  '/dashboard/profile': 'Hồ Sơ Cá Nhân',
   '/dashboard/saved': 'Xe Đã Lưu',
   '/dashboard/bookings': 'Lịch Lái Thử',
   '/dashboard/deposits': 'Đặt Cọc',
@@ -31,7 +31,7 @@ export function CustomerDashboardLayout() {
     <div className="flex min-h-screen bg-[#F9FAFB]">
       <CustomerSidebar />
       <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-[220px]">
         <CustomerTopbar title={title} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 p-4 lg:p-6">
           <Outlet />

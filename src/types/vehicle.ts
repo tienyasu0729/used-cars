@@ -19,4 +19,9 @@ export interface Vehicle {
   interiorColor?: string
   plateNumber?: string
   description?: string
+  engine?: string
+  horsepower?: number
+  wheelbaseMm?: number
+  airbags?: number
+  safetySystem?: string
 }

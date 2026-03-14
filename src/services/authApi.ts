@@ -25,6 +25,7 @@ const roleMap: Record<string, UserRole> = {
   customer: 'Customer',
   staff: 'SalesStaff',
   admin: 'Admin',
+  manager: 'BranchManager',
 }
 
 function toUser(m: (typeof mockUsers)[0]): User {

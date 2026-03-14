@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Notification } from '@/types'
 import { formatDate } from '@/utils/format'
-import { Bell, Calendar, Shield, ShoppingBag, Tag } from 'lucide-react'
+import { Bell, Calendar, Shield, ShoppingBag, Tag, Car, ArrowRightLeft } from 'lucide-react'
 
 const typeIcons: Record<string, typeof Bell> = {
   Booking: Calendar,
@@ -9,6 +9,10 @@ const typeIcons: Record<string, typeof Bell> = {
   Order: ShoppingBag,
   PriceDrop: Tag,
   System: Bell,
+  AppointmentTestDrive: Car,
+  AppointmentConsultation: Calendar,
+  TransferIncoming: ArrowRightLeft,
+  TransferOutgoing: ArrowRightLeft,
 }
 
 interface NotificationListProps {

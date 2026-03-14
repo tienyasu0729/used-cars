@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell, ChevronDown, Menu, Settings, LogOut, Key } from 'lucide-react'
+import { Bell, ChevronDown, Menu, Settings, LogOut, Key, Home } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { useNotifications } from '@/hooks/useNotifications'
+import { useStaffNotifications } from '@/hooks/useStaffNotifications'
 
 interface StaffTopbarProps {
   title: string
@@ -13,7 +13,7 @@ export function StaffTopbar({ title, onMenuClick }: StaffTopbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { user, logout } = useAuthStore()
-  const { data: notifications } = useNotifications()
+  const { data: notifications } = useStaffNotifications()
   const unreadCount = notifications?.filter((n) => !n.read).length ?? 0
 
   useEffect(() => {
@@ -44,13 +44,20 @@ export function StaffTopbar({ title, onMenuClick }: StaffTopbarProps) {
         >
           <Menu className="h-6 w-6" />
         </button>
+        <Link
+          to="/"
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <Home className="h-4 w-4" />
+          <span className="hidden sm:inline">Trở về trang chủ</span>
+        </Link>
         <h2 className="text-lg font-semibold">{title}</h2>
         <span className="hidden text-white/50 sm:inline">|</span>
         <p className="hidden text-sm text-white sm:block">{dateStr}</p>
       </div>
       <div className="flex items-center gap-4">
         <Link
-          to="/staff/dashboard"
+          to="/staff/notifications"
           className="relative rounded-lg p-2 text-white transition-colors hover:text-[#E8612A]"
         >
           <Bell className="h-5 w-5" />
@@ -76,7 +83,7 @@ export function StaffTopbar({ title, onMenuClick }: StaffTopbarProps) {
                 <p className="text-xs text-slate-400">Nhân viên Kinh doanh</p>
               </div>
               <Link
-                to="/dashboard/security"
+                to="/staff/security"
                 onClick={() => setDropdownOpen(false)}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700"
               >

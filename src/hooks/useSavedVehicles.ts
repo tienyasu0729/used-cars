@@ -9,7 +9,7 @@ function getSavedIds(): string[] {
     const s = localStorage.getItem(SAVED_IDS_KEY)
     return s ? JSON.parse(s) : []
   } catch {
-    return ['v1', 'v2', 'v4']
+    return ['v1', 'v2', 'v3', 'v4', 'v5', 'v6']
   }
 }
 

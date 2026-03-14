@@ -1,4 +1,13 @@
-export type NotificationType = 'Booking' | 'Deposit' | 'Order' | 'PriceDrop' | 'System'
+export type NotificationType =
+  | 'Booking'
+  | 'Deposit'
+  | 'Order'
+  | 'PriceDrop'
+  | 'System'
+  | 'AppointmentTestDrive'
+  | 'AppointmentConsultation'
+  | 'TransferIncoming'
+  | 'TransferOutgoing'
 
 export interface Notification {
   id: string

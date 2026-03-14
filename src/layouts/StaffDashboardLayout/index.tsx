@@ -15,6 +15,8 @@ const pageTitles: Record<string, string> = {
   '/staff/deposits/new': 'Tạo Đặt Cọc',
   '/staff/chat': 'Chat Khách Hàng',
   '/staff/transfer-requests': 'Yêu Cầu Điều Chuyển',
+  '/staff/profile': 'Hồ Sơ Cá Nhân',
+  '/staff/notifications': 'Thông Báo',
 }
 
 function getPageTitle(pathname: string): string {

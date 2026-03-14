@@ -1,8 +1,30 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Search, ChevronDown, User, LayoutDashboard, LogOut } from 'lucide-react'
+import { Menu, X, Search, ChevronDown, User, LayoutDashboard, LogOut, GitCompare } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { useCompareStore } from '@/store/compareStore'
 import { BrandLogo } from '@/components/common/BrandLogo'
+import type { UserRole } from '@/types'
+
+function getDashboardPath(role: UserRole): string {
+  const map: Record<UserRole, string> = {
+    Customer: '/dashboard',
+    SalesStaff: '/staff/dashboard',
+    BranchManager: '/manager/dashboard',
+    Admin: '/admin',
+    Guest: '/',
+  }
+  return map[role] ?? '/dashboard'
+}
+
+function getProfilePath(role: UserRole | string): string {
+  const r = String(role)
+  if (r === 'Customer' || r === 'customer') return '/dashboard/profile'
+  if (r === 'SalesStaff' || r === 'staff') return '/staff/profile'
+  if (r === 'BranchManager' || r === 'manager') return '/manager/profile'
+  if (r === 'Admin' || r === 'admin') return '/admin'
+  return '/dashboard/profile'
+}
 
 const navLinks = [
   { to: '/vehicles', label: 'Mua Xe' },
@@ -17,6 +39,7 @@ export function PublicHeader() {
   const [avatarOpen, setAvatarOpen] = useState(false)
   const avatarRef = useRef<HTMLDivElement>(null)
   const { user, logout } = useAuthStore()
+  const { vehicles: compareVehicles } = useCompareStore()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -73,6 +96,18 @@ export function PublicHeader() {
               {link.label}
             </Link>
           ))}
+          <Link
+            to="/compare"
+            className="relative flex items-center gap-1.5 text-sm font-medium text-white hover:text-white/90"
+          >
+            <GitCompare className="h-4 w-4" />
+            So sánh
+            {compareVehicles.length > 0 && (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#E8612A] px-1.5 text-xs font-bold text-white">
+                {compareVehicles.length}
+              </span>
+            )}
+          </Link>
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -90,7 +125,7 @@ export function PublicHeader() {
               {avatarOpen && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-white/20 bg-[#1A3C6E] py-2 shadow-xl">
                   <Link
-                    to="/dashboard"
+                    to={getProfilePath(user.role)}
                     onClick={() => setAvatarOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10"
                   >
@@ -98,7 +133,7 @@ export function PublicHeader() {
                     Hồ sơ
                   </Link>
                   <Link
-                    to="/dashboard"
+                    to={getDashboardPath(user.role)}
                     onClick={() => setAvatarOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10"
                   >
@@ -172,11 +207,22 @@ export function PublicHeader() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              to="/compare"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 rounded-lg py-3 text-lg font-medium text-white hover:bg-white/10"
+            >
+              <GitCompare className="h-4 w-4" />
+              So sánh
+              {compareVehicles.length > 0 && (
+                <span className="rounded-full bg-[#E8612A] px-2 py-0.5 text-xs font-bold">{compareVehicles.length}</span>
+              )}
+            </Link>
           </nav>
           <div className="mt-4 flex gap-2 px-4">
             {user ? (
               <>
-                <Link to="/dashboard" className="flex-1" onClick={() => setMobileOpen(false)}>
+                <Link to={getDashboardPath(user.role)} className="flex-1" onClick={() => setMobileOpen(false)}>
                   <button className="w-full rounded-lg border border-white py-2 text-white">Bảng điều khiển</button>
                 </Link>
                 <button

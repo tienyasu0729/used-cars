@@ -1,19 +1,64 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, MessageSquare, ShoppingBag, Package, Schedule, List } from 'lucide-react'
+import { Calendar, MessageSquare, ShoppingBag, Package, List } from 'lucide-react'
 import { useStaffBookings } from '@/hooks/useStaffBookings'
+import { useStaffSchedule } from '@/hooks/useStaffSchedule'
 import { useConsultations } from '@/hooks/useConsultations'
 import { useStaffOrders } from '@/hooks/useStaffOrders'
 import { useInventory } from '@/hooks/useInventory'
+import { StaffScheduleCalendar } from '@/features/staff/components/StaffScheduleCalendar'
+import { mockUsers } from '@/mock'
+import type { StaffScheduleItem } from '@/mock/mockStaffSchedule'
 
 const today = new Date().toISOString().slice(0, 10)
+const TYPE_LABELS: Record<string, string> = { test_drive: 'Lái thử', consultation: 'Tư vấn', contract: 'Ký hợp đồng', meeting: 'Họp nhóm', handover: 'Bàn giao' }
+
+function bookingToScheduleItem(b: { id: string; vehicleId: string; customerId: string; branchId: string; date: string; timeSlot: string; status: string }, vehicles: { id: string; brand: string; model: string }[]): StaffScheduleItem {
+  const v = vehicles.find((x) => x.id === b.vehicleId)
+  const cust = mockUsers.find((u) => u.id === b.customerId)
+  const statusMap: Record<string, StaffScheduleItem['status']> = { Pending: 'pending', Confirmed: 'confirmed', Completed: 'completed', Cancelled: 'cancelled' }
+  const [h, m] = b.timeSlot.split(':').map(Number)
+  const endH = h + 1
+  const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  return {
+    id: `b-${b.id}`,
+    bookingId: b.id,
+    customerId: b.customerId,
+    customerName: cust?.name ?? `Khách #${b.customerId}`,
+    vehicleId: b.vehicleId,
+    vehicleName: v ? `${v.brand} ${v.model}` : '',
+    branchId: b.branchId,
+    date: b.date,
+    timeSlot: b.timeSlot,
+    endTime,
+    type: 'test_drive',
+    status: statusMap[b.status] ?? 'pending',
+  }
+}
 
 export function StaffDashboardPage() {
   const { data: bookings } = useStaffBookings()
+  const { data: schedule, isLoading: scheduleLoading } = useStaffSchedule()
   const { data: consultations } = useConsultations()
   const { data: orders, ordersToday, ordersThisWeek } = useStaffOrders()
   const { data: inventory, available } = useInventory()
 
   const todayBookings = (bookings ?? []).filter((b) => b.date === today)
+  const todaySchedule = useMemo(() => {
+    const fromSched = (schedule ?? []).filter((s) => s.date === today)
+    const fromBooks = (bookings ?? []).filter((b) => b.date === today).map((b) => bookingToScheduleItem(b, inventory ?? []))
+    const existingIds = new Set(fromSched.map((x) => x.bookingId).filter(Boolean))
+    const extra = fromBooks.filter((b) => !existingIds.has(b.bookingId!))
+    return [...fromSched, ...extra].sort((a, b) => a.timeSlot.localeCompare(b.timeSlot))
+  }, [schedule, bookings, inventory])
+  const mergedSchedule = useMemo(() => {
+    const sched = schedule ?? []
+    const books = bookings ?? []
+    const vehicles = inventory ?? []
+    const existingIds = new Set(sched.map((x) => x.bookingId).filter(Boolean))
+    const fromBookings = books.filter((b) => !existingIds.has(b.id)).map((b) => bookingToScheduleItem(b, vehicles))
+    return [...sched, ...fromBookings]
+  }, [schedule, bookings, inventory])
   const pendingConsultations = (consultations ?? []).filter((c) => c.status === 'pending')
 
   const kpis = [
@@ -72,40 +117,51 @@ export function StaffDashboardPage() {
       </div>
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
         <div className="xl:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-              <Schedule className="h-5 w-5 text-[#1A3C6E]" />
-              Lịch trình hôm nay (08:00 - 18:00)
-            </h3>
-            <Link to="/staff/bookings" className="text-sm font-medium text-[#1A3C6E] hover:underline">
-              Xem tất cả
-            </Link>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Lịch trình của tôi</h3>
+            <p className="text-sm text-slate-500">Quản lý các cuộc hẹn lái thử và tư vấn</p>
           </div>
-          <div className="relative rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="absolute left-10 top-10 bottom-10 w-px bg-slate-200" />
-            <div className="space-y-8">
-              {todayBookings.slice(0, 3).map((b) => (
-                <div key={b.id} className="relative pl-12">
-                  <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-blue-100 shadow">
-                    <div className="h-2 w-2 rounded-full bg-blue-600" />
-                  </div>
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-                    <p className="mb-2 text-sm font-bold text-slate-400">{b.timeSlot}</p>
-                    <p className="text-sm font-bold text-slate-900">Khách #{b.customerId}</p>
-                    <p className="text-xs text-slate-500">Lái thử xe</p>
-                    <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-0.5 text-[10px] font-bold uppercase text-green-700">
-                      {b.status === 'Confirmed' ? 'Đã xác nhận' : b.status === 'Pending' ? 'Chờ xác nhận' : b.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              {todayBookings.length === 0 && (
-                <p className="py-8 text-center text-sm text-slate-500">Hôm nay chưa có lịch hẹn</p>
-              )}
-            </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            {scheduleLoading ? (
+              <div className="flex min-h-[400px] items-center justify-center">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#1A3C6E] border-t-transparent" />
+              </div>
+            ) : (
+              <StaffScheduleCalendar schedule={mergedSchedule} onAddAppointment={() => {}} />
+            )}
           </div>
         </div>
         <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-900">Sự kiện hôm nay</h3>
+            <p className="mt-1 text-xs font-medium text-slate-500">{new Date().getDate()} THÁNG {new Date().getMonth() + 1}</p>
+            <div className="mt-3 space-y-3">
+              {todaySchedule.slice(0, 4).map((s) => (
+                <div key={s.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs font-medium text-slate-500">{s.timeSlot} - {s.endTime || s.timeSlot}</p>
+                  <p className="mt-0.5 text-sm font-semibold text-slate-900">{TYPE_LABELS[s.type]}</p>
+                  <p className="text-xs text-slate-600">{s.customerName} - {s.vehicleName || ''}</p>
+                  {s.location && <p className="text-xs text-slate-500">{s.location}</p>}
+                  <div className="mt-1 flex items-center gap-1">
+                    <span className={`h-2 w-2 rounded-full ${s.status === 'confirmed' ? 'bg-green-500' : 'bg-amber-500'}`} />
+                    <span className="text-[10px] font-medium uppercase">{s.status === 'confirmed' ? 'Đã xác nhận' : 'Đang chờ'}</span>
+                  </div>
+                </div>
+              ))}
+              {todaySchedule.length === 0 && !scheduleLoading && <p className="py-4 text-center text-xs text-slate-500">Không có sự kiện</p>}
+            </div>
+            <Link to="/staff/bookings" className="mt-3 block text-center text-sm font-medium text-[#1A3C6E] hover:underline">
+              Xem tất cả lịch hẹn
+            </Link>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-900">Chú thích</h3>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2"><div className="h-3 w-3 rounded bg-blue-200" /><span className="text-xs text-slate-700">Lái thử xe</span></div>
+              <div className="flex items-center gap-2"><div className="h-3 w-3 rounded bg-orange-200" /><span className="text-xs text-slate-700">Tư vấn/Ký hợp đồng</span></div>
+              <div className="flex items-center gap-2"><div className="h-3 w-3 rounded bg-slate-200" /><span className="text-xs text-slate-700">Khác/Nội bộ</span></div>
+            </div>
+          </div>
           <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
             <List className="h-5 w-5 text-[#E8612A]" />
             Công việc cần làm

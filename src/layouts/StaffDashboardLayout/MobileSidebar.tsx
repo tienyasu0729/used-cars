@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { X, LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Package, PlusCircle, ClipboardList, Banknote, MessageCircle, ArrowLeftRight } from 'lucide-react'
+import { X, LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Package, PlusCircle, ClipboardList, Banknote, MessageCircle, ArrowLeftRight, User, Bell } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 
 interface MobileSidebarProps {
@@ -18,6 +18,7 @@ const navItems = [
   { to: '/staff/deposits/new', icon: Banknote, label: 'Tạo Đặt Cọc' },
   { to: '/staff/chat', icon: MessageCircle, label: 'Chat Khách Hàng' },
   { to: '/staff/transfer-requests', icon: ArrowLeftRight, label: 'Yêu Cầu Điều Chuyển' },
+  { to: '/staff/notifications', icon: Bell, label: 'Thông Báo' },
 ]
 
 export function StaffMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
@@ -53,9 +54,23 @@ export function StaffMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             </NavLink>
           ))}
         </nav>
-        <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/50 p-4">
-          <p className="text-sm font-semibold text-white">{user?.name}</p>
-          <p className="text-xs text-slate-500">Nhân viên Kinh doanh</p>
+        <div className="absolute bottom-0 left-0 right-0 space-y-2 border-t border-slate-800 bg-slate-950/50 p-4">
+          <div>
+            <p className="text-sm font-semibold text-white">{user?.name}</p>
+            <p className="text-xs text-slate-500">Nhân viên Kinh doanh</p>
+          </div>
+          <NavLink
+            to="/staff/profile"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
+                isActive ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`
+            }
+          >
+            <User className="h-4 w-4" />
+            Hồ Sơ Cá Nhân
+          </NavLink>
         </div>
       </aside>
     </>

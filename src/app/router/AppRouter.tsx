@@ -4,6 +4,7 @@ import { PublicLayout } from '@/layouts/PublicLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { CustomerDashboardLayout } from '@/layouts/CustomerDashboardLayout'
 import { StaffDashboardLayout } from '@/layouts/StaffDashboardLayout'
+import { ManagerDashboardLayout } from '@/layouts/ManagerDashboardLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ScrollToTop } from '@/components/common/ScrollToTop'
 import { Spinner } from '@/components/ui'
@@ -20,6 +21,8 @@ const LoginPage = lazy(() => import('@/pages/public/LoginPage').then((m) => ({ d
 const RegisterPage = lazy(() => import('@/pages/public/RegisterPage').then((m) => ({ default: m.RegisterPage })))
 const ForgotPasswordPage = lazy(() => import('@/pages/public/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
 const ResetPasswordPage = lazy(() => import('@/pages/public/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
+const TermsPage = lazy(() => import('@/pages/public/TermsPage').then((m) => ({ default: m.TermsPage })))
+const PrivacyPage = lazy(() => import('@/pages/public/PrivacyPage').then((m) => ({ default: m.PrivacyPage })))
 
 const DashboardOverviewPage = lazy(() => import('@/pages/customer/DashboardOverviewPage').then((m) => ({ default: m.DashboardOverviewPage })))
 const ProfilePage = lazy(() => import('@/pages/customer/ProfilePage').then((m) => ({ default: m.ProfilePage })))
@@ -43,6 +46,19 @@ const StaffOrdersPage = lazy(() => import('@/pages/staff/StaffOrdersPage').then(
 const StaffCreateDepositPage = lazy(() => import('@/pages/staff/StaffCreateDepositPage').then((m) => ({ default: m.StaffCreateDepositPage })))
 const StaffChatPage = lazy(() => import('@/pages/staff/StaffChatPage').then((m) => ({ default: m.StaffChatPage })))
 const StaffTransferRequestsPage = lazy(() => import('@/pages/staff/StaffTransferRequestsPage').then((m) => ({ default: m.StaffTransferRequestsPage })))
+const StaffNotificationsPage = lazy(() => import('@/pages/staff/StaffNotificationsPage').then((m) => ({ default: m.StaffNotificationsPage })))
+
+const ManagerDashboardPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerDashboardPage })))
+const ManagerVehiclesPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerVehiclesPage })))
+const ManagerAddVehiclePage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerAddVehiclePage })))
+const ManagerEditVehiclePage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerEditVehiclePage })))
+const ManagerStaffPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerStaffPage })))
+const ManagerCreateStaffPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerCreateStaffPage })))
+const ManagerAppointmentsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerAppointmentsPage })))
+const ManagerTransfersPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerTransfersPage })))
+const ManagerReportsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerReportsPage })))
+const ManagerSettingsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerSettingsPage })))
+const ManagerNotificationsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerNotificationsPage })))
 
 const Fallback = () => (
   <div className="flex min-h-[400px] items-center justify-center">
@@ -65,6 +81,8 @@ const router = createBrowserRouter([
       { path: 'about', element: <Suspense fallback={<Fallback />}><AboutPage /></Suspense> },
       { path: 'sell', element: <Suspense fallback={<Fallback />}><ContactPage /></Suspense> },
       { path: 'news', element: <Suspense fallback={<Fallback />}><AboutPage /></Suspense> },
+      { path: 'terms', element: <Suspense fallback={<Fallback />}><TermsPage /></Suspense> },
+      { path: 'privacy', element: <Suspense fallback={<Fallback />}><PrivacyPage /></Suspense> },
     ],
   },
   {
@@ -79,7 +97,7 @@ const router = createBrowserRouter([
   {
     path: '/dashboard',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute roles={['customer', 'Customer']}>
         <ScrollToTop />
         <CustomerDashboardLayout />
       </ProtectedRoute>
@@ -118,28 +136,47 @@ const router = createBrowserRouter([
       { path: 'deposits/new', element: <Suspense fallback={<Fallback />}><StaffCreateDepositPage /></Suspense> },
       { path: 'chat', element: <Suspense fallback={<Fallback />}><StaffChatPage /></Suspense> },
       { path: 'transfer-requests', element: <Suspense fallback={<Fallback />}><StaffTransferRequestsPage /></Suspense> },
+      { path: 'notifications', element: <Suspense fallback={<Fallback />}><StaffNotificationsPage /></Suspense> },
+      { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
+      { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
     ],
   },
   {
     path: '/manager',
     element: (
-      <ProtectedRoute>
-        <div className="flex min-h-screen items-center justify-center p-8">
-          <p className="text-slate-500">Manager Dashboard (Prompt Set 4)</p>
-        </div>
+      <ProtectedRoute roles={['manager', 'BranchManager']}>
+        <ScrollToTop />
+        <ManagerDashboardLayout />
       </ProtectedRoute>
     ),
+    children: [
+      { index: true, element: <Suspense fallback={<Fallback />}><ManagerDashboardPage /></Suspense> },
+      { path: 'dashboard', element: <Suspense fallback={<Fallback />}><ManagerDashboardPage /></Suspense> },
+      { path: 'vehicles', element: <Suspense fallback={<Fallback />}><ManagerVehiclesPage /></Suspense> },
+      { path: 'vehicles/new', element: <Suspense fallback={<Fallback />}><ManagerAddVehiclePage /></Suspense> },
+      { path: 'vehicles/:id/edit', element: <Suspense fallback={<Fallback />}><ManagerEditVehiclePage /></Suspense> },
+      { path: 'staff', element: <Suspense fallback={<Fallback />}><ManagerStaffPage /></Suspense> },
+      { path: 'staff/new', element: <Suspense fallback={<Fallback />}><ManagerCreateStaffPage /></Suspense> },
+      { path: 'appointments', element: <Suspense fallback={<Fallback />}><ManagerAppointmentsPage /></Suspense> },
+      { path: 'transfers', element: <Suspense fallback={<Fallback />}><ManagerTransfersPage /></Suspense> },
+      { path: 'reports', element: <Suspense fallback={<Fallback />}><ManagerReportsPage /></Suspense> },
+      { path: 'settings', element: <Suspense fallback={<Fallback />}><ManagerSettingsPage /></Suspense> },
+      { path: 'notifications', element: <Suspense fallback={<Fallback />}><ManagerNotificationsPage /></Suspense> },
+      { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
+      { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
+    ],
   },
   {
     path: '/admin',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute roles={['admin', 'Admin']}>
         <div className="flex min-h-screen items-center justify-center p-8">
           <p className="text-slate-500">Admin Dashboard (Prompt Set 5)</p>
         </div>
       </ProtectedRoute>
     ),
   },
+  { path: '*', element: <Navigate to="/" replace /> },
 ])
 
 export function AppRouter() {

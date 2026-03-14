@@ -1,9 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { authApi } from '@/services/authApi'
 import { Button } from '@/components/ui'
 import { Input } from '@/components/ui'
+import type { UserRole } from '@/types'
+
+function getRedirectForRole(role: UserRole, from?: string): string {
+  const defaults: Record<UserRole, string> = {
+    Customer: '/dashboard',
+    SalesStaff: '/staff/dashboard',
+    BranchManager: '/manager/dashboard',
+    Admin: '/admin',
+    Guest: '/',
+  }
+  const allowedPrefixes: Record<UserRole, string[]> = {
+    Customer: ['/dashboard'],
+    SalesStaff: ['/staff'],
+    BranchManager: ['/manager'],
+    Admin: ['/admin'],
+    Guest: [],
+  }
+  const prefixes = allowedPrefixes[role] ?? []
+  if (from && prefixes.some((p) => from.startsWith(p))) return from
+  return defaults[role] ?? '/'
+}
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -14,7 +35,14 @@ export function LoginPage() {
   const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/dashboard'
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname
+  const user = useAuthStore((s) => s.user)
+
+  useEffect(() => {
+    if (user) {
+      navigate(getRedirectForRole(user.role, from), { replace: true })
+    }
+  }, [user, from, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,7 +55,8 @@ export function LoginPage() {
     try {
       const { user, token } = await authApi.login({ email, password })
       login(user, token)
-      navigate(from, { replace: true })
+      const target = getRedirectForRole(user.role, from)
+      navigate(target, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
     } finally {

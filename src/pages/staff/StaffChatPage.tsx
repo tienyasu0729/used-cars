@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { ChatLayout } from '@/features/customer/components/ChatLayout'
-import { useConversations } from '@/hooks/useChats'
+import { StaffChatLayout } from '@/features/staff/components/StaffChatLayout'
+import { useStaffConversations } from '@/hooks/useChats'
 import { useChatMessages } from '@/hooks/useChats'
 import type { ChatMessage } from '@/types'
 
 export function StaffChatPage() {
   const [selectedId, setSelectedId] = useState<string | undefined>()
   const [localMessages, setLocalMessages] = useState<Record<string, ChatMessage[]>>({})
-  const { data: conversations, isLoading } = useConversations()
+  const { data: conversations, isLoading } = useStaffConversations()
   const { data: messages = [] } = useChatMessages(selectedId)
 
   const mergedMessages = selectedId
@@ -41,12 +41,8 @@ export function StaffChatPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Chat Khách Hàng</h1>
-        <p className="mt-1 text-slate-500">Hỗ trợ và tư vấn khách hàng</p>
-      </div>
-      <ChatLayout
+    <div className="h-full">
+      <StaffChatLayout
         conversations={conversations ?? []}
         messages={mergedMessages}
         selectedId={selectedId}

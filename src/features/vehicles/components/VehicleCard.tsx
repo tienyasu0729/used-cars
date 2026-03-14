@@ -6,6 +6,7 @@ import { VehicleStatusBadge } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { useBranches } from '@/hooks/useBranches'
 import { useCompareStore } from '@/store/compareStore'
+import { useToastStore } from '@/store/toastStore'
 
 interface VehicleCardProps {
   vehicle: Vehicle
@@ -16,9 +17,25 @@ interface VehicleCardProps {
 export function VehicleCard({ vehicle, compact, showNewBadge }: VehicleCardProps) {
   const { data: branches } = useBranches()
   const { addVehicle, removeVehicle, vehicles } = useCompareStore()
+  const toast = useToastStore()
   const branch = branches?.find((b) => b.id === vehicle.branchId)
   const isSaved = false
   const isComparing = vehicles.some((v) => v.id === vehicle.id)
+
+  const handleCompare = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (isComparing) {
+      removeVehicle(vehicle.id)
+      toast.addToast('info', 'Đã bỏ xe khỏi danh sách so sánh')
+    } else {
+      if (vehicles.length >= 3) {
+        toast.addToast('warning', 'Chỉ so sánh tối đa 3 xe')
+        return
+      }
+      addVehicle(vehicle)
+      toast.addToast('success', `Đã thêm vào so sánh (${vehicles.length + 1}/3)`)
+    }
+  }
 
   return (
     <div className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-xl">
@@ -89,7 +106,9 @@ export function VehicleCard({ vehicle, compact, showNewBadge }: VehicleCardProps
           <Button
             variant="outline"
             size="sm"
-            onClick={() => (isComparing ? removeVehicle(vehicle.id) : addVehicle(vehicle))}
+            onClick={handleCompare}
+            title="So sánh xe"
+            className={isComparing ? 'border-[#1A3C6E] bg-[#1A3C6E]/10' : ''}
           >
             <GitCompare className="h-4 w-4" />
           </Button>
