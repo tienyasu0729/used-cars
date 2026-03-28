@@ -1,121 +1,38 @@
-import { useState, useEffect } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
-import { authApi } from '@/services/authApi'
-import { Button } from '@/components/ui'
-import { Input } from '@/components/ui'
-import type { UserRole } from '@/types'
+/**
+ * LoginPage — Trang đăng nhập /login
+ * 
+ * Page này chỉ import và render LoginForm component.
+ * Toàn bộ logic nằm trong LoginForm → useLogin hook → authService.
+ * 
+ * Tại sao tách Page và Form:
+ * - Page lo layout (AuthLayout wrapper), SEO title
+ * - Form lo render form + xử lý input
+ * - Hook lo business logic + API
+ * Dễ maintain và test từng layer riêng.
+ */
 
-function getRedirectForRole(role: UserRole, from?: string): string {
-  const defaults: Record<UserRole, string> = {
-    Customer: '/dashboard',
-    SalesStaff: '/staff/dashboard',
-    BranchManager: '/manager/dashboard',
-    Admin: '/admin',
-    Guest: '/',
-  }
-  const allowedPrefixes: Record<UserRole, string[]> = {
-    Customer: ['/dashboard'],
-    SalesStaff: ['/staff'],
-    BranchManager: ['/manager'],
-    Admin: ['/admin'],
-    Guest: [],
-  }
-  const prefixes = allowedPrefixes[role] ?? []
-  if (from && prefixes.some((p) => from.startsWith(p))) return from
-  return defaults[role] ?? '/'
-}
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { LoginForm } from '@/components/auth/LoginForm'
+import { useAuthStore } from '@/store/authStore'
 
 export function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const login = useAuthStore((s) => s.login)
-  const navigate = useNavigate()
-  const location = useLocation()
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const user = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
 
+  // Nếu đã login rồi thì redirect luôn, không cần hiện form
   useEffect(() => {
-    if (user) {
-      navigate(getRedirectForRole(user.role, from), { replace: true })
+    if (isAuthenticated && user) {
+      const redirectMap: Record<string, string> = {
+        Customer: '/dashboard',
+        SalesStaff: '/staff',
+        BranchManager: '/manager',
+        Admin: '/admin',
+      }
+      navigate(redirectMap[user.role] || '/dashboard', { replace: true })
     }
-  }, [user, from, navigate])
+  }, [isAuthenticated, user, navigate])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    if (!email || !password) {
-      setError('Vui lòng nhập email và mật khẩu')
-      return
-    }
-    setLoading(true)
-    try {
-      const { user: u, token } = await authApi.login({ email, password })
-      login(u, token)
-      const target = getRedirectForRole(u.role, from)
-      navigate(target, { replace: true })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="w-full rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-      <h1 className="text-2xl font-bold text-gray-900">Đăng Nhập</h1>
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <Input
-          label="Email hoặc SĐT"
-          type="text"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="email@example.com"
-          required
-        />
-        <Input
-          label="Mật khẩu"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm">Ghi nhớ đăng nhập</span>
-          </label>
-          <Link to="/forgot-password" className="text-sm text-[#E8612A] hover:underline">
-            Quên mật khẩu?
-          </Link>
-        </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-          {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
-        </Button>
-      </form>
-      <div className="mt-4 flex items-center gap-2">
-        <div className="flex-1 border-t border-gray-200" />
-        <span className="text-sm text-gray-500">hoặc</span>
-        <div className="flex-1 border-t border-gray-200" />
-      </div>
-      <Button variant="outline" className="mt-4 w-full" type="button">
-        Tiếp tục với Google
-      </Button>
-      <p className="mt-6 text-center text-sm text-gray-500">
-        Chưa có tài khoản?{' '}
-        <Link to="/register" className="text-[#E8612A] hover:underline">
-          Đăng ký ngay
-        </Link>
-      </p>
-    </div>
-  )
+  return <LoginForm />
 }
