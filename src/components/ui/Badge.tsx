@@ -34,12 +34,14 @@ export function VehicleStatusBadge({ status }: { status: string }) {
     Reserved: 'reserved',
     Sold: 'sold',
     Hidden: 'default',
+    InTransfer: 'pending',
   }
   const labels: Record<string, string> = {
     Available: 'Còn Hàng',
     Reserved: 'Đã Đặt Cọc',
     Sold: 'Đã Bán',
     Hidden: 'Ẩn',
+    InTransfer: 'Đang chuyển kho',
   }
   return <Badge variant={map[status] ?? 'default'}>{labels[status] ?? status}</Badge>
 }

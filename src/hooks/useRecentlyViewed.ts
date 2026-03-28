@@ -1,59 +1,57 @@
 /**
- * useRecentlyViewed — Hook xe đã xem gần đây
- *
- * Lấy từ GET /vehicles/recently-viewed
- * - Đã đăng nhập: dùng JWT (interceptor tự gắn)
- * - Chưa đăng nhập: dùng header X-Guest-Id (tạo UUID lưu localStorage)
- * Không throw lỗi, chỉ trả mảng rỗng nếu fail
+ * useRecentlyViewed — Tier 3.1: luôn gửi X-Guest-Id qua interactionService
  */
-import { useState, useEffect } from 'react'
-import { vehicleService } from '@/services/vehicle.service'
-import { useAuthStore } from '@/store/authStore'
-import type { Vehicle } from '@/types/vehicle.types'
+import { useState, useEffect, useMemo } from 'react'
+import { interactionService } from '@/services/interaction.service'
+import type { ViewedVehicleItem } from '@/types/interaction.types'
+import type { Vehicle, VehicleImage } from '@/types/vehicle.types'
 
-const GUEST_ID_KEY = 'guest_id'
-
-// Lấy hoặc tạo guest_id cho user chưa đăng nhập
-function getOrCreateGuestId(): string {
-  let guestId = localStorage.getItem(GUEST_ID_KEY)
-  if (!guestId) {
-    guestId = typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `guest_${Date.now()}_${Math.random().toString(36).slice(2)}`
-    localStorage.setItem(GUEST_ID_KEY, guestId)
+function viewedItemToVehicle(s: ViewedVehicleItem): Vehicle {
+  const images: VehicleImage[] = s.primaryImageUrl
+    ? [{ id: 0, url: s.primaryImageUrl, sortOrder: 0, primaryImage: true }]
+    : []
+  return {
+    id: s.vehicleId,
+    listing_id: s.listingId,
+    title: s.title,
+    price: s.price,
+    year: new Date().getFullYear(),
+    fuel: '—',
+    transmission: '—',
+    status: 'Available',
+    category_id: 0,
+    subcategory_id: 0,
+    branch_id: 0,
+    images,
   }
-  return guestId
 }
 
-interface UseRecentlyViewedReturn {
+export interface UseRecentlyViewedReturn {
   recentVehicles: Vehicle[]
   isLoading: boolean
 }
 
 export function useRecentlyViewed(): UseRecentlyViewedReturn {
-  const { isAuthenticated } = useAuthStore()
-  const [recentVehicles, setRecentVehicles] = useState<Vehicle[]>([])
+  const [items, setItems] = useState<ViewedVehicleItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchRecent = async () => {
+    let cancelled = false
+    const run = async () => {
       setIsLoading(true)
-      try {
-        // Nếu đã đăng nhập: JWT sẽ tự gắn qua interceptor
-        // Nếu chưa: gửi kèm guest_id
-        const guestId = isAuthenticated ? undefined : getOrCreateGuestId()
-        const vehicles = await vehicleService.getRecentlyViewed(guestId)
-        setRecentVehicles(vehicles)
-      } catch {
-        // Không throw lỗi, chỉ trả mảng rỗng
-        setRecentVehicles([])
-      } finally {
+      const list = await interactionService.getRecentlyViewed()
+      if (!cancelled) {
+        setItems(list)
         setIsLoading(false)
       }
     }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
-    fetchRecent()
-  }, [isAuthenticated])
+  const recentVehicles = useMemo(() => items.map(viewedItemToVehicle), [items])
 
   return { recentVehicles, isLoading }
 }

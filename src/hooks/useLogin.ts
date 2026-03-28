@@ -10,6 +10,7 @@
 import { useState, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import authService from '@/services/auth.service'
+import { interactionService } from '@/services/interaction.service'
 import { useAuthStore } from '@/store/authStore'
 import type { LoginRequest, ApiErrorResponse } from '@/types/auth.types'
 import type { UserProfile } from '@/types/auth.types'
@@ -65,6 +66,15 @@ export function useLogin(): UseLoginReturn {
 
       // Lưu vào Zustand store (store sẽ persist vào localStorage)
       setAuth(user, token)
+
+      const guestId = localStorage.getItem('guest_id')
+      if (guestId) {
+        interactionService.mergeGuestHistory(guestId).then(() => {
+          localStorage.removeItem('guest_id')
+        }).catch(() => {
+          console.warn('[Tier3.1] Merge guest history thất bại, bỏ qua')
+        })
+      }
 
       // Redirect theo role, ưu tiên quay lại trang user muốn vào (nếu hợp lệ)
       const defaultPath = getRedirectPathByRole(user.role)
