@@ -16,7 +16,7 @@ export interface PaginatedResponse<T> {
 // ============================================================
 // DỮ LIỆU CƠ BẢN
 // ============================================================
-export type VehicleStatus = 'Available' | 'Reserved' | 'Sold' | 'Hidden'
+export type VehicleStatus = 'Available' | 'Reserved' | 'Sold' | 'Hidden' | 'InTransfer'
 
 export interface VehicleImage {
   id: number

@@ -11,7 +11,7 @@ import { VehicleStatusBadge } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { useCompareVehicles } from '@/hooks/useCompareVehicles'
 import { useToastStore } from '@/store/toastStore'
-import { SaveButton } from './SaveButton'
+import { SaveButton } from '@/components/vehicles/SaveButton'
 import type { Vehicle as ApiVehicle, VehicleImage } from '@/types/vehicle.types'
 
 interface VehicleCardProps {

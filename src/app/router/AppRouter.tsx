@@ -6,6 +6,7 @@ import { CustomerDashboardLayout } from '@/layouts/CustomerDashboardLayout'
 import { StaffDashboardLayout } from '@/layouts/StaffDashboardLayout'
 import { ManagerDashboardLayout } from '@/layouts/ManagerDashboardLayout'
 import { AdminDashboardLayout } from '@/layouts/AdminDashboardLayout'
+import { Tier31TestPanel } from '@/dev-tools/Tier31TestPanel'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ScrollToTop } from '@/components/common/ScrollToTop'
 import { Spinner } from '@/components/ui'
@@ -225,6 +226,7 @@ const router = createBrowserRouter([
       { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
     ],
   },
+  ...(import.meta.env.DEV ? [{ path: '/dev/tier31-test', element: <Tier31TestPanel /> }] : []),
   { path: '*', element: <Navigate to="/" replace /> },
 ])
 

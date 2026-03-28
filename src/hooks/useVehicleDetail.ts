@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { vehicleService } from '@/services/vehicle.service'
+import { interactionService } from '@/services/interaction.service'
 import { useAuthStore } from '@/store/authStore'
 import type { Vehicle } from '@/types/vehicle.types'
 
@@ -42,6 +43,7 @@ export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetai
       .getVehicleById(vehicleId)
       .then((v) => {
         setVehicle(v)
+        interactionService.recordView(vehicleId)
       })
       .catch((err) => {
         const code = err?.errorCode
@@ -59,10 +61,10 @@ export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetai
   useEffect(() => {
     if (!isAuthenticated || !vehicleId) return
 
-    vehicleService
+    interactionService
       .getSavedVehicles()
       .then((saved) => {
-        const found = saved.some((v) => v.id === vehicleId)
+        const found = saved.some((s) => s.vehicleId === vehicleId)
         setIsSaved(found)
       })
       .catch(() => {
@@ -83,10 +85,10 @@ export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetai
 
     try {
       if (isSaved) {
-        await vehicleService.unsaveVehicle(vehicleId)
+        await interactionService.unsaveVehicle(vehicleId)
         setIsSaved(false)
       } else {
-        await vehicleService.saveVehicle(vehicleId)
+        await interactionService.saveVehicle(vehicleId)
         setIsSaved(true)
       }
     } catch (err: unknown) {

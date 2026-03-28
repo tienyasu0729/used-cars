@@ -92,18 +92,6 @@ export const vehicleService = {
   },
 
   /**
-   * [PUBLIC] Lấy danh sách xe vừa xem
-   * GET /vehicles/recently-viewed
-   * @param guestId UUID cho guest chưa đ/n, interceptor tự đẩy JWT nếu có login
-   */
-  getRecentlyViewed: async (guestId?: string): Promise<Vehicle[]> => {
-    const headers = guestId ? { 'X-Guest-Id': guestId } : undefined
-    const res = await axiosInstance.get<{ data: unknown[] }>('/vehicles/recently-viewed', { headers })
-    const raw = (res as unknown as { data: unknown[] }).data ?? res
-    return normalizeVehicleList(Array.isArray(raw) ? raw : [])
-  },
-
-  /**
    * [PUBLIC] Lấy chi tiết các xe để so sánh (max 3 params ids)
    * GET /vehicles/compare?ids=1,2,3
    */
@@ -114,32 +102,6 @@ export const vehicleService = {
     const res = await axiosInstance.get<{ data: unknown[] }>('/vehicles/compare', {
       params: { ids: ids.join(',') },
     })
-    const raw = (res as unknown as { data: unknown[] }).data ?? res
-    return normalizeVehicleList(Array.isArray(raw) ? raw : [])
-  },
-
-  /**
-   * [CUSTOMER] Lưu xe yêu thích (yêu cầu JWT)
-   * POST /vehicles/{id}/save
-   */
-  saveVehicle: async (vehicleId: number): Promise<void> => {
-    await axiosInstance.post(`/vehicles/${vehicleId}/save`)
-  },
-
-  /**
-   * [CUSTOMER] Bỏ lưu xe yêu thích (yêu cầu JWT)
-   * DELETE /vehicles/{id}/save
-   */
-  unsaveVehicle: async (vehicleId: number): Promise<void> => {
-    await axiosInstance.delete(`/vehicles/${vehicleId}/save`)
-  },
-
-  /**
-   * [CUSTOMER] Xem xe đã lưu
-   * GET /users/me/saved-vehicles
-   */
-  getSavedVehicles: async (): Promise<Vehicle[]> => {
-    const res = await axiosInstance.get<{ data: unknown[] }>('/users/me/saved-vehicles')
     const raw = (res as unknown as { data: unknown[] }).data ?? res
     return normalizeVehicleList(Array.isArray(raw) ? raw : [])
   },

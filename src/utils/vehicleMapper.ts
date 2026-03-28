@@ -51,7 +51,7 @@ function normalizeImages(r: Record<string, unknown>): VehicleImage[] {
   return []
 }
 
-const STATUSES: VehicleStatus[] = ['Available', 'Reserved', 'Sold', 'Hidden']
+const STATUSES: VehicleStatus[] = ['Available', 'Reserved', 'Sold', 'Hidden', 'InTransfer']
 
 function toStatus(v: unknown): VehicleStatus {
   const s = toStr(v)

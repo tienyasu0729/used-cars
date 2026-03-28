@@ -3,6 +3,7 @@ import { Car, Handshake, Calendar, Shield, FileText, Building2, Wrench, Search, 
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useBranches } from '@/hooks/useBranches'
+import { RecentlyViewedWidget } from '@/components/vehicles/RecentlyViewedWidget'
 import { Button } from '@/components/ui'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
@@ -138,6 +139,9 @@ export function HomePage() {
           <Link to="/vehicles">
             <Button variant="outline">Xem tất cả xe →</Button>
           </Link>
+        </div>
+        <div className="mt-12">
+          <RecentlyViewedWidget maxItems={6} />
         </div>
       </section>
 
