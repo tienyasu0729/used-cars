@@ -41,7 +41,7 @@ export function StaffCreateOrderPage() {
   const { data: inventory, available } = useInventory()
   const branchVehicles = (available?.length ? available : inventory) ?? []
 
-  const selectedVehicle = branchVehicles.find((v) => v.id === vehicleId)
+  const selectedVehicle = branchVehicles.find((v) => String(v.id) === vehicleId)
   const vehiclePrice = selectedVehicle?.price ?? 0
 
   const step3Form = useForm<Step3Form>({

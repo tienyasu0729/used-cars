@@ -1,5 +1,5 @@
-import type { Booking } from '@/types'
-import type { Vehicle } from '@/types'
+import type { Booking } from '@/types/booking.types'
+import type { Vehicle } from '@/types/vehicle.types'
 import { Modal } from '@/components/ui'
 import { Badge } from '@/components/ui'
 import { formatPrice } from '@/utils/format'
@@ -28,6 +28,7 @@ export function BookingDetailModal({
   const getStatusBadge = (status: string) => {
     if (status === 'Pending') return <Badge variant="pending">Chờ xác nhận</Badge>
     if (status === 'Confirmed') return <Badge variant="confirmed">Đã xác nhận</Badge>
+    if (status === 'Rescheduled') return <Badge variant="pending">Đổi lịch</Badge>
     if (status === 'Completed') return <Badge variant="available">Hoàn thành</Badge>
     return <Badge variant="default">Đã hủy</Badge>
   }
@@ -38,14 +39,16 @@ export function BookingDetailModal({
         <div className="flex gap-4">
           {vehicle?.images?.[0] && (
             <img
-              src={vehicle.images[0]}
+              src={typeof vehicle.images[0] === 'string' ? vehicle.images[0] : vehicle.images[0].url}
               alt=""
               className="h-24 w-32 rounded-lg object-cover"
             />
           )}
           <div>
-            <p className="font-bold text-slate-900">{vehicle?.brand} {vehicle?.model}</p>
-            <p className="text-[#E8612A] font-bold">{vehicle && formatPrice(vehicle.price)}</p>
+            <p className="font-bold text-slate-900">
+              {vehicle?.brand} {vehicle?.model}
+            </p>
+            <p className="font-bold text-[#E8612A]">{vehicle && formatPrice(vehicle.price)}</p>
           </div>
         </div>
         <div>
@@ -54,11 +57,13 @@ export function BookingDetailModal({
         </div>
         <div>
           <p className="text-xs font-medium text-slate-500">Chi nhánh</p>
-          <p className="font-medium text-slate-900">{branchName ?? booking.branchId}</p>
+          <p className="font-medium text-slate-900">{branchName ?? booking.branchName}</p>
         </div>
         <div>
           <p className="text-xs font-medium text-slate-500">Thời gian</p>
-          <p className="font-medium text-slate-900">{booking.date} {booking.timeSlot}</p>
+          <p className="font-medium text-slate-900">
+            {booking.bookingDate} {booking.timeSlot}
+          </p>
         </div>
         <div>
           <p className="text-xs font-medium text-slate-500">Trạng thái</p>
@@ -73,6 +78,7 @@ export function BookingDetailModal({
       </div>
       <div className="mt-6 flex justify-end gap-2">
         <button
+          type="button"
           onClick={onClose}
           className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700"
         >
@@ -82,6 +88,7 @@ export function BookingDetailModal({
           <>
             {onConfirm && (
               <button
+                type="button"
                 onClick={onConfirm}
                 className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white"
               >
@@ -90,6 +97,7 @@ export function BookingDetailModal({
             )}
             {onCancel && (
               <button
+                type="button"
                 onClick={onCancel}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white"
               >

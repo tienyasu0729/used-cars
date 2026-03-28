@@ -27,7 +27,7 @@ export function StaffTransferRequestsPage() {
   const { user } = useAuthStore()
   const toast = useToastStore()
 
-  const branchId = user?.branchId ?? 'branch1'
+  const branchId = user?.branchId != null ? String(user.branchId) : 'branch1'
   const branchVehicles = mockVehicles.filter((v) => v.branchId === branchId && v.status === 'Available')
   const otherBranches = mockBranches.filter((b) => b.id !== branchId)
 
@@ -47,7 +47,7 @@ export function StaffTransferRequestsPage() {
       vehicleName: v ? `${v.brand} ${v.model} ${v.year}` : '',
       fromBranchId: branchId,
       toBranchId: form.toBranchId,
-      requestedBy: user?.id ?? 'u2',
+      requestedBy: user?.id != null ? String(user.id) : 'u2',
       status: 'pending',
       createdAt: new Date().toISOString(),
       reason: form.reason,

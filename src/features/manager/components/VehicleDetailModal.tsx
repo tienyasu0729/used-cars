@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { Modal } from '@/components/ui'
 import { VehicleStatusBadge } from '@/components/ui'
 import { formatPrice, formatMileage } from '@/utils/format'
-import type { Vehicle } from '@/types'
+import type { Vehicle } from '@/types/vehicle.types'
 
 interface VehicleDetailModalProps {
   vehicle: Vehicle | null
@@ -19,11 +19,14 @@ export function VehicleDetailModal({
 }: VehicleDetailModalProps) {
   if (!vehicle) return null
 
+  const img0 = vehicle.images?.[0]
+  const cover = typeof img0 === 'string' ? img0 : img0?.url
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`${vehicle.brand} ${vehicle.model}`}
+      title={vehicle.title || `${vehicle.brand ?? ''} ${vehicle.model ?? ''}`.trim()}
       footer={
         <div className="flex gap-2">
           <button
@@ -49,7 +52,7 @@ export function VehicleDetailModal({
           {onHide && (
             <button
               onClick={() => {
-                onHide(vehicle.id)
+                onHide(String(vehicle.id))
                 onClose()
               }}
               className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600"
@@ -61,13 +64,7 @@ export function VehicleDetailModal({
       }
     >
       <div className="space-y-4">
-        {vehicle.images?.[0] && (
-          <img
-            src={vehicle.images[0]}
-            alt=""
-            className="h-40 w-full rounded-lg object-cover"
-          />
-        )}
+        {cover && <img src={cover} alt="" className="h-40 w-full rounded-lg object-cover" />}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs font-medium text-slate-500">Giá</p>
@@ -86,12 +83,14 @@ export function VehicleDetailModal({
             <p className="font-medium">{formatMileage(vehicle.mileage)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-500">Biển số</p>
-            <p className="font-mono text-sm">{vehicle.plateNumber ?? '-'}</p>
+            <p className="text-xs font-medium text-slate-500">Mã tin</p>
+            <p className="font-mono text-sm">{vehicle.listing_id ?? '-'}</p>
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500">Nhiên liệu / Hộp số</p>
-            <p className="font-medium">{vehicle.fuelType} / {vehicle.transmission}</p>
+            <p className="font-medium">
+              {vehicle.fuel} / {vehicle.transmission}
+            </p>
           </div>
         </div>
       </div>

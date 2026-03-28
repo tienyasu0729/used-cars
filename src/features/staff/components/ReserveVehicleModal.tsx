@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import type { Vehicle } from '@/types'
+import type { Vehicle } from '@/types/vehicle.types'
 import { Modal, Button } from '@/components/ui'
 
 const schema = z.object({
@@ -39,16 +39,21 @@ export function ReserveVehicleModal({
 
   if (!vehicle) return null
 
+  const im0 = vehicle.images?.[0]
+  const thumb = typeof im0 === 'string' ? im0 : im0?.url
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Đặt chỗ xe">
       <div className="mb-4 flex gap-3">
         <img
-          src={vehicle.images[0]}
+          src={thumb || 'https://placehold.co/96x64'}
           alt=""
           className="h-16 w-24 rounded object-cover"
         />
         <div>
-          <p className="font-bold text-slate-900">{vehicle.brand} {vehicle.model}</p>
+          <p className="font-bold text-slate-900">
+            {vehicle.brand} {vehicle.model}
+          </p>
           <p className="text-sm text-slate-500">Năm {vehicle.year}</p>
         </div>
       </div>

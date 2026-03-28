@@ -4,7 +4,7 @@
  * Cung cấp: createVehicle, updateVehicle, deleteVehicle
  * Toast feedback + error handling theo error codes Dev 2
  */
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { vehicleService } from '@/services/vehicle.service'
 import { useToastStore } from '@/store/toastStore'
 import type { Vehicle, CreateVehicleRequest } from '@/types/vehicle.types'
@@ -125,7 +125,9 @@ export function useManagerVehicles() {
     }
   }, [])
 
-  useState(() => { fetchVehicles() })
+  useEffect(() => {
+    void fetchVehicles()
+  }, [fetchVehicles])
 
   return { data: vehicles, isLoading, refetch: fetchVehicles }
 }

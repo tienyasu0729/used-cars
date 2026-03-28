@@ -1,23 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
-import { mockBookings } from '@/mock'
+import { bookingService } from '@/services/booking.service'
+import { mockBookings } from '@/mock/mockBookings'
 import { isMockMode } from '@/config/dataSource'
+import type { Booking } from '@/types/booking.types'
 
-async function fetchBookings() {
-  if (isMockMode()) return mockBookings
-  try {
-    const res = await fetch('/api/bookings')
-    if (res.ok) {
-      const data = await res.json()
-      return Array.isArray(data) ? data : data?.data ?? mockBookings
-    }
-  } catch {}
-  return mockBookings
-}
-
+/**
+ * Danh sách booking của customer (tất cả trạng thái) — dùng sidebar / dashboard.
+ * Trang BookingsPage dùng {@link useMyBookings} để lọc tab.
+ */
 export function useBookings() {
   return useQuery({
-    queryKey: ['bookings', isMockMode()],
-    queryFn: fetchBookings,
-    staleTime: isMockMode() ? Infinity : 1000 * 60 * 2,
+    queryKey: ['my-bookings', 'all', isMockMode()],
+    queryFn: async (): Promise<Booking[]> => {
+      if (isMockMode()) {
+        return mockBookings
+      }
+      const r = await bookingService.getMyBookings({ page: 0, size: 100 })
+      return r.items
+    },
+    staleTime: isMockMode() ? Infinity : 60_000,
   })
 }

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import type { Vehicle } from '@/types'
+import type { Vehicle } from '@/types/vehicle.types'
 import { formatPrice } from '@/utils/format'
 import { Heart, Share2 } from 'lucide-react'
 import { useBranches } from '@/hooks/useBranches'
@@ -19,9 +19,11 @@ interface DashboardOverviewCardProps {
 
 export function DashboardOverviewCard({ vehicle, showNewBadge }: DashboardOverviewCardProps) {
   const { data: branches } = useBranches()
-  const { data: saved } = useSavedVehicles()
-  const branch = branches?.find((b) => b.id === vehicle.branchId)
-  const isSaved = saved?.some((v) => v.id === vehicle.id) ?? false
+  const { savedVehicles } = useSavedVehicles()
+  const branch = branches?.find((b) => Number(b.id) === vehicle.branch_id)
+  const isSaved = savedVehicles.some((v) => v.id === vehicle.id) ?? false
+  const img0 = vehicle.images?.[0]
+  const cover = typeof img0 === 'string' ? img0 : img0?.url
 
   return (
     <Link
@@ -30,7 +32,7 @@ export function DashboardOverviewCard({ vehicle, showNewBadge }: DashboardOvervi
     >
       <div className="relative h-48 overflow-hidden bg-slate-200">
         <img
-          src={vehicle.images?.[0] || 'https://placehold.co/400x192'}
+          src={cover || 'https://placehold.co/400x192'}
           alt=""
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -38,25 +40,26 @@ export function DashboardOverviewCard({ vehicle, showNewBadge }: DashboardOvervi
           className="absolute right-3 top-3 rounded-full bg-white/90 p-2 transition-colors hover:bg-white"
           onClick={(e) => e.preventDefault()}
         >
-          <Heart className={`h-5 w-5 ${isSaved ? 'fill-red-500 text-red-500' : 'text-slate-400'}`} />
+          <Share2 className="h-4 w-4 text-slate-600" />
         </button>
         {showNewBadge && (
-          <span className="absolute bottom-3 left-3 rounded bg-[#1A3C6E] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
-            Mới về
+          <span className="absolute left-3 top-3 rounded bg-[#E8612A] px-2 py-0.5 text-xs font-bold text-white">
+            Mới
           </span>
         )}
       </div>
-      <div className="p-5">
-        <h3 className="text-lg font-bold text-slate-900">{vehicle.brand} {vehicle.model} {vehicle.trim || ''}</h3>
-        <p className="mt-1 text-sm text-slate-500">
-          {branch?.name ?? 'Đà Nẵng'} • {vehicle.year} • {fuelLabel[vehicle.fuelType] ?? vehicle.fuelType}
-        </p>
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-lg font-bold text-[#1A3C6E]">{formatPrice(vehicle.price).replace(' VNĐ', ' ₫')}</p>
-          <button className="text-slate-400 transition-colors hover:text-[#1A3C6E]" onClick={(e) => e.preventDefault()}>
-            <Share2 className="h-5 w-5" />
-          </button>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="font-bold text-slate-900">{vehicle.title}</p>
+            <p className="mt-1 text-xs text-slate-500">{branch?.name ?? 'Chi nhánh'}</p>
+          </div>
+          <Heart className={`h-5 w-5 shrink-0 ${isSaved ? 'fill-red-500 text-red-500' : 'text-slate-300'}`} />
         </div>
+        <p className="mt-2 text-lg font-black text-[#E8612A]">{formatPrice(vehicle.price)}</p>
+        <p className="mt-1 text-xs text-slate-500">
+          {vehicle.year} · {fuelLabel[vehicle.fuel] ?? vehicle.fuel}
+        </p>
       </div>
     </Link>
   )

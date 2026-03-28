@@ -1,15 +1,13 @@
 import { useState, useMemo } from 'react'
-import { Check, Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Check, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useStaffBookings } from '@/hooks/useStaffBookings'
 import { useBranches } from '@/hooks/useBranches'
 import { useVehicles } from '@/hooks/useVehicles'
-import { bookingApi } from '@/services/bookingApi'
 import { useToastStore } from '@/store/toastStore'
-import { useQueryClient } from '@tanstack/react-query'
 import { mockUsers } from '@/mock'
-import { Badge } from '@/components/ui'
 import { BookingDetailModal } from '@/features/staff/components/BookingDetailModal'
-import type { Booking } from '@/types'
+import { BookingActionButtons } from '@/components/staff/BookingActionButtons'
+import type { Booking } from '@/types/booking.types'
 
 const PAGE_SIZE = 4
 const tabs = ['Tất Cả', 'Chờ Xác Nhận', 'Đã Xác Nhận', 'Đã Hủy']
@@ -35,23 +33,27 @@ export function StaffBookingsPage() {
   const [activeTab, setActiveTab] = useState(0)
   const [page, setPage] = useState(1)
   const [detailBooking, setDetailBooking] = useState<Booking | null>(null)
-  const { data: bookings } = useStaffBookings()
+  const {
+    bookings,
+    confirmBooking,
+    rescheduleBooking,
+    completeBooking,
+    cancelBooking,
+  } = useStaffBookings()
   const { data: branches } = useBranches()
-  const { data: vehiclesData } = useVehicles()
-  const vehicles = vehiclesData?.data ?? []
+  const { vehicles } = useVehicles()
   const toast = useToastStore()
-  const queryClient = useQueryClient()
 
   const filteredBookings = useMemo(() => {
     const list = (bookings ?? []).filter((b) => {
       if (activeTab === 0) return true
-      if (activeTab === 1) return b.status === 'Pending'
+      if (activeTab === 1) return b.status === 'Pending' || b.status === 'Rescheduled'
       if (activeTab === 2) return b.status === 'Confirmed'
       if (activeTab === 3) return b.status === 'Cancelled'
       return true
     })
-    const order = { Pending: 0, Confirmed: 1, Completed: 2, Cancelled: 3 }
-    return list.sort((a, b) => (order[a.status as keyof typeof order] ?? 4) - (order[b.status as keyof typeof order] ?? 4))
+    const order: Record<string, number> = { Pending: 0, Rescheduled: 1, Confirmed: 2, Completed: 3, Cancelled: 4 }
+    return list.sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9))
   }, [bookings, activeTab])
 
   const paginated = useMemo(() => {
@@ -60,9 +62,9 @@ export function StaffBookingsPage() {
   }, [filteredBookings, page])
 
   const today = new Date().toISOString().slice(0, 10)
-  const todayBookings = (bookings ?? []).filter((b) => b.date === today)
+  const todayBookings = (bookings ?? []).filter((b) => b.bookingDate === today)
   const todayNew = todayBookings.filter((b) => b.status === 'Pending').length
-  const pendingCount = (bookings ?? []).filter((b) => b.status === 'Pending').length
+  const pendingCount = (bookings ?? []).filter((b) => b.status === 'Pending' || b.status === 'Rescheduled').length
   const confirmedCount = (bookings ?? []).filter((b) => b.status === 'Confirmed').length
   const completedCount = (bookings ?? []).filter((b) => b.status === 'Completed').length
   const totalCount = (bookings ?? []).length
@@ -70,41 +72,27 @@ export function StaffBookingsPage() {
 
   const getStatusBadge = (status: string) => {
     if (status === 'Pending') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Chờ xác nhận</span>
+    if (status === 'Rescheduled') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">Đổi lịch</span>
     if (status === 'Confirmed') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">Đã xác nhận</span>
     if (status === 'Cancelled') return <span className="text-sm font-medium text-slate-500">Đã hủy</span>
-    return <Badge variant="available">Hoàn thành</Badge>
+    return <span className="rounded px-2.5 py-1 text-xs font-medium bg-sky-100 text-sky-800">Hoàn thành</span>
   }
 
-  const getCustomer = (customerId: string) => mockUsers.find((u) => u.id === customerId)
+  const getCustomer = (customerId: number | undefined) =>
+    customerId != null ? mockUsers.find((u) => u.id === String(customerId)) : undefined
 
-  const handleConfirm = async (booking?: Booking) => {
-    const b = booking ?? detailBooking
-    if (!b) return
+  const wrap = async (msgOk: string, fn: () => Promise<void>) => {
     try {
-      await bookingApi.confirmBooking(b.id)
-      queryClient.invalidateQueries({ queryKey: ['bookings'] })
-      toast.addToast('success', 'Đã xác nhận lịch hẹn')
+      await fn()
+      toast.addToast('success', msgOk)
       setDetailBooking(null)
     } catch {
-      toast.addToast('error', 'Không thể xác nhận')
+      toast.addToast('error', 'Thao tác thất bại')
     }
   }
 
-  const handleCancel = async (booking?: Booking) => {
-    const b = booking ?? detailBooking
-    if (!b) return
-    try {
-      await bookingApi.cancelBooking(b.id)
-      queryClient.invalidateQueries({ queryKey: ['bookings'] })
-      toast.addToast('success', 'Đã hủy lịch hẹn')
-      setDetailBooking(null)
-    } catch {
-      toast.addToast('error', 'Không thể hủy')
-    }
-  }
-
-  const vehicle = detailBooking ? vehicles?.find((v) => v.id === detailBooking.vehicleId) : null
-  const branch = detailBooking ? branches?.find((b) => b.id === detailBooking.branchId) : null
+  const vehicle = detailBooking ? vehicles?.find((x) => x.id === detailBooking.vehicleId) : null
+  const branch = detailBooking ? branches?.find((b) => String(b.id) === String(detailBooking.branchId)) : null
   const totalPages = Math.ceil(filteredBookings.length / PAGE_SIZE) || 1
 
   return (
@@ -170,38 +158,42 @@ export function StaffBookingsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-200">
-                          <img src={v?.images?.[0] || 'https://placehold.co/80x56'} alt="" className="h-full w-full object-cover" />
+                          <img
+                            src={
+                              (() => {
+                                const im = v?.images?.[0]
+                                if (!im) return 'https://placehold.co/80x56'
+                                return typeof im === 'string' ? im : im.url
+                              })()
+                            }
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-900">{v?.brand} {v?.model} {v?.year}</p>
+                          <p className="font-semibold text-slate-900">{b.vehicleTitle || `${v?.brand} ${v?.model} ${v?.year}`}</p>
                           <p className="text-xs text-slate-500">{detail}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-medium text-slate-900">{cust?.name ?? `Khách #${b.customerId}`}</p>
+                      <p className="font-medium text-slate-900">{cust?.name ?? `Khách #${b.customerId ?? '?'}`}</p>
                       <p className="text-xs text-slate-500">{cust?.phone ? formatPhone(cust.phone) : '*** *** ***'}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-slate-700">{formatDate(b.date)}</p>
+                      <p className="text-sm text-slate-700">{formatDate(b.bookingDate)}</p>
                       <p className="text-xs text-slate-500">{formatTime(b.timeSlot)}</p>
                     </td>
                     <td className="px-6 py-4">{getStatusBadge(b.status)}</td>
                     <td className="px-6 py-4 text-right">
-                      {b.status === 'Cancelled' ? (
-                        <button
-                          onClick={() => setDetailBooking(b)}
-                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                        >
-                          Xem chi tiết
-                        </button>
-                      ) : (
+                      <div className="flex flex-col items-end gap-2">
                         <div className="flex items-center justify-end gap-2">
                           {b.status === 'Pending' && (
                             <button
-                              onClick={() => handleConfirm(b)}
+                              onClick={() => wrap('Đã xác nhận lịch hẹn', () => confirmBooking(b.id))}
                               className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200"
                               title="Chấp nhận"
+                              type="button"
                             >
                               <Check className="h-5 w-5" />
                             </button>
@@ -209,21 +201,20 @@ export function StaffBookingsPage() {
                           <button
                             onClick={() => setDetailBooking(b)}
                             className="rounded-lg bg-blue-100 p-2 text-blue-700 hover:bg-blue-200"
-                            title="Sửa lịch hẹn"
+                            title="Chi tiết / thao tác"
+                            type="button"
                           >
                             <Calendar className="h-5 w-5" />
                           </button>
-                          {b.status !== 'Cancelled' && (
-                            <button
-                              onClick={() => window.confirm('Hủy lịch hẹn này?') && handleCancel(b)}
-                              className="rounded-lg bg-red-100 p-2 text-red-600 hover:bg-red-200"
-                              title="Hủy lịch hẹn"
-                            >
-                              <X className="h-5 w-5" />
-                            </button>
-                          )}
                         </div>
-                      )}
+                        <BookingActionButtons
+                          booking={b}
+                          onConfirm={(id, note) => wrap('Đã xác nhận', () => confirmBooking(id, note))}
+                          onReschedule={(id, body) => wrap('Đã đổi lịch', () => rescheduleBooking(id, body))}
+                          onComplete={(id) => wrap('Đã hoàn thành', () => completeBooking(id))}
+                          onCancel={(id) => wrap('Đã hủy', () => cancelBooking(id))}
+                        />
+                      </div>
                     </td>
                   </tr>
                 )
@@ -238,6 +229,7 @@ export function StaffBookingsPage() {
           </p>
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
               className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent"
@@ -250,6 +242,7 @@ export function StaffBookingsPage() {
               return (
                 <button
                   key={p}
+                  type="button"
                   onClick={() => setPage(p)}
                   className={`min-w-[36px] rounded-lg px-3 py-2 text-sm font-medium ${
                     page === p ? 'bg-[#1A3C6E] text-white' : 'border border-slate-200 hover:bg-slate-50'
@@ -260,6 +253,7 @@ export function StaffBookingsPage() {
               )
             })}
             <button
+              type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
               className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent"
@@ -276,8 +270,8 @@ export function StaffBookingsPage() {
         branchName={branch?.name}
         isOpen={!!detailBooking}
         onClose={() => setDetailBooking(null)}
-        onConfirm={handleConfirm}
-        onCancel={() => window.confirm('Hủy lịch hẹn?') && handleCancel()}
+        onConfirm={() => detailBooking && wrap('Đã xác nhận', () => confirmBooking(detailBooking.id))}
+        onCancel={() => detailBooking && window.confirm('Hủy lịch hẹn?') && wrap('Đã hủy', () => cancelBooking(detailBooking.id))}
       />
     </div>
   )

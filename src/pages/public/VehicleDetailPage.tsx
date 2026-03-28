@@ -13,11 +13,14 @@ import { VehicleDetailGallery } from '@/features/vehicles/components/VehicleDeta
 import { formatPrice, formatMileage } from '@/utils/format'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
 import { Phone, Calendar } from 'lucide-react'
+import { useAuthStore } from '@/store/authStore'
+import { BookingForm } from '@/components/booking/BookingForm'
 
 export function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>()
   const vehicleId = id ? parseInt(id, 10) : undefined
   const { vehicle, isLoading, error, isSaved, toggleSave } = useVehicleDetail(vehicleId)
+  const { isAuthenticated, user } = useAuthStore()
   useDocumentTitle(vehicle ? `Chi tiết xe - ${vehicle.title}` : 'Chi tiết xe')
 
   // Lấy xe tương tự (cùng category)
@@ -118,19 +121,27 @@ export function VehicleDetailPage() {
                 {isSaved ? '❤️ Đã lưu' : '🤍 Lưu xe'}
               </button>
 
-              {/* Đặt lịch lái thử — placeholder (Dev 3) */}
-              <Link
-                to={`/bookings/new?vehicleId=${vehicle.id}`}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A3C6E] py-3 font-bold text-white hover:bg-[#15325A]"
-              >
-                <Calendar className="h-5 w-5" />
-                Đặt lịch lái thử
-              </Link>
-
-              {/* TODO: hiện khi Dev 3 xong */}
-              {/* <button disabled className="w-full rounded-lg border border-slate-200 py-3 text-sm text-slate-400">
-                Xem lịch sử bảo dưỡng (sắp có)
-              </button> */}
+              {vehicle.status === 'Available' && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-4">
+                  <p className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
+                    <Calendar className="h-4 w-4 text-[#1A3C6E]" />
+                    Đặt lịch lái thử
+                  </p>
+                  {isAuthenticated && user?.role === 'Customer' ? (
+                    <BookingForm vehicleId={vehicle.id} branchId={vehicle.branch_id} />
+                  ) : (
+                    <div className="space-y-3 text-center text-sm text-slate-600">
+                      <p>Đăng nhập tài khoản khách hàng để chọn ngày giờ lái thử.</p>
+                      <Link
+                        to={`/login?redirect=${encodeURIComponent(`/vehicles/${vehicle.id}`)}`}
+                        className="inline-flex w-full items-center justify-center rounded-lg bg-[#1A3C6E] py-3 font-bold text-white hover:bg-[#15325A]"
+                      >
+                        Đăng nhập
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

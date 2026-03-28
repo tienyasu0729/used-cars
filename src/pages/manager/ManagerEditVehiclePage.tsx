@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useManagerVehicle } from '@/hooks/useManagerVehicles'
+import { useVehicle } from '@/hooks/useVehicles'
 import { Input, Button } from '@/components/ui'
 
 const schema = z.object({
@@ -13,10 +14,15 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+function toFormStatus(s: string): FormData['status'] {
+  return s === 'Available' || s === 'Reserved' || s === 'Sold' ? s : 'Available'
+}
+
 export function ManagerEditVehiclePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { data: vehicle, isLoading } = useManagerVehicle(id)
+  const { data: vehicle, isLoading } = useVehicle(id)
+  const { updateVehicle } = useManagerVehicle()
 
   const {
     register,
@@ -28,7 +34,7 @@ export function ManagerEditVehiclePage() {
       ? {
           price: vehicle.price,
           mileage: vehicle.mileage ?? 0,
-          status: vehicle.status,
+          status: toFormStatus(vehicle.status),
         }
       : undefined,
   })

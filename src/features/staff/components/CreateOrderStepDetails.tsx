@@ -1,6 +1,6 @@
 import { Car, Coins, Pencil } from 'lucide-react'
 import { formatPrice, formatPriceNumber } from '@/utils/format'
-import type { Vehicle } from '@/types'
+import type { Vehicle } from '@/types/vehicle.types'
 
 const PAYMENT_OPTIONS = [
   { value: 'cash', label: 'Tiền mặt', sub: 'Tại cửa hàng' },
@@ -112,7 +112,16 @@ export function CreateOrderStepDetails({
         <div className="mt-6 flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-4">
           <div className="flex items-center gap-3">
             <div className="h-12 w-16 overflow-hidden rounded bg-slate-200">
-              <img src={vehicle.images?.[0]} alt="" className="h-full w-full object-cover" />
+              <img
+                src={
+                  (() => {
+                    const im = vehicle.images?.[0]
+                    return (typeof im === 'string' ? im : im?.url) || ''
+                  })()
+                }
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </div>
             <div>
               <p className="text-xs font-bold uppercase text-slate-500">Đã chọn xe:</p>

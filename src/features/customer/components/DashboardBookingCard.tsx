@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import type { Booking } from '@/types'
-import type { Vehicle } from '@/types'
+import type { Booking } from '@/types/booking.types'
+import type { Vehicle } from '@/types/vehicle.types'
 import type { Branch } from '@/types'
 import { ChevronRight } from 'lucide-react'
 
@@ -19,7 +19,7 @@ interface DashboardBookingCardProps {
 }
 
 export function DashboardBookingCard({ booking, vehicle, branch }: DashboardBookingCardProps) {
-  const d = new Date(booking.date)
+  const d = new Date(booking.bookingDate)
   const month = MONTHS[d.getMonth() + 1]
   const day = d.getDate()
 
@@ -34,7 +34,7 @@ export function DashboardBookingCard({ booking, vehicle, branch }: DashboardBook
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold text-slate-900">
-          {vehicle ? `Lái thử ${vehicle.brand} ${vehicle.model}` : 'Lịch hẹn'}
+          {vehicle ? `Lái thử ${vehicle.brand} ${vehicle.model}` : booking.vehicleTitle || 'Lịch hẹn'}
         </p>
         <p className="text-xs text-slate-500">
           {formatTimeSlot(booking.timeSlot)} - {branch?.name ?? 'Chi nhánh'}

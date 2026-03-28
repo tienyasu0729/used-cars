@@ -74,11 +74,29 @@ const AdminReportsPage = lazy(() => import('@/pages/admin').then((m) => ({ defau
 const AdminLogsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminLogsPage })))
 const AdminNotificationsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminNotificationsPage })))
 
+const Tier32TestPanel = lazy(() =>
+  import('@/dev-tools/Tier32TestPanel').then((m) => ({ default: m.Tier32TestPanel }))
+)
+
 const Fallback = () => (
   <div className="flex min-h-[400px] items-center justify-center">
     <Spinner size="lg" />
   </div>
 )
+
+const devTier32Route =
+  import.meta.env.DEV
+    ? ([
+        {
+          path: 'dev/tier32-test',
+          element: (
+            <Suspense fallback={<Fallback />}>
+              <Tier32TestPanel />
+            </Suspense>
+          ),
+        },
+      ] as const)
+    : ([] as const)
 
 const router = createBrowserRouter([
   {
@@ -97,6 +115,7 @@ const router = createBrowserRouter([
       { path: 'news', element: <Suspense fallback={<Fallback />}><AboutPage /></Suspense> },
       { path: 'terms', element: <Suspense fallback={<Fallback />}><TermsPage /></Suspense> },
       { path: 'privacy', element: <Suspense fallback={<Fallback />}><PrivacyPage /></Suspense> },
+      ...devTier32Route,
     ],
   },
   {

@@ -22,7 +22,7 @@ export function ManagerVehiclesPage() {
     const matchSearch =
       !search ||
       `${v.brand} ${v.model}`.toLowerCase().includes(search.toLowerCase()) ||
-      (v.plateNumber ?? '').toLowerCase().includes(search.toLowerCase())
+      (v.listing_id ?? '').toLowerCase().includes(search.toLowerCase())
     const matchStatus = !statusFilter || v.status === statusFilter
     const matchBrand = !brandFilter || v.brand === brandFilter
     return matchSearch && matchStatus && matchBrand
@@ -119,7 +119,10 @@ export function ManagerVehiclesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paginated.map((v) => (
+              {paginated.map((v) => {
+                const im = v.images?.[0]
+                const thumb = typeof im === 'string' ? im : im?.url
+                return (
                 <tr
                   key={v.id}
                   className="cursor-pointer transition-colors hover:bg-slate-50/50"
@@ -129,20 +132,20 @@ export function ManagerVehiclesPage() {
                     <div className="flex items-center gap-4">
                       <div
                         className="h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-200 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${v.images[0]})` }}
+                        style={thumb ? { backgroundImage: `url(${thumb})` } : undefined}
                       />
                       <div>
                         <p className="font-bold text-slate-900">
                           {v.brand} {v.model}
                         </p>
                         <p className="text-xs text-slate-500">
-                          {v.exteriorColor ?? 'N/A'} • {v.fuelType}
+                          {v.exteriorColor ?? 'N/A'} • {v.fuel}
                         </p>
                       </div>
                     </div>
                   </td>
                   <td className="p-4 font-mono text-sm font-medium" onClick={(e) => e.stopPropagation()}>
-                    {v.plateNumber ?? '-'}
+                    {v.listing_id ?? '-'}
                   </td>
                   <td className="p-4" onClick={(e) => e.stopPropagation()}>
                     <p className="text-sm font-medium">{v.year}</p>
@@ -175,7 +178,7 @@ export function ManagerVehiclesPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

@@ -40,6 +40,8 @@ export interface UserProfile {
   email: string
   phone: string
   role: UserRole
+  /** Staff / manager — khi backend bổ sung */
+  branchId?: number
 }
 
 /** Cấu trúc data bên trong ApiResponse khi login thành công */
@@ -63,6 +65,8 @@ export interface ApiResponse<T> {
   code: string
   message: string
   data: T
+  /** Phân trang (PageMetaDto) — một số endpoint GET */
+  meta?: unknown
 }
 
 // ============================================================

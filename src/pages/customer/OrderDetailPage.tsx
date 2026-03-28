@@ -38,7 +38,7 @@ export function OrderDetailPage() {
   const { id } = useParams()
   const { data: order, isLoading } = useOrder(id)
   const { data: vehicle } = useVehicle(order?.vehicleId)
-  const { data: branch } = useBranch(vehicle?.branchId)
+  const { data: branch } = useBranch(vehicle?.branch_id != null ? String(vehicle.branch_id) : undefined)
   const payment = id ? mockOrderPaymentBreakdown[id] : null
   const timeline = id ? mockOrderTimeline[id] : []
   const extras = id ? mockOrderExtras[id] : null

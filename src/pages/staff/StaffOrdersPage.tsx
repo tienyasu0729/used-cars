@@ -6,12 +6,19 @@ import { useVehicles } from '@/hooks/useVehicles'
 import { formatPrice } from '@/utils/format'
 import { Badge, Button, Modal } from '@/components/ui'
 import { mockUsers } from '@/mock'
-import type { Order, Vehicle } from '@/types'
+import type { Order } from '@/types'
+import type { Vehicle } from '@/types/vehicle.types'
+
+function vehicleThumb(v: Vehicle | null | undefined) {
+  const im = v?.images?.[0]
+  return typeof im === 'string' ? im : im?.url
+}
 
 function OrderDetailModal({ order, vehicle, onClose }: { order: Order; vehicle: Vehicle | null; onClose: () => void }) {
   const customer = mockUsers.find((u) => u.id === order.customerId)
   const paidAmount = order.deposit
   const remaining = order.price - order.deposit
+  const thumb = vehicleThumb(vehicle)
 
   return (
     <Modal
@@ -35,7 +42,7 @@ function OrderDetailModal({ order, vehicle, onClose }: { order: Order; vehicle: 
           <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Thông tin xe</h3>
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 overflow-hidden rounded bg-slate-200">
-              <img src={vehicle?.images?.[0]} alt="" className="h-full w-full object-cover" />
+              <img src={thumb || ''} alt="" className="h-full w-full object-cover" />
             </div>
             <p className="font-semibold text-slate-900">{vehicle ? `${vehicle.brand} ${vehicle.model}` : '-'}</p>
           </div>
@@ -78,8 +85,7 @@ function OrderDetailModal({ order, vehicle, onClose }: { order: Order; vehicle: 
 export function StaffOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const { data: orders } = useStaffOrders()
-  const { data: vehiclesData } = useVehicles()
-  const vehicles = vehiclesData?.data ?? []
+  const { vehicles } = useVehicles()
 
   const getStatusBadge = (status: string) => {
     if (status === 'Pending') return <Badge variant="pending">Chờ xác nhận</Badge>
@@ -113,7 +119,8 @@ export function StaffOrdersPage() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {(orders ?? []).map((o) => {
-                const vehicle = vehicles.find((v) => v.id === o.vehicleId)
+                const vehicle = vehicles.find((v) => String(v.id) === String(o.vehicleId))
+                const rowThumb = vehicleThumb(vehicle)
                 return (
                   <tr key={o.id} className="hover:bg-slate-50/50">
                     <td className="px-6 py-4 font-mono text-xs font-bold text-[#1A3C6E]">#{o.id}</td>
@@ -123,7 +130,7 @@ export function StaffOrdersPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 overflow-hidden rounded bg-slate-200">
-                          <img src={vehicle?.images?.[0]} alt="" className="h-full w-full object-cover" />
+                          <img src={rowThumb || ''} alt="" className="h-full w-full object-cover" />
                         </div>
                         <span className="text-sm font-medium">{vehicle?.brand} {vehicle?.model}</span>
                       </div>
@@ -157,7 +164,7 @@ export function StaffOrdersPage() {
       {selectedOrder && (
         <OrderDetailModal
           order={selectedOrder}
-          vehicle={vehicles.find((v) => v.id === selectedOrder.vehicleId) ?? null}
+          vehicle={vehicles.find((v) => String(v.id) === String(selectedOrder.vehicleId)) ?? null}
           onClose={() => setSelectedOrder(null)}
         />
       )}

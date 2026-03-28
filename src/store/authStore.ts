@@ -31,13 +31,15 @@ interface AuthState {
   setAuth: (user: UserProfile, token: string) => void
   /** Xóa toàn bộ auth state + localStorage khi logout */
   clearAuth: () => void
+  /** Alias UI — gọi cùng logic clearAuth */
+  logout: () => void
   /** Đọc lại auth từ localStorage khi app khởi động (tránh mất session khi F5) */
   initializeFromStorage: () => void
   /** Set trạng thái loading (dùng trong hooks khi gọi API) */
   setLoading: (loading: boolean) => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   isAuthenticated: false,
@@ -63,6 +65,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     set({ user: null, token: null, isAuthenticated: false })
   },
+
+  logout: () => get().clearAuth(),
 
   initializeFromStorage: () => {
     // Recover session từ localStorage khi app khởi động

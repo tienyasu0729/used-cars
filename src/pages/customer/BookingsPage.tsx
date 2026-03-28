@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookingCard } from '@/features/customer/components/BookingCard'
-import { useBookings } from '@/hooks/useBookings'
+import { useMyBookings } from '@/hooks/useMyBookings'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useBranches } from '@/hooks/useBranches'
 import { EmptyState } from '@/components/ui'
@@ -17,16 +17,15 @@ const tabs = [
 
 export function BookingsPage() {
   const [activeTab, setActiveTab] = useState('all')
-  const { data: bookings, isLoading, isError } = useBookings()
-  const { data: vehiclesData } = useVehicles()
+  const { bookings: allBookings, isLoading, isError } = useMyBookings()
+  const { vehicles } = useVehicles()
   const { data: branches } = useBranches()
-  const vehicles = vehiclesData?.data ?? []
 
   const filtered =
     activeTab === 'all'
-      ? bookings ?? []
-      : (bookings ?? []).filter((b) => {
-          if (activeTab === 'pending') return b.status === 'Pending'
+      ? allBookings
+      : allBookings.filter((b) => {
+          if (activeTab === 'pending') return b.status === 'Pending' || b.status === 'Rescheduled'
           if (activeTab === 'confirmed') return b.status === 'Confirmed' || b.status === 'Completed'
           if (activeTab === 'cancelled') return b.status === 'Cancelled'
           return true
@@ -77,15 +76,8 @@ export function BookingsPage() {
         <div className="space-y-3">
           {filtered.map((b) => {
             const vehicle = vehicles.find((v) => v.id === b.vehicleId)
-            const branch = branches?.find((br) => br.id === b.branchId)
-            return (
-              <BookingCard
-                key={b.id}
-                booking={b}
-                vehicle={vehicle}
-                branch={branch}
-              />
-            )
+            const branch = branches?.find((br) => Number(br.id) === b.branchId)
+            return <BookingCard key={b.id} booking={b} vehicle={vehicle} branch={branch} />
           })}
         </div>
       )}

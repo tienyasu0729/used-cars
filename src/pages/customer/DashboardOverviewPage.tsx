@@ -29,16 +29,15 @@ export function DashboardOverviewPage() {
   const { user } = useAuthStore()
   const { data: bookings, isLoading: bookingsLoading, isError: bookingsError } = useBookings()
   const { data: deposits } = useDeposits()
-  const { data: saved } = useSavedVehicles()
+  const { savedVehicles: saved } = useSavedVehicles()
   const { data: orders } = useOrders()
-  const { data: vehiclesData } = useVehicles()
+  const { vehicles } = useVehicles()
   const { data: branches } = useBranches()
 
-  const vehicles = vehiclesData?.data ?? []
   const recentVehicles = vehicles.slice(0, 4)
   const upcomingBookings = (bookings ?? [])
     .filter((b) => b.status === 'Confirmed' || b.status === 'Pending')
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime())
     .slice(0, 3)
   const activeDeposits = (deposits ?? []).filter((d) => d.status === 'Confirmed' || d.status === 'Pending')
   const savedCount = saved?.length ?? 0
@@ -123,7 +122,7 @@ export function DashboardOverviewPage() {
             <div className="flex flex-col gap-3">
               {upcomingBookings.map((b) => {
                 const vehicle = vehicles.find((v) => v.id === b.vehicleId)
-                const branch = branches?.find((br) => br.id === b.branchId)
+                const branch = branches?.find((br) => Number(br.id) === b.branchId)
                 return (
                   <DashboardBookingCard key={b.id} booking={b} vehicle={vehicle} branch={branch} />
                 )

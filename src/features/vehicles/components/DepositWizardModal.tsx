@@ -59,7 +59,7 @@ export function DepositWizardModal({
     try {
       const res = await depositApi.createDeposit({
         vehicleId,
-        customerId: user.id,
+        customerId: String(user.id),
         amount: data.amount,
         paymentMethod: data.paymentMethod,
       })

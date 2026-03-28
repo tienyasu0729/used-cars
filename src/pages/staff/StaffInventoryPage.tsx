@@ -8,7 +8,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { formatPrice } from '@/utils/format'
 import { VehicleStatusBadge } from '@/components/ui'
 import { ReserveVehicleModal } from '@/features/staff/components/ReserveVehicleModal'
-import type { Vehicle } from '@/types'
+import type { Vehicle } from '@/types/vehicle.types'
 
 const tabs = ['Tất Cả', 'Còn Hàng', 'Đã Đặt Cọc', 'Đã Bán']
 
@@ -26,8 +26,8 @@ export function StaffInventoryPage() {
       (activeTab === 3 && v.status === 'Sold')
     const matchSearch =
       !search ||
-      v.brand.toLowerCase().includes(search.toLowerCase()) ||
-      v.model.toLowerCase().includes(search.toLowerCase())
+      (v.brand?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+      (v.model?.toLowerCase().includes(search.toLowerCase()) ?? false)
     return matchTab && matchSearch
   })
 
@@ -39,7 +39,7 @@ export function StaffInventoryPage() {
     if (!reserveVehicle) return
     try {
       await depositApi.createDeposit({
-        vehicleId: reserveVehicle.id,
+        vehicleId: String(reserveVehicle.id),
         customerId: data.customerId,
         amount: Math.floor(reserveVehicle.price * 0.1),
         paymentMethod: 'bank_transfer',
@@ -93,12 +93,15 @@ export function StaffInventoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {filtered.map((v) => (
+              {filtered.map((v) => {
+                const im = v.images?.[0]
+                const thumb = typeof im === 'string' ? im : im?.url
+                return (
                 <tr key={v.id} className="hover:bg-slate-50/50">
                   <td className="px-6 py-4">
                     <div
                       className="h-12 w-20 rounded-lg bg-cover bg-center"
-                      style={{ backgroundImage: `url(${v.images[0] || 'https://placehold.co/80x48'})` }}
+                      style={{ backgroundImage: `url(${thumb || 'https://placehold.co/80x48'})` }}
                     />
                   </td>
                   <td className="px-6 py-4 font-bold text-slate-900">
@@ -130,7 +133,7 @@ export function StaffInventoryPage() {
                     )}
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

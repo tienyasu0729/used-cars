@@ -28,8 +28,7 @@ export function OrdersPage() {
   const [tab, setTab] = useState('all')
   const [page, setPage] = useState(1)
   const { data: orders, isLoading } = useOrders()
-  const { data: vehiclesData } = useVehicles()
-  const vehicles = vehiclesData?.data ?? []
+  const { vehicles } = useVehicles()
 
   const filtered =
     tab === 'all'

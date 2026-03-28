@@ -10,8 +10,8 @@ export function BranchDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: branch, isLoading } = useBranch(id)
   useDocumentTitle(branch ? `Chi nhánh - ${branch.name}` : 'Chi tiết chi nhánh')
-  const { data } = useVehicles()
-  const branchVehicles = data?.data?.filter((v) => v.branchId === id) ?? []
+  const { vehicles } = useVehicles()
+  const branchVehicles = vehicles.filter((v) => String(v.branch_id) === id)
   const staff = id ? mockBranchStaff[id] ?? [] : []
 
   if (isLoading || !branch) {
@@ -85,7 +85,10 @@ export function BranchDetailPage() {
               </Link>
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
-              {branchVehicles.slice(0, 4).map((v) => (
+              {branchVehicles.slice(0, 4).map((v) => {
+                const im0 = v.images?.[0]
+                const thumb = typeof im0 === 'string' ? im0 : im0?.url
+                return (
                 <div
                   key={v.id}
                   className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
@@ -93,7 +96,7 @@ export function BranchDetailPage() {
                   <Link to={`/vehicles/${v.id}`} className="block">
                     <div className="h-48 overflow-hidden bg-slate-200">
                       <img
-                        src={v.images?.[0] || 'https://placehold.co/600x400'}
+                        src={thumb || 'https://placehold.co/600x400'}
                         alt={`${v.brand} ${v.model}`}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
@@ -113,7 +116,8 @@ export function BranchDetailPage() {
                     </div>
                   </Link>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </section>
         </div>

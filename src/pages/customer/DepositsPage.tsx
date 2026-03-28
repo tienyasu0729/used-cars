@@ -31,8 +31,7 @@ function getStatusDisplay(status: string, expiryDate: string) {
 export function DepositsPage() {
   const [tab, setTab] = useState<'active' | 'history'>('active')
   const { data: deposits, isLoading } = useDeposits()
-  const { data: vehiclesData } = useVehicles()
-  const vehicles = vehiclesData?.data ?? []
+  const { vehicles } = useVehicles()
 
   const activeDeposits = (deposits ?? []).filter((d) => ACTIVE_STATUSES.includes(d.status))
   const historyDeposits = (deposits ?? []).filter((d) => HISTORY_STATUSES.includes(d.status))

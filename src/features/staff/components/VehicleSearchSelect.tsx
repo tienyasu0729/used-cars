@@ -1,17 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 import { formatPriceNumber } from '@/utils/format'
-
-interface Vehicle {
-  id: string
-  brand: string
-  model: string
-  year: number
-  price: number
-  code?: string
-  plateNumber?: string
-  [key: string]: unknown
-}
+import type { Vehicle } from '@/types/vehicle.types'
 
 interface VehicleSearchSelectProps {
   vehicles: Vehicle[]
@@ -23,7 +13,7 @@ interface VehicleSearchSelectProps {
 }
 
 function getVehicleLabel(v: Vehicle) {
-  return `${v.brand} ${v.model} ${v.year} - ${formatPriceNumber(v.price)}`
+  return `${v.brand ?? ''} ${v.model ?? ''} ${v.year} - ${formatPriceNumber(v.price)}`
 }
 
 function toSearchStr(s: string) {
@@ -34,25 +24,34 @@ function matchVehicle(v: Vehicle, q: string) {
   const raw = q.trim()
   const s = toSearchStr(raw)
   if (!s) return true
-  const vcode = v.code != null ? toSearchStr(String(v.code)) : ''
-  const codeMatch = vcode !== '' && vcode.includes(s)
+  const listing = v.listing_id != null ? toSearchStr(String(v.listing_id)) : ''
+  const codeMatch = listing !== '' && listing.includes(s)
+  const brand = v.brand != null ? toSearchStr(v.brand) : ''
+  const model = v.model != null ? toSearchStr(v.model) : ''
   return (
     codeMatch ||
-    v.id.toLowerCase().includes(s) ||
-    v.brand.toLowerCase().includes(s) ||
-    v.model.toLowerCase().includes(s) ||
+    String(v.id).toLowerCase().includes(s) ||
+    brand.includes(s) ||
+    model.includes(s) ||
     String(v.year).includes(raw) ||
-    (v.plateNumber != null && toSearchStr(String(v.plateNumber)).includes(s))
+    (v.listing_id != null && toSearchStr(String(v.listing_id)).includes(s))
   )
 }
 
-export function VehicleSearchSelect({ vehicles, value, onChange, placeholder = 'Tìm theo tên xe hoặc mã xe...', disabled, error }: VehicleSearchSelectProps) {
+export function VehicleSearchSelect({
+  vehicles,
+  value,
+  onChange,
+  placeholder = 'Tìm theo tên xe hoặc mã xe...',
+  disabled,
+  error,
+}: VehicleSearchSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const selected = vehicles.find((v) => v.id === value)
+  const selected = vehicles.find((v) => String(v.id) === value)
   const displayText = selected ? getVehicleLabel(selected) : ''
   const filtered = query.trim() ? vehicles.filter((v) => matchVehicle(v, query.trim())) : vehicles
 
@@ -69,7 +68,7 @@ export function VehicleSearchSelect({ vehicles, value, onChange, placeholder = '
   }, [isOpen])
 
   const handleSelect = (v: Vehicle) => {
-    onChange(v.id)
+    onChange(String(v.id))
     setQuery('')
     setIsOpen(false)
   }
@@ -78,7 +77,7 @@ export function VehicleSearchSelect({ vehicles, value, onChange, placeholder = '
     if (!disabled) setIsOpen(true)
   }
 
-  const inputValue = isOpen ? query : (value ? displayText : '')
+  const inputValue = isOpen ? query : value ? displayText : ''
   const showPlaceholder = !value && !query && !isOpen
 
   return (
@@ -107,7 +106,9 @@ export function VehicleSearchSelect({ vehicles, value, onChange, placeholder = '
           className="absolute inset-0 w-full cursor-pointer bg-transparent pl-10 pr-10 outline-none"
           autoComplete="off"
         />
-        <span className="invisible flex-1" aria-hidden>{inputValue || placeholder}</span>
+        <span className="invisible flex-1" aria-hidden>
+          {inputValue || placeholder}
+        </span>
         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 shrink-0 text-slate-400" />
       </div>
       {isOpen && (
@@ -120,9 +121,11 @@ export function VehicleSearchSelect({ vehicles, value, onChange, placeholder = '
                 key={v.id}
                 type="button"
                 onClick={() => handleSelect(v)}
-                className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 ${v.id === value ? 'bg-blue-50 text-[#1A3C6E]' : 'text-slate-700'}`}
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 ${String(v.id) === value ? 'bg-blue-50 text-[#1A3C6E]' : 'text-slate-700'}`}
               >
-                {v.code && <span className="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">{v.code}</span>}
+                {v.listing_id && (
+                  <span className="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">{v.listing_id}</span>
+                )}
                 {getVehicleLabel(v)}
               </button>
             ))

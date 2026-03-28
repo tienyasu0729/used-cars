@@ -34,7 +34,22 @@ export function AdminCatalogPage() {
   const [activeTab, setActiveTab] = useState<CatalogTab>('brands')
   const [modalOpen, setModalOpen] = useState(false)
   const [editItem, setEditItem] = useState<Record<string, unknown> | null>(null)
-  const { data: catalog, isLoading } = useCatalog()
+  const { categories, isLoadingCategories } = useCatalog()
+
+  const catalog = {
+    brands: categories.map((c) => ({
+      id: String(c.id),
+      name: c.name,
+      slug: c.name?.toLowerCase().replace(/\s+/g, '-') ?? '',
+      status: 'active' as const,
+      vehicleCount: 0,
+    })),
+    models: [] as Record<string, unknown>[],
+    colors: [] as Record<string, unknown>[],
+    fuelTypes: [] as Record<string, unknown>[],
+    transmissions: [] as Record<string, unknown>[],
+  }
+  const isLoading = isLoadingCategories
 
   const createBrand = useCreateCatalogBrand()
   const createModel = useCreateCatalogModel()

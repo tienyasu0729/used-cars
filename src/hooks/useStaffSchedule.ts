@@ -26,7 +26,7 @@ export function useStaffSchedule() {
 
   return useQuery({
     queryKey: ['staffSchedule', branchId, isMockMode()],
-    queryFn: () => fetchStaffSchedule(branchId),
+    queryFn: () => fetchStaffSchedule(branchId != null ? String(branchId) : undefined),
     staleTime: isMockMode() ? Infinity : 1000 * 60,
   })
 }
