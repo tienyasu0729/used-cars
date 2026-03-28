@@ -1,37 +1,75 @@
-import { useQuery } from '@tanstack/react-query'
-import { mockVehicles } from '@/mock'
-import { isMockMode } from '@/config/dataSource'
+/**
+ * useSavedVehicles — Hook xe đã lưu yêu thích (Customer)
+ *
+ * Fetch từ API GET /users/me/saved-vehicles
+ * Hỗ trợ removeVehicle với optimistic update
+ * Chỉ gọi khi user đã đăng nhập
+ */
+import { useState, useEffect, useCallback } from 'react'
+import { vehicleService } from '@/services/vehicle.service'
+import { useAuthStore } from '@/store/authStore'
+import type { Vehicle } from '@/types/vehicle.types'
 
-const SAVED_IDS_KEY = 'saved_vehicle_ids'
-
-function getSavedIds(): string[] {
-  try {
-    const s = localStorage.getItem(SAVED_IDS_KEY)
-    return s ? JSON.parse(s) : []
-  } catch {
-    return ['v1', 'v2', 'v3', 'v4', 'v5', 'v6']
-  }
+interface UseSavedVehiclesReturn {
+  savedVehicles: Vehicle[]
+  isLoading: boolean
+  error: string | null
+  removeVehicle: (id: number) => Promise<void>
+  refetch: () => void
 }
 
-async function fetchSavedVehicles() {
-  const ids = getSavedIds()
-  if (isMockMode()) {
-    return mockVehicles.filter((v) => ids.includes(v.id))
-  }
-  try {
-    const res = await fetch('/api/users/me/saved-vehicles')
-    if (res.ok) {
-      const data = await res.json()
-      return Array.isArray(data) ? data : data?.data ?? []
+export function useSavedVehicles(): UseSavedVehiclesReturn {
+  const { isAuthenticated } = useAuthStore()
+  const [savedVehicles, setSavedVehicles] = useState<Vehicle[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchSaved = useCallback(async () => {
+    if (!isAuthenticated) {
+      setSavedVehicles([])
+      return
     }
-  } catch {}
-  return mockVehicles.filter((v) => ids.includes(v.id))
-}
 
-export function useSavedVehicles() {
-  return useQuery({
-    queryKey: ['savedVehicles', isMockMode()],
-    queryFn: fetchSavedVehicles,
-    staleTime: isMockMode() ? Infinity : 1000 * 60 * 2,
-  })
+    setIsLoading(true)
+    setError(null)
+    try {
+      const vehicles = await vehicleService.getSavedVehicles()
+      setSavedVehicles(vehicles)
+    } catch (err: unknown) {
+      setError('Lỗi tải danh sách xe yêu thích')
+      console.error('[useSavedVehicles] Lỗi:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    fetchSaved()
+  }, [fetchSaved])
+
+  // Optimistic update: xóa khỏi list trước, nếu API fail thì rollback
+  const removeVehicle = useCallback(
+    async (vehicleId: number) => {
+      const backup = [...savedVehicles]
+      // Xóa khỏi list ngay lập tức (optimistic)
+      setSavedVehicles((prev) => prev.filter((v) => v.id !== vehicleId))
+
+      try {
+        await vehicleService.unsaveVehicle(vehicleId)
+      } catch (err: unknown) {
+        // Rollback nếu API fail
+        setSavedVehicles(backup)
+        console.error('[useSavedVehicles] Lỗi xóa:', err)
+      }
+    },
+    [savedVehicles]
+  )
+
+  return {
+    savedVehicles,
+    isLoading,
+    error,
+    removeVehicle,
+    refetch: fetchSaved,
+  }
 }

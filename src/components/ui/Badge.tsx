@@ -28,16 +28,18 @@ export function Badge({ variant, children, className = '' }: BadgeProps) {
   )
 }
 
-export function VehicleStatusBadge({ status }: { status: VehicleStatus }) {
-  const map: Record<VehicleStatus, BadgeVariant> = {
+export function VehicleStatusBadge({ status }: { status: string }) {
+  const map: Record<string, BadgeVariant> = {
     Available: 'available',
     Reserved: 'reserved',
     Sold: 'sold',
+    Hidden: 'default',
   }
-  const labels: Record<VehicleStatus, string> = {
+  const labels: Record<string, string> = {
     Available: 'Còn Hàng',
     Reserved: 'Đã Đặt Cọc',
     Sold: 'Đã Bán',
+    Hidden: 'Ẩn',
   }
-  return <Badge variant={map[status]}>{labels[status]}</Badge>
+  return <Badge variant={map[status] ?? 'default'}>{labels[status] ?? status}</Badge>
 }

@@ -113,7 +113,7 @@ export function OrdersPage() {
                 const vehicle = vehicles.find((v) => v.id === o.vehicleId)
                 const status = statusMap[o.status] ?? { label: o.status, className: 'bg-slate-100 text-slate-700' }
                 const detail = vehicle
-                  ? `Đời ${vehicle.year} • ${vehicle.exteriorColor ?? '-'} • ${vehicle.mileage === 0 ? 'Mới 100%' : formatMileage(vehicle.mileage)}`
+                  ? `Đời ${vehicle.year} • ${vehicle.exteriorColor ?? '-'} • ${vehicle.mileage != null && vehicle.mileage === 0 ? 'Mới 100%' : formatMileage(vehicle.mileage)}`
                   : '-'
                 return (
                   <tr key={o.id} className="transition-colors hover:bg-slate-50">

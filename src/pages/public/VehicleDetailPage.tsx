@@ -1,30 +1,35 @@
+/**
+ * VehicleDetailPage — Trang chi tiết xe public
+ *
+ * Dùng useVehicleDetail hook (API-backed)
+ * Hiển thị gallery, thông số, save button, booking placeholder
+ */
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { useVehicle } from '@/hooks/useVehicles'
-import { useBranch } from '@/hooks/useBranches'
+import { useParams, Link } from 'react-router-dom'
+import { useVehicleDetail } from '@/hooks/useVehicleDetail'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { VehicleDetailGallery } from '@/features/vehicles/components/VehicleDetailGallery'
-import { VehicleDetailSidebar } from '@/features/vehicles/components/VehicleDetailSidebar'
-import { SimilarVehicleCard } from '@/features/vehicles/components/SimilarVehicleCard'
-import { BookTestDriveModal } from '@/features/vehicles/components/BookTestDriveModal'
-import { DepositWizardModal } from '@/features/vehicles/components/DepositWizardModal'
+import { formatPrice, formatMileage } from '@/utils/format'
+import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
+import { Phone, Calendar } from 'lucide-react'
 
 export function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { data: vehicle, isLoading } = useVehicle(id)
-  useDocumentTitle(vehicle ? `Chi tiết xe - ${vehicle.brand} ${vehicle.model}` : 'Chi tiết xe')
-  const { data: branch } = useBranch(vehicle?.branchId)
-  const { data } = useVehicles()
-  const allVehicles = data?.data ?? []
-  const sameBrand = allVehicles.filter((v) => v.brand === vehicle?.brand && v.id !== vehicle?.id)
-  const others = allVehicles.filter((v) => v.brand !== vehicle?.brand && v.branchId === vehicle?.branchId)
-  const similarVehicles = [...sameBrand, ...others].filter((v) => v.id !== vehicle?.id).slice(0, 4)
-  const [activeTab, setActiveTab] = useState('specs')
-  const [bookingOpen, setBookingOpen] = useState(false)
-  const [depositOpen, setDepositOpen] = useState(false)
+  const vehicleId = id ? parseInt(id, 10) : undefined
+  const { vehicle, isLoading, error, isSaved, toggleSave } = useVehicleDetail(vehicleId)
+  useDocumentTitle(vehicle ? `Chi tiết xe - ${vehicle.title}` : 'Chi tiết xe')
 
-  if (isLoading || !vehicle) {
+  // Lấy xe tương tự (cùng category)
+  const { vehicles: allVehicles } = useVehicles({ size: 20 })
+  const similarVehicles = allVehicles
+    .filter((v) => v.category_id === vehicle?.category_id && v.id !== vehicle?.id)
+    .slice(0, 4)
+
+  const [activeTab, setActiveTab] = useState('specs')
+
+  // Loading state
+  if (isLoading) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="h-96 animate-pulse rounded-xl bg-slate-200" />
@@ -32,58 +37,127 @@ export function VehicleDetailPage() {
     )
   }
 
+  // Error state
+  if (error || !vehicle) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-16 text-center">
+        <h2 className="text-2xl font-bold text-slate-900">{error || 'Xe không tồn tại'}</h2>
+        <p className="mt-2 text-slate-500">Xe này có thể đã bị xóa hoặc không tồn tại.</p>
+        <Link
+          to="/vehicles"
+          className="mt-6 inline-block rounded-lg bg-[#1A3C6E] px-8 py-3 font-bold text-white hover:bg-[#15325A]"
+        >
+          Quay lại danh sách xe
+        </Link>
+      </div>
+    )
+  }
+
   const similarContent = (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {similarVehicles.map((v, i) => (
-        <SimilarVehicleCard key={v.id} vehicle={v} showNewBadge={i === 0} />
+        <VehicleCard key={v.id} vehicle={v} showNewBadge={i === 0} compact />
       ))}
+      {similarVehicles.length === 0 && (
+        <p className="col-span-full text-center text-slate-500">Không có xe tương tự</p>
+      )}
     </div>
   )
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="grid gap-8 lg:grid-cols-12">
+        {/* Gallery + Tabs */}
         <VehicleDetailGallery
           vehicle={vehicle}
-          branch={branch ?? null}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           similarContent={similarContent}
         />
-        <VehicleDetailSidebar
-          vehicle={vehicle}
-          branch={branch ?? null}
-          onBookTestDrive={() => setBookingOpen(true)}
-          onDeposit={() => setDepositOpen(true)}
-        />
+
+        {/* Sidebar thông tin */}
+        <div className="flex flex-col gap-6 lg:col-span-4">
+          {/* Card giá + hành động */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h1 className="text-xl font-bold text-slate-900">{vehicle.title}</h1>
+            {vehicle.listing_id && (
+              <p className="mt-1 text-xs font-mono text-slate-400">{vehicle.listing_id}</p>
+            )}
+            <p className="mt-3 text-3xl font-black text-[#E8612A]">{formatPrice(vehicle.price)}</p>
+
+            {/* Quick stats */}
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3">
+              <div className="text-center">
+                <p className="text-xs text-slate-500">Năm SX</p>
+                <p className="font-bold">{vehicle.year}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-slate-500">Số km</p>
+                <p className="font-bold">{formatMileage(vehicle.mileage)}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-slate-500">Nhiên liệu</p>
+                <p className="font-bold text-sm">{vehicle.fuel || '—'}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-slate-500">Hộp số</p>
+                <p className="font-bold text-sm">{vehicle.transmission || '—'}</p>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="mt-6 space-y-3">
+              <button
+                onClick={toggleSave}
+                className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 py-3 font-bold transition-all ${
+                  isSaved
+                    ? 'border-red-200 bg-red-50 text-red-600'
+                    : 'border-[#1A3C6E]/10 text-[#1A3C6E] hover:bg-[#1A3C6E] hover:text-white'
+                }`}
+              >
+                {isSaved ? '❤️ Đã lưu' : '🤍 Lưu xe'}
+              </button>
+
+              {/* Đặt lịch lái thử — placeholder (Dev 3) */}
+              <Link
+                to={`/bookings/new?vehicleId=${vehicle.id}`}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A3C6E] py-3 font-bold text-white hover:bg-[#15325A]"
+              >
+                <Calendar className="h-5 w-5" />
+                Đặt lịch lái thử
+              </Link>
+
+              {/* TODO: hiện khi Dev 3 xong */}
+              {/* <button disabled className="w-full rounded-lg border border-slate-200 py-3 text-sm text-slate-400">
+                Xem lịch sử bảo dưỡng (sắp có)
+              </button> */}
+            </div>
+          </div>
+
+          {/* Contact box */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-3 font-bold text-slate-900">Liên hệ tư vấn</h3>
+            <a
+              href="tel:19006868"
+              className="flex items-center gap-3 rounded-lg bg-[#1A3C6E]/5 p-3 font-bold text-[#1A3C6E] hover:bg-[#1A3C6E]/10"
+            >
+              <Phone className="h-5 w-5" />
+              1900 6868
+            </a>
+          </div>
+        </div>
       </div>
 
-      <section className="mt-16">
-        <h2 className="mb-8 text-2xl font-black">Xe Tương Tự</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {similarVehicles.map((v, i) => (
-            <SimilarVehicleCard key={v.id} vehicle={v} showNewBadge={i === 0} />
-          ))}
-        </div>
-      </section>
-
-      {branch && (
-        <>
-          <BookTestDriveModal
-            isOpen={bookingOpen}
-            onClose={() => setBookingOpen(false)}
-            vehicleId={vehicle.id}
-            branchId={branch.id}
-            vehicleName={`${vehicle.brand} ${vehicle.model}`}
-          />
-          <DepositWizardModal
-            isOpen={depositOpen}
-            onClose={() => setDepositOpen(false)}
-            vehicleId={vehicle.id}
-            vehicleName={`${vehicle.brand} ${vehicle.model}`}
-            vehiclePrice={vehicle.price}
-          />
-        </>
+      {/* Xe tương tự */}
+      {similarVehicles.length > 0 && (
+        <section className="mt-16">
+          <h2 className="mb-8 text-2xl font-black">Xe Tương Tự</h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {similarVehicles.map((v, i) => (
+              <VehicleCard key={v.id} vehicle={v} showNewBadge={i === 0} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   )

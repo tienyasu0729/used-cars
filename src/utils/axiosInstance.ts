@@ -12,8 +12,8 @@
 import axios from 'axios'
 import type { ApiErrorResponse } from '@/types/auth.types'
 
-// Đọc base URL từ biến môi trường Vite, fallback localhost khi dev
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
+// Đọc base URL từ biến môi trường Vite, fallback qua proxy khi dev
+const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
 const axiosInstance = axios.create({
   baseURL,

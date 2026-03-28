@@ -1,65 +1,92 @@
+/**
+ * VehicleDetailGallery — Gallery ảnh + tabs thông số xe
+ *
+ * Hỗ trợ API Vehicle type (vehicle.fuel, vehicle.images: VehicleImage[])
+ */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import type { Vehicle } from '@/types'
-import type { Branch } from '@/types'
+import { formatMileage, formatDate } from '@/utils/format'
+import type { Vehicle, VehicleImage } from '@/types/vehicle.types'
 
 interface VehicleDetailGalleryProps {
   vehicle: Vehicle
-  branch: Branch | null
   activeTab: string
   onTabChange: (tab: string) => void
   similarContent: React.ReactNode
 }
 
-const fuelLabel = (t: string) => (t === 'Gasoline' ? 'Xăng' : t === 'Diesel' ? 'Dầu' : t === 'Electric' ? 'Điện' : 'Hybrid')
-const transLabel = (t: string) => (t === 'Automatic' ? 'Tự động' : 'Sàn')
+// Lấy URL ảnh từ VehicleImage objects
+function getImageUrls(images?: VehicleImage[]): string[] {
+  if (!images || images.length === 0) return ['https://placehold.co/800x500?text=No+Image']
+  // Sắp xếp theo sortOrder, ảnh chính lên đầu
+  const sorted = [...images].sort((a, b) => {
+    if (a.primaryImage && !b.primaryImage) return -1
+    if (!a.primaryImage && b.primaryImage) return 1
+    return a.sortOrder - b.sortOrder
+  })
+  return sorted.map((img) => img.url)
+}
 
 export function VehicleDetailGallery({
   vehicle,
-  branch,
   activeTab,
   onTabChange,
   similarContent,
 }: VehicleDetailGalleryProps) {
+  const imgs = getImageUrls(vehicle.images)
   const [selectedImg, setSelectedImg] = useState(0)
-  const imgs = vehicle.images?.length ? vehicle.images : ['https://placehold.co/800x500']
   const extraCount = imgs.length > 5 ? imgs.length - 5 : 0
 
   const tabs = [
     { id: 'specs', label: 'Thông Số Kỹ Thuật' },
     { id: 'desc', label: 'Mô Tả' },
-    { id: 'location', label: 'Vị Trí' },
     { id: 'similar', label: 'Xe Tương Tự' },
   ]
 
+  const postingLabel =
+    vehicle.posting_date != null && vehicle.posting_date !== ''
+      ? Number.isNaN(new Date(vehicle.posting_date).getTime())
+        ? vehicle.posting_date
+        : formatDate(vehicle.posting_date)
+      : '—'
+
   const specs = [
-    { label: 'Kiểu dáng', value: 'Sedan' },
-    { label: 'Nhiên liệu', value: fuelLabel(vehicle.fuelType) },
-    { label: 'Hộp số', value: transLabel(vehicle.transmission) },
-    { label: 'Dẫn động', value: 'FWD - Dẫn động cầu trước' },
-    { label: 'Số chỗ ngồi', value: '5 chỗ' },
-    { label: 'Màu xe', value: vehicle.exteriorColor || '-' },
+    { label: 'Mã xe', value: vehicle.listing_id || '—' },
+    { label: 'Hãng xe', value: vehicle.brand || '—' },
+    { label: 'Dòng xe', value: vehicle.model || '—' },
+    { label: 'Năm sản xuất', value: String(vehicle.year) },
+    { label: 'Kiểu dáng', value: vehicle.body_style || '—' },
+    { label: 'Xuất xứ', value: vehicle.origin || '—' },
+    { label: 'Nhiên liệu', value: vehicle.fuel || '—' },
+    { label: 'Hộp số', value: vehicle.transmission || '—' },
+    { label: 'Số km đã đi', value: formatMileage(vehicle.mileage) },
+    { label: 'Chi nhánh', value: vehicle.branch_name || '—' },
+    { label: 'Ngày đăng tin', value: postingLabel },
+    { label: 'Trạng thái', value: vehicle.status },
   ]
 
   return (
     <div className="flex flex-col gap-4 lg:col-span-8">
+      {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm font-medium text-slate-500">
         <Link to="/" className="hover:text-[#1A3C6E]">Trang chủ</Link>
         <ChevronRight className="h-4 w-4" />
         <Link to="/vehicles" className="hover:text-[#1A3C6E]">Xe cũ</Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="font-semibold text-[#1A3C6E]">{vehicle.brand} {vehicle.model} {vehicle.trim || ''} {vehicle.year}</span>
+        <span className="font-semibold text-[#1A3C6E]">{vehicle.title}</span>
       </nav>
 
+      {/* Main image */}
       <div className="aspect-video w-full overflow-hidden rounded-xl bg-slate-200">
         <img
           src={imgs[selectedImg] || imgs[0]}
-          alt={`${vehicle.brand} ${vehicle.model}`}
+          alt={vehicle.title}
           className="h-full w-full object-cover"
         />
       </div>
 
+      {/* Thumbnail strip */}
       <div className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
         {imgs.slice(0, 5).map((img, i) => (
           <button
@@ -83,6 +110,7 @@ export function VehicleDetailGallery({
         )}
       </div>
 
+      {/* Tabs */}
       <div className="mt-8">
         <div className="border-b border-slate-200">
           <nav className="flex gap-8">
@@ -110,18 +138,14 @@ export function VehicleDetailGallery({
               ))}
             </div>
           )}
-          {activeTab === 'desc' && <p className="text-slate-600">{vehicle.description || 'Chưa có mô tả.'}</p>}
-          {activeTab === 'location' && branch && (
-            <div className="h-72 overflow-hidden rounded-xl bg-slate-200">
-              <iframe
-                title="Vị trí"
-                src={`https://www.google.com/maps?q=${branch.lat},${branch.lng}&output=embed`}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-              />
-            </div>
-          )}
+          {activeTab === 'desc' &&
+            (vehicle.description?.trim() ? (
+              <div className="max-w-none whitespace-pre-wrap text-base leading-relaxed text-slate-700">
+                {vehicle.description}
+              </div>
+            ) : (
+              <p className="text-slate-500">Chưa có mô tả chi tiết.</p>
+            ))}
           {activeTab === 'similar' && similarContent}
         </div>
       </div>

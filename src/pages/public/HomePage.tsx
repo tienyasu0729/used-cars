@@ -8,10 +8,13 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export function HomePage() {
   useDocumentTitle('Chợ xe ô tô Đà Nẵng')
-  const { data, isLoading } = useVehicles()
-  const { data: branches } = useBranches()
+  const { vehicles: featuredVehicles, isLoading: featuredLoading } = useVehicles({
+    page: 0,
+    size: 9,
+    sort: 'postingDateDesc',
+  })
+  const { data: branches, isLoading: branchesLoading } = useBranches()
   const branchesList = Array.isArray(branches) ? branches : []
-  const vehicles = data?.data?.slice(0, 4) ?? []
 
   const features = [
     { icon: Shield, title: 'Kiểm định 160 bước', desc: 'Mọi xe đều được kiểm tra kỹ thuật nghiêm ngặt bởi đội ngũ kỹ thuật viên giàu kinh nghiệm.' },
@@ -83,7 +86,9 @@ export function HomePage() {
               <Handshake className="h-8 w-8" />
             </div>
             <div>
-              <p className="text-3xl font-extrabold text-[#1A3C6E]">{branchesList.length || 3}</p>
+              <p className="text-3xl font-extrabold text-[#1A3C6E]">
+                {branchesLoading ? '…' : branchesList.length}
+              </p>
               <p className="font-medium text-slate-500">Chi nhánh</p>
             </div>
           </div>
@@ -116,16 +121,16 @@ export function HomePage() {
             </button>
           </div>
         </div>
-        {isLoading ? (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
+        {featuredLoading ? (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 9 }, (_, i) => (
               <div key={i} className="h-80 animate-pulse rounded-xl bg-gray-200" />
             ))}
           </div>
         ) : (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {vehicles.map((v, i) => (
-              <VehicleCard key={v.id} vehicle={v} showNewBadge={i === 0} />
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredVehicles.map((v, i) => (
+              <VehicleCard key={v.id} vehicle={v} showNewBadge={i < 3} />
             ))}
           </div>
         )}
@@ -163,21 +168,33 @@ export function HomePage() {
           <div>
             <h2 className="mb-6 text-3xl font-bold text-gray-800">Hệ thống chi nhánh</h2>
             <p className="mb-8 leading-relaxed text-slate-600">
-              Chúng tôi hiện có 3 showroom lớn tại Đà Nẵng, giúp khách hàng dễ dàng tiếp cận và trải nghiệm thực tế những mẫu xe mong muốn.
+              {branchesLoading
+                ? 'Đang tải danh sách chi nhánh…'
+                : branchesList.length > 0
+                  ? `Chúng tôi hiện có ${branchesList.length} điểm giao dịch, giúp khách hàng dễ dàng tiếp cận và trải nghiệm thực tế những mẫu xe mong muốn.`
+                  : 'Hiện chưa có chi nhánh được công bố. Vui lòng quay lại sau hoặc liên hệ hotline để được hỗ trợ.'}
             </p>
             <div className="space-y-6">
-              {branchesList.map((b, i) => (
-                <Link key={b.id} to={`/branches/${b.id}`} className="flex gap-4 rounded-xl border border-transparent p-4 transition-colors hover:border-slate-200 hover:bg-slate-50">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A3C6E]/10 text-[#1A3C6E]">
-                    {i + 1}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-800">{b.name}</h4>
-                    <p className="mt-1 text-sm text-slate-500">{b.address}</p>
-                    <p className="mt-1 text-sm font-semibold text-[#1A3C6E]">Hotline: {b.phone}</p>
-                  </div>
-                </Link>
-              ))}
+              {branchesLoading && (
+                <p className="text-sm text-slate-500">Đang tải chi nhánh…</p>
+              )}
+              {!branchesLoading &&
+                branchesList.map((b, i) => (
+                  <Link
+                    key={b.id}
+                    to={`/branches/${b.id}`}
+                    className="flex gap-4 rounded-xl border border-transparent p-4 transition-colors hover:border-slate-200 hover:bg-slate-50"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A3C6E]/10 text-[#1A3C6E]">
+                      {i + 1}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800">{b.name}</h4>
+                      <p className="mt-1 text-sm text-slate-500">{b.address}</p>
+                      <p className="mt-1 text-sm font-semibold text-[#1A3C6E]">Hotline: {b.phone}</p>
+                    </div>
+                  </Link>
+                ))}
             </div>
           </div>
           <div className="relative h-[450px] overflow-hidden rounded-2xl shadow-2xl">

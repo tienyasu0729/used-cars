@@ -27,7 +27,7 @@ export function ManagerEditVehiclePage() {
     values: vehicle
       ? {
           price: vehicle.price,
-          mileage: vehicle.mileage,
+          mileage: vehicle.mileage ?? 0,
           status: vehicle.status,
         }
       : undefined,

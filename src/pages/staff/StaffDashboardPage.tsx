@@ -48,7 +48,7 @@ export function StaffDashboardPage() {
   const { data: bookings } = useStaffBookings()
   const { data: schedule, isLoading: scheduleLoading } = useStaffSchedule()
   const { data: consultations } = useConsultations()
-  const { data: orders, ordersToday, ordersThisWeek } = useStaffOrders()
+  const { ordersToday, ordersThisWeek } = useStaffOrders()
   const { data: inventory, available } = useInventory()
 
   const todayBookings = (bookings ?? []).filter((b) => b.date === today)

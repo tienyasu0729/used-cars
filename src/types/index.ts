@@ -10,6 +10,17 @@ export {
 } from './auth.types'
 
 export * from './vehicle'
+// API-backed Vehicle types (Dev 2) — import these as named types khi cần phân biệt
+export {
+  type Vehicle as ApiVehicle,
+  type VehicleStatus as ApiVehicleStatus,
+  type VehicleImage,
+  type Category,
+  type Subcategory,
+  type VehicleSearchParams,
+  type PaginatedResponse,
+  type CreateVehicleRequest,
+} from './vehicle.types'
 export * from './branch'
 export * from './booking'
 export * from './order'

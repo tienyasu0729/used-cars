@@ -9,11 +9,13 @@ export function formatPriceNumber(price: number): string {
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(price)
 }
 
-export function formatMileage(km: number): string {
+export function formatMileage(km: number | null | undefined): string {
+  if (km == null || Number.isNaN(km)) return '—'
   return new Intl.NumberFormat('vi-VN').format(km) + ' km'
 }
 
-export function formatMileageShort(km: number): string {
+export function formatMileageShort(km: number | null | undefined): string {
+  if (km == null || Number.isNaN(km)) return '—'
   return (km >= 1000 ? `${Math.round(km / 1000)}k` : km) + ' km'
 }
 

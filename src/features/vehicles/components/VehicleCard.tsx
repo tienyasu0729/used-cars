@@ -1,49 +1,58 @@
+/**
+ * VehicleCard — Card xe dùng trong listing
+ *
+ * Hỗ trợ cả Vehicle type cũ (mock) và Vehicle type mới (API)
+ * Hiển thị: ảnh, listing_id, title, giá VNĐ, km, badge status, save button
+ */
 import { Link } from 'react-router-dom'
-import { MapPin, Heart, GitCompare, Gauge, Calendar, Fuel, Cog } from 'lucide-react'
-import type { Vehicle } from '@/types'
+import { MapPin, GitCompare, Gauge, Calendar, Fuel, Cog } from 'lucide-react'
 import { formatPrice, formatMileage } from '@/utils/format'
 import { VehicleStatusBadge } from '@/components/ui'
 import { Button } from '@/components/ui'
-import { useBranches } from '@/hooks/useBranches'
-import { useCompareStore } from '@/store/compareStore'
+import { useCompareVehicles } from '@/hooks/useCompareVehicles'
 import { useToastStore } from '@/store/toastStore'
+import { SaveButton } from './SaveButton'
+import type { Vehicle as ApiVehicle, VehicleImage } from '@/types/vehicle.types'
 
 interface VehicleCardProps {
-  vehicle: Vehicle
+  vehicle: ApiVehicle
   compact?: boolean
   showNewBadge?: boolean
+  showSaveButton?: boolean
 }
 
-export function VehicleCard({ vehicle, compact, showNewBadge }: VehicleCardProps) {
-  const { data: branches } = useBranches()
-  const { addVehicle, removeVehicle, vehicles } = useCompareStore()
+// Lấy URL ảnh chính hoặc ảnh đầu tiên
+function getPrimaryImage(images?: VehicleImage[]): string {
+  if (!images || images.length === 0) return 'https://placehold.co/600x400?text=No+Image'
+  const primary = images.find((img) => img.primaryImage)
+  return primary?.url ?? images[0]?.url ?? 'https://placehold.co/600x400?text=No+Image'
+}
+
+export function VehicleCard({ vehicle, compact, showNewBadge, showSaveButton = true }: VehicleCardProps) {
+  const { addToCompare, removeFromCompare, compareList } = useCompareVehicles()
   const toast = useToastStore()
-  const branch = branches?.find((b) => b.id === vehicle.branchId)
-  const isSaved = false
-  const isComparing = vehicles.some((v) => v.id === vehicle.id)
+  const isComparing = compareList.includes(vehicle.id)
 
   const handleCompare = (e: React.MouseEvent) => {
     e.preventDefault()
     if (isComparing) {
-      removeVehicle(vehicle.id)
+      removeFromCompare(vehicle.id)
       toast.addToast('info', 'Đã bỏ xe khỏi danh sách so sánh')
     } else {
-      if (vehicles.length >= 3) {
-        toast.addToast('warning', 'Chỉ so sánh tối đa 3 xe')
-        return
-      }
-      addVehicle(vehicle)
-      toast.addToast('success', `Đã thêm vào so sánh (${vehicles.length + 1}/3)`)
+      addToCompare(vehicle.id)
     }
   }
+
+  // Lấy thumbnail (ảnh chính hoặc ảnh đầu tiên)
+  const thumbnail = getPrimaryImage(vehicle.images)
 
   return (
     <div className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-xl">
       <Link to={`/vehicles/${vehicle.id}`} className="block">
         <div className="relative h-48 overflow-hidden bg-slate-200">
           <img
-            src={vehicle.images[0] || 'https://placehold.co/600x400'}
-            alt={vehicle.brand + ' ' + vehicle.model}
+            src={thumbnail}
+            alt={vehicle.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute left-3 top-3 flex flex-col gap-2">
@@ -54,21 +63,31 @@ export function VehicleCard({ vehicle, compact, showNewBadge }: VehicleCardProps
             )}
             <VehicleStatusBadge status={vehicle.status} />
           </div>
-          <button
-            className="absolute right-3 top-3 rounded-full bg-white/80 p-1.5 text-slate-900 transition-colors hover:bg-white"
-            onClick={(e) => e.preventDefault()}
-          >
-            <Heart className={`h-5 w-5 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
-          </button>
+
+          {/* Listing ID badge */}
+          {vehicle.listing_id && (
+            <span className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-0.5 text-[10px] font-mono text-white/90">
+              {vehicle.listing_id}
+            </span>
+          )}
+
+          {/* Save button */}
+          {showSaveButton && (
+            <div className="absolute right-3 top-3">
+              <SaveButton vehicleId={vehicle.id} />
+            </div>
+          )}
         </div>
       </Link>
+
       <div className={compact ? 'p-4' : 'p-5'}>
         <Link to={`/vehicles/${vehicle.id}`}>
           <h3 className="mb-1 font-bold text-gray-900 line-clamp-1 hover:text-[#1A3C6E]">
-            {vehicle.brand} {vehicle.model} {vehicle.trim || ''} {vehicle.year}
+            {vehicle.title}
           </h3>
         </Link>
         <p className="mb-3 text-lg font-extrabold text-[#E8612A]">{formatPrice(vehicle.price)}</p>
+
         <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2 border-y border-slate-100 py-3 ${compact ? 'mb-3' : 'mb-5'}`}>
           <div className="flex flex-col items-center">
             <Gauge className="mb-0.5 h-5 w-5 text-slate-400" />
@@ -81,22 +100,17 @@ export function VehicleCard({ vehicle, compact, showNewBadge }: VehicleCardProps
           <div className="flex flex-col items-center">
             <Fuel className="mb-0.5 h-5 w-5 text-slate-400" />
             <span className="text-[10px] font-medium text-slate-500">
-              {vehicle.fuelType === 'Gasoline' ? 'Xăng' : vehicle.fuelType === 'Diesel' ? 'Dầu' : vehicle.fuelType === 'Electric' ? 'Điện' : 'Hybrid'}
+              {vehicle.fuel || '—'}
             </span>
           </div>
           <div className="flex flex-col items-center">
             <Cog className="mb-0.5 h-5 w-5 text-slate-400" />
             <span className="text-[10px] font-medium text-slate-500">
-              {vehicle.transmission === 'Automatic' ? 'Tự động' : 'Số sàn'}
+              {vehicle.transmission || '—'}
             </span>
           </div>
         </div>
-        {branch && !compact && (
-          <div className="mb-5 flex items-center gap-2 text-xs text-slate-500">
-            <MapPin className="h-4 w-4 shrink-0" />
-            <span className="truncate">{branch.name}</span>
-          </div>
-        )}
+
         <div className={`flex gap-2 ${compact ? 'mt-2' : ''}`}>
           <Link to={`/vehicles/${vehicle.id}`} className="flex-1">
             <button className="w-full rounded-lg border-2 border-[#1A3C6E]/10 py-2.5 font-bold text-[#1A3C6E] transition-all hover:bg-[#1A3C6E] hover:text-white">

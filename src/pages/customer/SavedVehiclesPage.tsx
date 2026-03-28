@@ -11,17 +11,18 @@ const tabFilters = [
 
 export function SavedVehiclesPage() {
   const [tab, setTab] = useState('all')
-  const { data: vehicles, isLoading, isError } = useSavedVehicles()
+  const { savedVehicles: vehicles, isLoading, error } = useSavedVehicles()
 
+  const allVehicles = vehicles ?? []
   const filtered =
     tab === 'all'
-      ? vehicles ?? []
+      ? allVehicles
       : tab === 'available'
-        ? (vehicles ?? []).filter((v) => v.status === 'Available' || v.status === 'Reserved')
-        : (vehicles ?? []).filter((v) => v.status === 'Sold')
+        ? allVehicles.filter((v) => v.status === 'Available' || v.status === 'Reserved')
+        : allVehicles.filter((v) => v.status === 'Sold')
 
-  const availableCount = (vehicles ?? []).filter((v) => v.status === 'Available' || v.status === 'Reserved').length
-  const soldCount = (vehicles ?? []).filter((v) => v.status === 'Sold').length
+  const availableCount = allVehicles.filter((v) => v.status === 'Available' || v.status === 'Reserved').length
+  const soldCount = allVehicles.filter((v) => v.status === 'Sold').length
 
   return (
     <div className="space-y-6">
@@ -36,7 +37,7 @@ export function SavedVehiclesPage() {
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-900">Xe đã lưu</h1>
         <p className="text-slate-500">
-          Bạn đã lưu <span className="font-bold text-[#1A3C6E]">{vehicles?.length ?? 0}</span> phương tiện đang quan tâm tại khu vực Đà Nẵng.
+          Bạn đã lưu <span className="font-bold text-[#1A3C6E]">{allVehicles.length}</span> phương tiện đang quan tâm tại khu vực Đà Nẵng.
         </p>
       </div>
 
@@ -51,14 +52,14 @@ export function SavedVehiclesPage() {
                 : 'border-transparent text-slate-500 hover:text-[#1A3C6E]'
             }`}
           >
-            {f.key === 'all' ? `Tất cả (${vehicles?.length ?? 0})` : f.key === 'available' ? `Đang bán (${availableCount})` : `Đã bán (${soldCount})`}
+            {f.key === 'all' ? `Tất cả (${allVehicles.length})` : f.key === 'available' ? `Đang bán (${availableCount})` : `Đã bán (${soldCount})`}
           </button>
         ))}
       </div>
 
-      {isError ? (
+      {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          Không thể tải xe đã lưu. Vui lòng thử lại.
+          {error}
         </div>
       ) : (
         <SavedVehicleGrid vehicles={filtered} isLoading={isLoading} />

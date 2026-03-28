@@ -29,9 +29,16 @@ export function BranchCard({ branch }: BranchCardProps) {
             {branch.phone}
           </div>
         </div>
-        <p className="mt-2 text-xs text-gray-500">
-          {branch.openTime} - {branch.closeTime} | {branch.workingDays}
-        </p>
+        {(branch.openTime || branch.closeTime || branch.workingDays) && (
+          <p className="mt-2 text-xs text-gray-500">
+            {branch.openTime && branch.closeTime
+              ? `${branch.openTime} - ${branch.closeTime}`
+              : [branch.openTime, branch.closeTime].filter(Boolean).join(' - ')}
+            {branch.workingDays
+              ? `${branch.openTime || branch.closeTime ? ' | ' : ''}${branch.workingDays}`
+              : ''}
+          </p>
+        )}
         {branch.vehicleCount !== undefined && (
           <span className="mt-2 inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
             {branch.vehicleCount} xe

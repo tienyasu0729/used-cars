@@ -1,11 +1,15 @@
-import type { Vehicle } from '@/types'
-import { SavedVehicleCard } from './SavedVehicleCard'
+/**
+ * SavedVehicleGrid — Grid hiển thị danh sách xe đã lưu
+ *
+ * Chuyển sang API Vehicle type (Dev 2)
+ * Xóa dependency mock data: mockSavedListingExtras
+ */
+import type { Vehicle } from '@/types/vehicle.types'
+import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
 import { EmptyState } from '@/components/ui'
 import { Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui'
-import { useBranches } from '@/hooks/useBranches'
-import { mockSavedListingExtras } from '@/mock/mockSavedListingExtras'
 
 interface SavedVehicleGridProps {
   vehicles: Vehicle[]
@@ -13,8 +17,6 @@ interface SavedVehicleGridProps {
 }
 
 export function SavedVehicleGrid({ vehicles, isLoading }: SavedVehicleGridProps) {
-  const { data: branches } = useBranches()
-
   if (isLoading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -42,18 +44,9 @@ export function SavedVehicleGrid({ vehicles, isLoading }: SavedVehicleGridProps)
 
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {vehicles.map((v) => {
-        const branch = branches?.find((b) => b.id === v.branchId)
-        const listingStatus = mockSavedListingExtras[v.id]?.listingStatus
-        return (
-          <SavedVehicleCard
-            key={v.id}
-            vehicle={v}
-            branch={branch}
-            listingStatus={listingStatus}
-          />
-        )
-      })}
+      {vehicles.map((v) => (
+        <VehicleCard key={v.id} vehicle={v} />
+      ))}
     </div>
   )
 }

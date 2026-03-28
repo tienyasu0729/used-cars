@@ -1,25 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { mockBranches } from '@/mock'
-import { branchApi } from '@/services/branchApi'
+import { branchService } from '@/services/branch.service'
 import { isMockMode } from '@/config/dataSource'
+import type { Branch } from '@/types/branch'
 
-function ensureBranchArray(value: unknown): typeof mockBranches {
-  if (Array.isArray(value)) return value
-  if (value && typeof value === 'object' && 'data' in value && Array.isArray((value as { data: unknown }).data)) {
-    return (value as { data: typeof mockBranches }).data
-  }
-  return mockBranches
-}
-
-async function fetchBranches(): Promise<typeof mockBranches> {
+async function fetchBranches(): Promise<Branch[]> {
   if (isMockMode()) {
     return mockBranches
   }
   try {
-    const res = await branchApi.getBranches()
-    return ensureBranchArray(res.data)
-  } catch {
-    return mockBranches
+    return await branchService.getBranches()
+  } catch (e) {
+    console.error('[useBranches] Lỗi tải chi nhánh từ API:', e)
+    return []
   }
 }
 
@@ -40,10 +33,10 @@ export function useBranch(id: string | undefined) {
         return mockBranches.find((b) => b.id === id) ?? null
       }
       try {
-        const res = await branchApi.getBranchById(id)
-        return res.data
-      } catch {
-        return mockBranches.find((b) => b.id === id) ?? null
+        return await branchService.getBranchById(id)
+      } catch (e) {
+        console.error('[useBranch] Lỗi tải chi nhánh:', e)
+        return null
       }
     },
     enabled: !!id,
