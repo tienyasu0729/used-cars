@@ -1,22 +1,25 @@
 import { useQuery } from '@tanstack/react-query'
+import axiosInstance from '@/utils/axiosInstance'
 import { mockConversations, mockChatMessages, mockStaffConversations } from '@/mock'
-import { isMockMode } from '@/config/dataSource'
+import { customerExtrasApiEnabled, isMockMode } from '@/config/dataSource'
+import type { ApiResponse } from '@/types/auth.types'
+import type { ChatConversation, ChatMessage } from '@/types/chat'
 
-async function fetchConversations() {
-  if (isMockMode()) return mockConversations
+async function fetchConversations(): Promise<ChatConversation[]> {
+  if (isMockMode() || !customerExtrasApiEnabled()) return mockConversations
   try {
-    const res = await fetch('/api/chat/conversations')
-    if (res.ok) {
-      const data = await res.json()
-      return Array.isArray(data) ? data : data?.data ?? mockConversations
-    }
-  } catch {}
-  return mockConversations
+    const res = (await axiosInstance.get('/chat/conversations')) as unknown as ApiResponse<ChatConversation[]>
+    const raw = res.data
+    if (Array.isArray(raw)) return raw
+    return mockConversations
+  } catch {
+    return mockConversations
+  }
 }
 
 export function useConversations() {
   return useQuery({
-    queryKey: ['chatConversations', isMockMode()],
+    queryKey: ['chatConversations', isMockMode(), customerExtrasApiEnabled()],
     queryFn: fetchConversations,
     staleTime: isMockMode() ? Infinity : 1000 * 60,
   })
@@ -24,17 +27,19 @@ export function useConversations() {
 
 export function useStaffConversations() {
   return useQuery({
-    queryKey: ['staffChatConversations', isMockMode()],
+    queryKey: ['staffChatConversations', isMockMode(), customerExtrasApiEnabled()],
     queryFn: async () => {
-      if (isMockMode()) return mockStaffConversations
+      if (isMockMode() || !customerExtrasApiEnabled()) return mockStaffConversations
       try {
-        const res = await fetch('/api/staff/chat/conversations')
-        if (res.ok) {
-          const data = await res.json()
-          return Array.isArray(data) ? data : data?.data ?? mockStaffConversations
-        }
-      } catch {}
-      return mockStaffConversations
+        const res = (await axiosInstance.get(
+          '/staff/chat/conversations',
+        )) as unknown as ApiResponse<ChatConversation[]>
+        const raw = res.data
+        if (Array.isArray(raw)) return raw
+        return mockStaffConversations
+      } catch {
+        return mockStaffConversations
+      }
     },
     staleTime: isMockMode() ? Infinity : 1000 * 60,
   })
@@ -42,20 +47,25 @@ export function useStaffConversations() {
 
 export function useChatMessages(conversationId: string | undefined) {
   return useQuery({
-    queryKey: ['chatMessages', conversationId, isMockMode()],
+    queryKey: ['chatMessages', conversationId, isMockMode(), customerExtrasApiEnabled()],
     queryFn: async () => {
       if (!conversationId) return []
       if (isMockMode()) {
         return mockChatMessages[conversationId] ?? []
       }
+      if (!customerExtrasApiEnabled()) {
+        return mockChatMessages[conversationId] ?? []
+      }
       try {
-        const res = await fetch(`/api/chat/conversations/${conversationId}/messages`)
-        if (res.ok) {
-          const data = await res.json()
-          return Array.isArray(data) ? data : data?.data ?? []
-        }
-      } catch {}
-      return mockChatMessages[conversationId] ?? []
+        const res = (await axiosInstance.get(
+          `/chat/conversations/${conversationId}/messages`,
+        )) as unknown as ApiResponse<ChatMessage[]>
+        const raw = res.data
+        if (Array.isArray(raw)) return raw
+        return mockChatMessages[conversationId] ?? []
+      } catch {
+        return mockChatMessages[conversationId] ?? []
+      }
     },
     enabled: !!conversationId,
   })

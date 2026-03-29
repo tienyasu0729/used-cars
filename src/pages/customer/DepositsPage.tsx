@@ -108,7 +108,7 @@ export function DepositsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {displayed.map((d) => {
-                const vehicle = vehicles.find((v) => v.id === d.vehicleId)
+                const vehicle = vehicles.find((v) => String(v.id) === String(d.vehicleId))
                 const status = getStatusDisplay(d.status, d.expiryDate)
                 const txId = d.id.startsWith('DEP-') ? d.id : `DEP-${d.id}`
                 return (

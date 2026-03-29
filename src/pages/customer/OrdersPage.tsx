@@ -109,7 +109,7 @@ export function OrdersPage() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {paginated.map((o) => {
-                const vehicle = vehicles.find((v) => v.id === o.vehicleId)
+                const vehicle = vehicles.find((v) => String(v.id) === String(o.vehicleId))
                 const status = statusMap[o.status] ?? { label: o.status, className: 'bg-slate-100 text-slate-700' }
                 const detail = vehicle
                   ? `Đời ${vehicle.year} • ${vehicle.exteriorColor ?? '-'} • ${vehicle.mileage != null && vehicle.mileage === 0 ? 'Mới 100%' : formatMileage(vehicle.mileage)}`

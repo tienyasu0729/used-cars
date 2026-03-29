@@ -25,8 +25,8 @@ const navItems = [
 
 export function AdminMobileSidebar({ isOpen, onClose }: AdminMobileSidebarProps) {
   const { user } = useAuthStore()
-  const { data: transfers } = useTransfersAdmin()
-  const pendingCount = transfers?.filter((t: { status: string }) => t.status === 'pending').length ?? 0
+  const { data: transfersData } = useTransfersAdmin({ page: 0, size: 1, status: 'Pending' })
+  const pendingCount = transfersData?.meta?.totalElements ?? 0
 
   if (!isOpen) return null
 

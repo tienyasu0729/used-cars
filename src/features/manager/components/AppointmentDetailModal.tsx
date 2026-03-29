@@ -6,25 +6,45 @@ interface AppointmentDetailModalProps {
   appointment: ManagerAppointment | null
   isOpen: boolean
   onClose: () => void
+  onConfirm?: (bookingId: number) => void | Promise<void>
+  onCancelBooking?: (bookingId: number) => void | Promise<void>
+  actionBookingId?: number | null
+}
+
+function canManagerConfirm(status: string): boolean {
+  return status === 'Pending' || status === 'Rescheduled'
+}
+
+function canManagerCancel(status: string): boolean {
+  return status === 'Pending' || status === 'Confirmed' || status === 'Rescheduled'
 }
 
 export function AppointmentDetailModal({
   appointment,
   isOpen,
   onClose,
+  onConfirm,
+  onCancelBooking,
+  actionBookingId,
 }: AppointmentDetailModalProps) {
   if (!appointment) return null
+
+  const numericId = Number(appointment.id)
+  const isBusy = actionBookingId === numericId
 
   const statusVariant =
     appointment.status === 'Confirmed'
       ? 'confirmed'
-      : appointment.status === 'Pending'
+      : appointment.status === 'Pending' || appointment.status === 'Rescheduled'
         ? 'pending'
         : 'default'
 
   const statusLabels: Record<string, string> = {
     Confirmed: 'Đã Xác Nhận',
     Pending: 'Chờ Xử Lý',
+    Rescheduled: 'Đổi Lịch',
+    Completed: 'Hoàn Thành',
+    Cancelled: 'Đã Hủy',
   }
   const typeLabels: Record<string, string> = {
     test_drive: 'Lái Thử',
@@ -40,12 +60,38 @@ export function AppointmentDetailModal({
       onClose={onClose}
       title="Chi tiết lịch hẹn"
       footer={
-        <button
-          onClick={onClose}
-          className="rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-medium text-white"
-        >
-          Đóng
-        </button>
+        <>
+          {onConfirm && canManagerConfirm(appointment.status) && (
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => void onConfirm(numericId)}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {isBusy ? 'Đang xử lý...' : 'Chấp nhận / Xác nhận lịch'}
+            </button>
+          )}
+          {onCancelBooking && canManagerCancel(appointment.status) && (
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => {
+                if (!window.confirm('Hủy lịch hẹn này cho khách?')) return
+                void onCancelBooking(numericId)
+              }}
+              className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              Hủy lịch
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-medium text-white"
+          >
+            Đóng
+          </button>
+        </>
       }
     >
       <div className="space-y-4">

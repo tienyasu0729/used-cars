@@ -10,7 +10,8 @@ import type {
 } from '@/types/booking.types'
 import type { PaginatedResponse } from '@/types/vehicle.types'
 
-function normalizeTimeSlot(t: string): string {
+/** Chuẩn hóa HH:mm để so khớp slot từ API (có thể có giây). */
+export function normalizeTimeSlot(t: string): string {
   if (!t) return t
   const parts = t.split(':')
   if (parts.length >= 2) {
@@ -132,8 +133,16 @@ export const bookingService = {
   },
 
   async confirmBooking(id: number, note?: string): Promise<Booking> {
-    const res = (await axiosInstance.patch(`/bookings/${id}/confirm`, { note })) as unknown as ApiResponse<Booking>
-    return mapBooking(res.data as unknown as Record<string, unknown>)
+    try {
+      const res = (await axiosInstance.patch(`/bookings/${id}/confirm`, { note })) as unknown as ApiResponse<Booking>
+      return mapBooking(res.data as unknown as Record<string, unknown>)
+    } catch (e) {
+      const err = e as ApiErrorResponse
+      if (err.errorCode === 'INVALID_STATUS_TRANSITION') {
+        throw { ...err, message: 'Không thể xác nhận lịch ở trạng thái hiện tại.' }
+      }
+      throw e
+    }
   },
 
   async rescheduleBooking(id: number, data: RescheduleRequest): Promise<Booking> {

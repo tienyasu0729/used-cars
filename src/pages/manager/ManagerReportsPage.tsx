@@ -120,7 +120,7 @@ export function ManagerReportsPage() {
               <option>Theo tháng</option>
             </select>
           </div>
-          <div className="h-64">
+          <div className="h-64 min-h-[256px] w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>

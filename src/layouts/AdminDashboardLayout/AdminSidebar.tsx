@@ -34,8 +34,8 @@ const navItems = [
 
 export function AdminSidebar() {
   const { user } = useAuthStore()
-  const { data: transfers } = useTransfersAdmin()
-  const pendingCount = transfers?.filter((t: { status: string }) => t.status === 'pending').length ?? 0
+  const { data: transfersData } = useTransfersAdmin({ page: 0, size: 1, status: 'Pending' })
+  const pendingCount = transfersData?.meta?.totalElements ?? 0
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[220px] flex-shrink-0 flex-col bg-gray-900 lg:flex">

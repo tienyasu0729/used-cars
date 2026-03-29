@@ -79,6 +79,10 @@ const Tier32TestPanel = lazy(() =>
   import('@/dev-tools/Tier32TestPanel').then((m) => ({ default: m.Tier32TestPanel }))
 )
 
+const Tier33TestPanel = lazy(() =>
+  import('@/dev-tools/Tier33TestPanel').then((m) => ({ default: m.Tier33TestPanel }))
+)
+
 const Fallback = () => (
   <div className="flex min-h-[400px] items-center justify-center">
     <Spinner size="lg" />
@@ -93,6 +97,14 @@ const devTier32Route =
           element: (
             <Suspense fallback={<Fallback />}>
               <Tier32TestPanel />
+            </Suspense>
+          ),
+        },
+        {
+          path: 'dev/tier33-test',
+          element: (
+            <Suspense fallback={<Fallback />}>
+              <Tier33TestPanel />
             </Suspense>
           ),
         },

@@ -6,14 +6,7 @@ export function useManagerNotifications() {
   return useQuery({
     queryKey: ['manager-notifications', isMockMode()],
     queryFn: async () => {
-      if (isMockMode()) return mockManagerNotifications
-      try {
-        const res = await fetch('/api/manager/notifications')
-        if (res.ok) {
-          const data = await res.json()
-          return Array.isArray(data) ? data : data?.data ?? mockManagerNotifications
-        }
-      } catch {}
+      // Backend not implemented for this endpoint yet, return mock to avoid 401/500 errors
       return mockManagerNotifications
     },
     staleTime: isMockMode() ? Infinity : 1000 * 60,

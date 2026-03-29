@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookingCard } from '@/features/customer/components/BookingCard'
+import { BookingDetailModal } from '@/features/customer/components/BookingDetailModal'
 import { useMyBookings } from '@/hooks/useMyBookings'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useBranches } from '@/hooks/useBranches'
 import { EmptyState } from '@/components/ui'
 import { Calendar } from 'lucide-react'
 import { Button } from '@/components/ui'
+import type { Booking } from '@/types/booking.types'
 
 const tabs = [
   { key: 'all', label: 'Tất Cả' },
@@ -17,7 +19,28 @@ const tabs = [
 
 export function BookingsPage() {
   const [activeTab, setActiveTab] = useState('all')
-  const { bookings: allBookings, isLoading, isError } = useMyBookings()
+  const { bookings: allBookings, isLoading, isError, cancelBooking } = useMyBookings()
+  const [cancellingId, setCancellingId] = useState<number | null>(null)
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+
+  const handleCancelBooking = useCallback(
+    async (id: number) => {
+      setCancellingId(id)
+      try {
+        await cancelBooking(id)
+        setSelectedBooking(null)
+      } catch (e) {
+        const msg =
+          e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
+            ? (e as { message: string }).message
+            : 'Không thể hủy lịch. Vui lòng thử lại.'
+        window.alert(msg)
+      } finally {
+        setCancellingId(null)
+      }
+    },
+    [cancelBooking],
+  )
   const { vehicles } = useVehicles()
   const { data: branches } = useBranches()
 
@@ -30,6 +53,13 @@ export function BookingsPage() {
           if (activeTab === 'cancelled') return b.status === 'Cancelled'
           return true
         })
+
+  const selectedVehicle = selectedBooking
+    ? vehicles.find((v) => v.id === selectedBooking.vehicleId) ?? null
+    : null
+  const selectedBranch = selectedBooking
+    ? branches?.find((br) => Number(br.id) === selectedBooking.branchId) ?? null
+    : null
 
   return (
     <div className="space-y-6">
@@ -77,10 +107,29 @@ export function BookingsPage() {
           {filtered.map((b) => {
             const vehicle = vehicles.find((v) => v.id === b.vehicleId)
             const branch = branches?.find((br) => Number(br.id) === b.branchId)
-            return <BookingCard key={b.id} booking={b} vehicle={vehicle} branch={branch} />
+            return (
+              <BookingCard
+                key={b.id}
+                booking={b}
+                vehicle={vehicle}
+                branch={branch}
+                onViewDetail={setSelectedBooking}
+              />
+            )
           })}
         </div>
       )}
+
+      {/* Booking Detail Modal */}
+      <BookingDetailModal
+        booking={selectedBooking}
+        vehicle={selectedVehicle}
+        branch={selectedBranch}
+        isOpen={selectedBooking !== null}
+        onClose={() => setSelectedBooking(null)}
+        onCancelBooking={handleCancelBooking}
+        isCancelling={cancellingId === selectedBooking?.id}
+      />
     </div>
   )
 }

@@ -106,7 +106,7 @@ export function AdminDashboardPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h4 className="mb-2 text-lg font-semibold text-slate-900">So sánh chi nhánh</h4>
           <p className="mb-4 text-sm text-slate-500">Doanh thu (tỷ ₫)</p>
-          <div className="h-64">
+          <div className="h-64 min-h-[256px] w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />

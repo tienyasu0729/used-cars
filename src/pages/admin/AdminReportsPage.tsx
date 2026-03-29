@@ -39,7 +39,7 @@ export function AdminReportsPage() {
       </div>
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h4 className="mb-4 text-lg font-semibold text-slate-900">Doanh thu theo chi nhánh</h4>
-        <div className="h-80">
+        <div className="h-80 min-h-[320px] w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
@@ -53,7 +53,7 @@ export function AdminReportsPage() {
       </div>
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h4 className="mb-4 text-lg font-semibold text-slate-900">Xe bán theo chi nhánh</h4>
-        <div className="h-64">
+        <div className="h-64 min-h-[256px] w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={revenueData} layout="vertical" margin={{ left: 60 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />

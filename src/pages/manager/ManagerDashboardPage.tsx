@@ -28,14 +28,14 @@ const chartData = [
 
 export function ManagerDashboardPage() {
   const { data: vehicles } = useManagerVehicles()
-  const { data: transfers } = useTransfers()
+  const { data: transfersData } = useTransfers({ page: 0, size: 1, status: 'Pending' })
   const { data: appointments } = useAppointments()
   const { data: reports } = useBranchReports()
 
   const totalVehicles = vehicles?.length ?? 0
   const availableVehicles = vehicles?.filter((v) => v.status === 'Available').length ?? 0
   const monthlySales = 48
-  const pendingTransfers = transfers?.filter((t) => t.status === 'pending').length ?? 0
+  const pendingTransfers = transfersData?.meta?.totalElements ?? 0
   const brandData = reports?.salesByBrand ?? []
 
   const kpis = [
@@ -99,7 +99,7 @@ export function ManagerDashboardPage() {
                 <option>Cả Năm</option>
               </select>
             </div>
-            <div className="h-[280px] w-full">
+            <div className="h-[280px] min-h-[280px] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>

@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Download, Plus, Calendar, List, Target, UserPlus, DollarSign } from 'lucide-react'
 import { useAppointments } from '@/hooks/useAppointments'
+import { useManagerBookingMutations } from '@/hooks/useManagerBookingMutations'
 import { AppointmentDetailModal } from '@/features/manager/components'
 import { formatPrice } from '@/utils/format'
+import { useAuthStore } from '@/store/authStore'
 import type { ManagerAppointment } from '@/mock/mockManagerData'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -16,6 +18,24 @@ const TYPE_LABELS: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   Confirmed: 'Đã Xác Nhận',
   Pending: 'Chờ Xử Lý',
+  Rescheduled: 'Đổi Lịch',
+  Completed: 'Hoàn Thành',
+  Cancelled: 'Đã Hủy',
+}
+
+function canManagerConfirm(status: string): boolean {
+  return status === 'Pending' || status === 'Rescheduled'
+}
+
+function canManagerCancel(status: string): boolean {
+  return status === 'Pending' || status === 'Confirmed' || status === 'Rescheduled'
+}
+
+function statusBadgeClass(status: string): string {
+  if (status === 'Confirmed' || status === 'Completed') return 'bg-green-100 text-green-700'
+  if (status === 'Pending' || status === 'Rescheduled') return 'bg-amber-100 text-amber-700'
+  if (status === 'Cancelled') return 'bg-slate-200 text-slate-600'
+  return 'bg-slate-100 text-slate-600'
 }
 
 function getWeekBounds() {
@@ -32,7 +52,10 @@ function getWeekBounds() {
 }
 
 export function ManagerAppointmentsPage() {
+  const { user } = useAuthStore()
+  const branchId = typeof user?.branchId === 'number' ? user.branchId : 1
   const { data: appointments, isLoading } = useAppointments()
+  const { confirmBooking, cancelBooking, actionBookingId } = useManagerBookingMutations(branchId)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [selected, setSelected] = useState<ManagerAppointment | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -41,6 +64,41 @@ export function ManagerAppointmentsPage() {
     setSelected(a)
     setDetailOpen(true)
   }
+
+  const apiErrorMessage = (e: unknown): string => {
+    if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string') {
+      return (e as { message: string }).message
+    }
+    return 'Thao tác thất bại. Vui lòng thử lại.'
+  }
+
+  const handleConfirm = useCallback(
+    async (id: number) => {
+      try {
+        await confirmBooking(id)
+      } catch (e) {
+        window.alert(apiErrorMessage(e))
+      }
+    },
+    [confirmBooking],
+  )
+
+  const handleCancelBooking = useCallback(
+    async (id: number) => {
+      try {
+        await cancelBooking(id)
+      } catch (e) {
+        window.alert(apiErrorMessage(e))
+      }
+    },
+    [cancelBooking],
+  )
+
+  useEffect(() => {
+    if (!selected || !appointments?.length) return
+    const fresh = appointments.find((a) => a.id === selected.id)
+    if (fresh && fresh.status !== selected.status) setSelected(fresh)
+  }, [appointments, selected])
 
   if (isLoading) {
     return (
@@ -193,7 +251,7 @@ export function ManagerAppointmentsPage() {
                     <span className="text-xs text-slate-400">Nhân viên phụ trách</span>
                     <span className="text-sm font-semibold">{a.staffName}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-bold ${
                         a.type === 'test_drive'
@@ -203,15 +261,37 @@ export function ManagerAppointmentsPage() {
                     >
                       {TYPE_LABELS[a.type] ?? a.type}
                     </span>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold ${
-                        a.status === 'Confirmed'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-amber-100 text-amber-700'
-                      }`}
-                    >
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusBadgeClass(a.status)}`}>
                       {STATUS_LABELS[a.status] ?? a.status}
                     </span>
+                    <div
+                      className="flex flex-wrap gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {canManagerConfirm(a.status) && (
+                        <button
+                          type="button"
+                          disabled={actionBookingId === Number(a.id)}
+                          onClick={() => void handleConfirm(Number(a.id))}
+                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                          {actionBookingId === Number(a.id) ? '...' : 'Xác nhận'}
+                        </button>
+                      )}
+                      {canManagerCancel(a.status) && (
+                        <button
+                          type="button"
+                          disabled={actionBookingId === Number(a.id)}
+                          onClick={() => {
+                            if (!window.confirm('Hủy lịch hẹn này cho khách?')) return
+                            void handleCancelBooking(Number(a.id))
+                          }}
+                          className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          Hủy
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -229,6 +309,9 @@ export function ManagerAppointmentsPage() {
         appointment={selected}
         isOpen={detailOpen}
         onClose={() => setDetailOpen(false)}
+        onConfirm={handleConfirm}
+        onCancelBooking={handleCancelBooking}
+        actionBookingId={actionBookingId}
       />
     </div>
   )

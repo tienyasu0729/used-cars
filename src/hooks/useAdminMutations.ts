@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '@/services/adminApi'
+import { transferService } from '@/services/transfer.service'
 import type { AdminUser } from '@/mock/mockAdminData'
 
 export function useCreateRole() {
@@ -30,16 +31,22 @@ export function useUpdateUser() {
 export function useApproveTransfer() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, note }: { id: string; note?: string }) => adminApi.approveTransfer(id, note),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-transfers'] }),
+    mutationFn: ({ id, note }: { id: number; note: string }) => transferService.approveTransfer(id, { note }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-transfers'] })
+      qc.invalidateQueries({ queryKey: ['manager-transfers'] })
+    },
   })
 }
 
 export function useRejectTransfer() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) => adminApi.rejectTransfer(id, reason),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-transfers'] }),
+    mutationFn: ({ id, note }: { id: number; note: string }) => transferService.rejectTransfer(id, { note }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-transfers'] })
+      qc.invalidateQueries({ queryKey: ['manager-transfers'] })
+    },
   })
 }
 

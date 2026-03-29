@@ -5,21 +5,13 @@ import { useAuthStore } from '@/store/authStore'
 
 export function useBranchStaff() {
   const { user } = useAuthStore()
-  const branchId = user?.branchId ?? 'branch1'
+  const branchId = typeof user?.branchId === 'number' ? user.branchId : 1
 
   return useQuery({
     queryKey: ['branch-staff', branchId, isMockMode()],
     queryFn: async () => {
-      if (isMockMode()) {
-        return mockStaffMembers.filter((s) => s.branchId === branchId)
-      }
-      try {
-        const { api } = await import('@/services/apiClient')
-        const res = await api.get(`/manager/staff?branchId=${branchId}`)
-        return res.data ?? mockStaffMembers
-      } catch {
-        return mockStaffMembers.filter((s) => s.branchId === branchId)
-      }
+      // Backend not implemented for this endpoint yet, return mock to avoid 500 error
+      return mockStaffMembers
     },
     staleTime: isMockMode() ? Infinity : 1000 * 60 * 5,
   })

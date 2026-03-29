@@ -23,13 +23,15 @@ export function useMyBookings() {
   const cancelBooking = useCallback(
     async (id: number) => {
       if (isMockMode()) {
-        queryClient.invalidateQueries({ queryKey: ['my-bookings'] })
+        queryClient.setQueryData<Booking[]>(['my-bookings', true], (old) =>
+          (old ?? []).map((b) => (b.id === id ? { ...b, status: 'Cancelled' } : b)),
+        )
         return
       }
       await bookingService.cancelBooking(id)
       await queryClient.invalidateQueries({ queryKey: ['my-bookings'] })
     },
-    [queryClient]
+    [queryClient],
   )
 
   return {

@@ -1,14 +1,15 @@
-import { Link } from 'react-router-dom'
 import type { Booking } from '@/types/booking.types'
 import type { Vehicle } from '@/types/vehicle.types'
 import type { Branch } from '@/types'
 import { formatDate } from '@/utils/format'
 import { Badge } from '@/components/ui'
+import { ChevronRight } from 'lucide-react'
 
 interface BookingCardProps {
   booking: Booking
   vehicle?: Vehicle | null
   branch?: Branch | null
+  onViewDetail?: (booking: Booking) => void
 }
 
 const statusMap: Record<string, { variant: 'pending' | 'confirmed' | 'sold' | 'default'; label: string }> = {
@@ -19,7 +20,12 @@ const statusMap: Record<string, { variant: 'pending' | 'confirmed' | 'sold' | 'd
   Cancelled: { variant: 'default', label: 'Đã Hủy' },
 }
 
-export function BookingCard({ booking, vehicle, branch }: BookingCardProps) {
+export function BookingCard({
+  booking,
+  vehicle,
+  branch,
+  onViewDetail,
+}: BookingCardProps) {
   const status = statusMap[booking.status] ?? { variant: 'default', label: booking.status }
   const img0 = vehicle?.images?.[0]
   const imageUrl =
@@ -31,7 +37,11 @@ export function BookingCard({ booking, vehicle, branch }: BookingCardProps) {
   const branchName = branch?.name ?? booking.branchName
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <button
+      type="button"
+      onClick={() => onViewDetail?.(booking)}
+      className="group flex w-full cursor-pointer items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all duration-200 hover:border-[#1A3C6E]/30 hover:shadow-md"
+    >
       <div className="h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-200">
         <img src={imageUrl} alt="" className="h-full w-full object-cover" />
       </div>
@@ -42,12 +52,7 @@ export function BookingCard({ booking, vehicle, branch }: BookingCardProps) {
         </p>
       </div>
       <Badge variant={status.variant}>{status.label}</Badge>
-      <Link
-        to={`/dashboard/bookings`}
-        className="shrink-0 text-sm font-medium text-[#1A3C6E] hover:underline"
-      >
-        Xem chi tiết
-      </Link>
-    </div>
+      <ChevronRight className="h-5 w-5 shrink-0 text-slate-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[#1A3C6E]" />
+    </button>
   )
 }

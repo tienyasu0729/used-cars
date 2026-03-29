@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Modal, Button } from '@/components/ui'
-import type { AdminTransfer } from '@/mock/mockAdminData'
+import type { TransferRequest } from '@/types/transfer.types'
 
 interface TransferApprovalModalProps {
-  transfer: AdminTransfer | null
+  transfer: TransferRequest | null
   isOpen: boolean
   onClose: () => void
-  onApprove: (id: string, note?: string) => Promise<void>
-  onReject: (id: string, reason: string) => Promise<void>
+  onApprove: (id: number, note: string) => Promise<void>
+  onReject: (id: number, note: string) => Promise<void>
   initialMode?: 'confirm' | 'reject'
 }
 
@@ -20,18 +20,23 @@ export function TransferApprovalModal({
   initialMode = 'confirm',
 }: TransferApprovalModalProps) {
   const [mode, setMode] = useState<'confirm' | 'reject'>(initialMode)
-  const [reason, setReason] = useState('')
+  const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (isOpen) setMode(initialMode)
+    if (isOpen) {
+      setMode(initialMode)
+      setNote('')
+    }
   }, [isOpen, initialMode])
 
+  const valid = note.trim().length >= 5
+
   const handleApprove = async () => {
-    if (!transfer) return
+    if (!transfer || !valid) return
     setLoading(true)
     try {
-      await onApprove(transfer.id)
+      await onApprove(transfer.id, note.trim())
       onClose()
     } finally {
       setLoading(false)
@@ -39,10 +44,10 @@ export function TransferApprovalModal({
   }
 
   const handleReject = async () => {
-    if (!transfer || !reason.trim()) return
+    if (!transfer || !valid) return
     setLoading(true)
     try {
-      await onReject(transfer.id, reason)
+      await onReject(transfer.id, note.trim())
       onClose()
     } finally {
       setLoading(false)
@@ -54,20 +59,28 @@ export function TransferApprovalModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={() => { setMode('confirm'); setReason(''); onClose() }}
+      onClose={() => {
+        setMode('confirm')
+        setNote('')
+        onClose()
+      }}
       title={mode === 'confirm' ? 'Xác nhận duyệt điều chuyển' : 'Từ chối điều chuyển'}
       footer={
         mode === 'confirm' ? (
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>Hủy</Button>
-            <Button variant="primary" onClick={handleApprove} loading={loading}>
+            <Button variant="outline" onClick={onClose}>
+              Hủy
+            </Button>
+            <Button variant="primary" onClick={handleApprove} loading={loading} disabled={!valid}>
               Xác nhận duyệt
             </Button>
           </div>
         ) : (
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setMode('confirm')}>Quay lại</Button>
-            <Button variant="danger" onClick={handleReject} loading={loading} disabled={!reason.trim()}>
+            <Button variant="outline" onClick={() => setMode('confirm')}>
+              Quay lại
+            </Button>
+            <Button variant="danger" onClick={handleReject} loading={loading} disabled={!valid}>
               Từ chối
             </Button>
           </div>
@@ -75,29 +88,40 @@ export function TransferApprovalModal({
       }
     >
       {mode === 'confirm' ? (
-        <p className="text-slate-600">
-          Duyệt điều chuyển xe <strong>{transfer.vehicleName}</strong> từ <strong>{transfer.fromBranch}</strong> sang <strong>{transfer.toBranch}</strong>?
-        </p>
+        <div className="space-y-4">
+          <p className="text-slate-600">
+            Duyệt điều chuyển xe <strong>{transfer.vehicleTitle}</strong> từ{' '}
+            <strong>{transfer.fromBranchName}</strong> sang <strong>{transfer.toBranchName}</strong>?
+          </p>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú (bắt buộc, tối thiểu 5 ký tự)</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ví dụ: Approve từ admin panel"
+              rows={3}
+              maxLength={500}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
       ) : (
         <div className="space-y-4">
-          <p className="text-slate-600">Nhập lý do từ chối (bắt buộc):</p>
+          <p className="text-slate-600">Nhập lý do từ chối (tối thiểu 5 ký tự):</p>
           <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Lý do từ chối..."
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Lý do từ chối…"
             rows={3}
+            maxLength={500}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
           />
         </div>
       )}
       {mode === 'confirm' && (
         <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setMode('reject')}
-            className="text-sm text-red-500 hover:underline"
-          >
-            Từ chối điều chuyển
+          <button type="button" onClick={() => setMode('reject')} className="text-sm text-red-500 hover:underline">
+            Chuyển sang từ chối
           </button>
         </div>
       )}

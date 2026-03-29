@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAvailableSlots } from '@/hooks/useAvailableSlots'
 import { useCreateBooking } from '@/hooks/useCreateBooking'
+import { normalizeTimeSlot } from '@/services/booking.service'
 import { SlotPicker } from './SlotPicker'
 
 interface BookingFormProps {
@@ -14,8 +15,12 @@ function addDays(base: Date, n: number): Date {
   return d
 }
 
-function toYmd(d: Date): string {
-  return d.toISOString().slice(0, 10)
+/** Ngày theo lịch local (tránh lệch ngày so với UTC khi dùng toISOString). */
+function toYmdLocal(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
@@ -23,10 +28,10 @@ export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
   const { createBooking, isSubmitting, error, setError } = useCreateBooking()
 
   const today = useMemo(() => new Date(), [])
-  const min = toYmd(today)
-  const max = toYmd(addDays(today, 30))
+  const min = useMemo(() => toYmdLocal(today), [today])
+  const max = useMemo(() => toYmdLocal(addDays(today, 30)), [today])
 
-  const [bookingDate, setBookingDate] = useState(min)
+  const [bookingDate, setBookingDate] = useState(() => toYmdLocal(new Date()))
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [note, setNote] = useState('')
 
@@ -38,11 +43,26 @@ export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
     setSelectedSlot(null)
   }, [bookingDate, branchId])
 
+  useEffect(() => {
+    if (!error) return
+    if (error.includes('đầy') || error.includes('hết chỗ')) {
+      void fetchSlots(branchId, bookingDate)
+    }
+  }, [error, branchId, bookingDate, fetchSlots])
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     if (!selectedSlot) {
       setError('Vui lòng chọn khung giờ.')
+      return
+    }
+    const fresh = await fetchSlots(branchId, bookingDate)
+    const picked = fresh.find(
+      (s) => normalizeTimeSlot(s.slotTime) === normalizeTimeSlot(selectedSlot),
+    )
+    if (!picked || picked.availableCount <= 0) {
+      setError('Khung giờ này vừa hết chỗ. Vui lòng chọn giờ khác.')
       return
     }
     await createBooking({
