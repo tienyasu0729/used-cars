@@ -6,7 +6,6 @@ import { CustomerDashboardLayout } from '@/layouts/CustomerDashboardLayout'
 import { StaffDashboardLayout } from '@/layouts/StaffDashboardLayout'
 import { ManagerDashboardLayout } from '@/layouts/ManagerDashboardLayout'
 import { AdminDashboardLayout } from '@/layouts/AdminDashboardLayout'
-import { Tier31TestPanel } from '@/dev-tools/Tier31TestPanel'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ScrollToTop } from '@/components/common/ScrollToTop'
 import { Spinner } from '@/components/ui'
@@ -75,41 +74,11 @@ const AdminReportsPage = lazy(() => import('@/pages/admin').then((m) => ({ defau
 const AdminLogsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminLogsPage })))
 const AdminNotificationsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminNotificationsPage })))
 
-const Tier32TestPanel = lazy(() =>
-  import('@/dev-tools/Tier32TestPanel').then((m) => ({ default: m.Tier32TestPanel }))
-)
-
-const Tier33TestPanel = lazy(() =>
-  import('@/dev-tools/Tier33TestPanel').then((m) => ({ default: m.Tier33TestPanel }))
-)
-
 const Fallback = () => (
   <div className="flex min-h-[400px] items-center justify-center">
     <Spinner size="lg" />
   </div>
 )
-
-const devTier32Route =
-  import.meta.env.DEV
-    ? ([
-        {
-          path: 'dev/tier32-test',
-          element: (
-            <Suspense fallback={<Fallback />}>
-              <Tier32TestPanel />
-            </Suspense>
-          ),
-        },
-        {
-          path: 'dev/tier33-test',
-          element: (
-            <Suspense fallback={<Fallback />}>
-              <Tier33TestPanel />
-            </Suspense>
-          ),
-        },
-      ] as const)
-    : ([] as const)
 
 const router = createBrowserRouter([
   {
@@ -128,7 +97,6 @@ const router = createBrowserRouter([
       { path: 'news', element: <Suspense fallback={<Fallback />}><AboutPage /></Suspense> },
       { path: 'terms', element: <Suspense fallback={<Fallback />}><TermsPage /></Suspense> },
       { path: 'privacy', element: <Suspense fallback={<Fallback />}><PrivacyPage /></Suspense> },
-      ...devTier32Route,
     ],
   },
   {
@@ -238,7 +206,6 @@ const router = createBrowserRouter([
       { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
     ],
   },
-  ...(import.meta.env.DEV ? [{ path: '/dev/tier31-test', element: <Tier31TestPanel /> }] : []),
   { path: '*', element: <Navigate to="/" replace /> },
 ])
 
