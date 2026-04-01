@@ -3,6 +3,7 @@
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { interactionService } from '@/services/interaction.service'
 import { useAuthStore } from '@/store/authStore'
 import type { SavedVehicleItem } from '@/types/interaction.types'
@@ -31,6 +32,8 @@ function savedItemToVehicle(s: SavedVehicleItem): Vehicle {
 export interface UseSavedVehiclesReturn {
   /** Danh sách dạng Vehicle (tương thích SavedVehicleGrid / VehicleCard) */
   savedVehicles: Vehicle[]
+  /** Bản gốc từ API (có savedAt) — dùng cho thống kê dashboard */
+  savedRecords: SavedVehicleItem[]
   /** Alias cho code cũ dùng `data` */
   data: Vehicle[] | undefined
   savedIds: Set<number>
@@ -45,6 +48,7 @@ export interface UseSavedVehiclesReturn {
 
 export function useSavedVehicles(): UseSavedVehiclesReturn {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { isAuthenticated } = useAuthStore()
   const [items, setItems] = useState<SavedVehicleItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -85,6 +89,7 @@ export function useSavedVehicles(): UseSavedVehiclesReturn {
       try {
         await interactionService.saveVehicle(vehicleId)
         await fetchSaved()
+        void queryClient.invalidateQueries({ queryKey: ['customer-stats'] })
       } catch (err: unknown) {
         const code = (err as { errorCode?: string })?.errorCode
         if (code === 'VEHICLE_ALREADY_SAVED') {
@@ -94,7 +99,7 @@ export function useSavedVehicles(): UseSavedVehiclesReturn {
         }
       }
     },
-    [isAuthenticated, navigate, fetchSaved]
+    [isAuthenticated, navigate, fetchSaved, queryClient]
   )
 
   const unsaveVehicle = useCallback(
@@ -104,6 +109,7 @@ export function useSavedVehicles(): UseSavedVehiclesReturn {
       setItems((prev) => prev.filter((p) => p.vehicleId !== vehicleId))
       try {
         await interactionService.unsaveVehicle(vehicleId)
+        void queryClient.invalidateQueries({ queryKey: ['customer-stats'] })
       } catch (err: unknown) {
         setItems(backup)
         const code = (err as { errorCode?: string })?.errorCode
@@ -114,11 +120,12 @@ export function useSavedVehicles(): UseSavedVehiclesReturn {
         }
       }
     },
-    [isAuthenticated, items]
+    [isAuthenticated, items, queryClient]
   )
 
   return {
     savedVehicles,
+    savedRecords: items,
     data: savedVehicles,
     savedIds,
     isLoading,

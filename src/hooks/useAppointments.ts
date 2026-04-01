@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { mockAppointments, type ManagerAppointment } from '@/mock/mockManagerData'
-import { isMockMode } from '@/config/dataSource'
+import type { ManagerAppointment } from '@/mock/mockManagerData'
 import { useAuthStore } from '@/store/authStore'
 import { bookingService } from '@/services/booking.service'
 
@@ -9,11 +8,8 @@ export function useAppointments() {
   const branchId = typeof user?.branchId === 'number' ? user.branchId : 1
 
   return useQuery({
-    queryKey: ['manager-appointments', branchId, isMockMode()],
+    queryKey: ['manager-appointments', branchId],
     queryFn: async (): Promise<ManagerAppointment[]> => {
-      if (isMockMode()) {
-        return mockAppointments
-      }
       try {
         const res = await bookingService.getStaffBookings({ branchId, size: 50, status: 'all' })
         
@@ -35,6 +31,6 @@ export function useAppointments() {
         return []
       }
     },
-    staleTime: isMockMode() ? Infinity : 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 2,
   })
 }

@@ -1,14 +1,38 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Car, Handshake, Calendar, Shield, FileText, Building2, Wrench, Search, Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
+import { BranchCard } from '@/features/branches/components/BranchCard'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useBranches } from '@/hooks/useBranches'
 import { RecentlyViewedWidget } from '@/components/vehicles/RecentlyViewedWidget'
 import { Button } from '@/components/ui'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
+const PRICE_OPTIONS = [
+  { label: 'Khoảng giá', minPrice: '', maxPrice: '' },
+  { label: 'Dưới 500tr', minPrice: '', maxPrice: '500000000' },
+  { label: '500tr - 1 tỷ', minPrice: '500000000', maxPrice: '1000000000' },
+  { label: 'Trên 1 tỷ', minPrice: '1000000000', maxPrice: '' },
+]
+
 export function HomePage() {
   useDocumentTitle('Chợ xe ô tô Đà Nẵng')
+  const navigate = useNavigate()
+  const [heroKeyword, setHeroKeyword] = useState('')
+  const [heroPriceIdx, setHeroPriceIdx] = useState(0)
+
+  const handleHeroSearch = () => {
+    const params = new URLSearchParams()
+    const q = heroKeyword.trim()
+    if (q) params.set('q', q)
+    const opt = PRICE_OPTIONS[heroPriceIdx]
+    if (opt.minPrice) params.set('minPrice', opt.minPrice)
+    if (opt.maxPrice) params.set('maxPrice', opt.maxPrice)
+    const qs = params.toString()
+    navigate(qs ? `/vehicles?${qs}` : '/vehicles')
+  }
+
   const { vehicles: featuredVehicles, isLoading: featuredLoading } = useVehicles({
     page: 0,
     size: 9,
@@ -47,27 +71,43 @@ export function HomePage() {
           <p className="mb-10 mx-auto max-w-2xl text-lg text-white/90">
             Hệ thống mua bán xe uy tín hàng đầu khu vực miền Trung với hơn 10 năm kinh nghiệm.
           </p>
-          <div className="mx-auto flex max-w-3xl flex-col gap-2 rounded-xl bg-white p-2 shadow-2xl md:flex-row">
+          <form
+            className="mx-auto flex max-w-3xl flex-col gap-2 rounded-xl bg-white p-2 shadow-2xl md:flex-row"
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleHeroSearch()
+            }}
+          >
             <div className="flex flex-1 items-center border-b border-slate-200 px-4 py-3 md:border-b-0 md:border-r">
               <Search className="mr-2 h-5 w-5 shrink-0 text-slate-400" />
               <input
                 type="text"
+                value={heroKeyword}
+                onChange={(e) => setHeroKeyword(e.target.value)}
                 placeholder="Hãng xe, từ khóa..."
-                className="w-full border-none bg-transparent p-0 text-sm focus:ring-0"
+                className="w-full border-none bg-transparent p-0 text-sm focus:outline-none focus:ring-0"
               />
             </div>
             <div className="flex flex-1 items-center border-b border-slate-200 px-4 py-3 md:border-b-0 md:border-r">
-              <select className="w-full appearance-none border-none bg-transparent p-0 text-sm focus:ring-0">
-                <option>Khoảng giá</option>
-                <option>Dưới 500tr</option>
-                <option>500tr - 1 tỷ</option>
-                <option>Trên 1 tỷ</option>
+              <select
+                value={heroPriceIdx}
+                onChange={(e) => setHeroPriceIdx(Number(e.target.value))}
+                className="w-full appearance-none border-none bg-transparent p-0 text-sm focus:outline-none focus:ring-0 outline-none"
+              >
+                {PRICE_OPTIONS.map((opt, i) => (
+                  <option key={i} value={i}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <button className="rounded-lg bg-[#1A3C6E] px-8 py-3 text-sm font-bold text-white transition-all hover:bg-[#1A3C6E]/90">
+            <button
+              type="submit"
+              className="rounded-lg bg-[#1A3C6E] px-8 py-3 text-sm font-bold text-white transition-all hover:bg-[#1A3C6E]/90"
+            >
               Tìm kiếm
             </button>
-          </div>
+          </form>
         </div>
       </section>
 
@@ -178,28 +218,27 @@ export function HomePage() {
                   ? `Chúng tôi hiện có ${branchesList.length} điểm giao dịch, giúp khách hàng dễ dàng tiếp cận và trải nghiệm thực tế những mẫu xe mong muốn.`
                   : 'Hiện chưa có chi nhánh được công bố. Vui lòng quay lại sau hoặc liên hệ hotline để được hỗ trợ.'}
             </p>
-            <div className="space-y-6">
-              {branchesLoading && (
-                <p className="text-sm text-slate-500">Đang tải chi nhánh…</p>
-              )}
-              {!branchesLoading &&
-                branchesList.map((b, i) => (
-                  <Link
-                    key={b.id}
-                    to={`/branches/${b.id}`}
-                    className="flex gap-4 rounded-xl border border-transparent p-4 transition-colors hover:border-slate-200 hover:bg-slate-50"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A3C6E]/10 text-[#1A3C6E]">
-                      {i + 1}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-gray-800">{b.name}</h4>
-                      <p className="mt-1 text-sm text-slate-500">{b.address}</p>
-                      <p className="mt-1 text-sm font-semibold text-[#1A3C6E]">Hotline: {b.phone}</p>
-                    </div>
-                  </Link>
+            {branchesLoading ? (
+              <div className="grid gap-6 sm:grid-cols-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-72 animate-pulse rounded-xl bg-slate-200" />
                 ))}
-            </div>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2">
+                {branchesList.map((b) => (
+                  <BranchCard key={b.id} branch={b} />
+                ))}
+              </div>
+            )}
+            {!branchesLoading && branchesList.length > 0 && (
+              <Link
+                to="/branches"
+                className="mt-6 inline-flex text-sm font-bold text-[#1A3C6E] hover:underline"
+              >
+                Xem tất cả chi nhánh →
+              </Link>
+            )}
           </div>
           <div className="relative h-[450px] overflow-hidden rounded-2xl shadow-2xl">
             <iframe

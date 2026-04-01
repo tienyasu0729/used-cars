@@ -36,8 +36,8 @@ export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
   const [note, setNote] = useState('')
 
   useEffect(() => {
-    fetchSlots(branchId, bookingDate)
-  }, [branchId, bookingDate, fetchSlots])
+    void fetchSlots(branchId, bookingDate, vehicleId)
+  }, [branchId, bookingDate, vehicleId, fetchSlots])
 
   useEffect(() => {
     setSelectedSlot(null)
@@ -45,10 +45,17 @@ export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
 
   useEffect(() => {
     if (!error) return
-    if (error.includes('đầy') || error.includes('hết chỗ')) {
-      void fetchSlots(branchId, bookingDate)
+    const shouldRefresh =
+      error.includes('đầy') ||
+      error.includes('hết chỗ') ||
+      error.includes('lịch hẹn') ||
+      error.includes('khung giờ') ||
+      error.includes('trùng') ||
+      error.includes('xung đột')
+    if (shouldRefresh) {
+      void fetchSlots(branchId, bookingDate, vehicleId)
     }
-  }, [error, branchId, bookingDate, fetchSlots])
+  }, [error, branchId, bookingDate, vehicleId, fetchSlots])
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,7 +64,7 @@ export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
       setError('Vui lòng chọn khung giờ.')
       return
     }
-    const fresh = await fetchSlots(branchId, bookingDate)
+    const fresh = await fetchSlots(branchId, bookingDate, vehicleId)
     const picked = fresh.find(
       (s) => normalizeTimeSlot(s.slotTime) === normalizeTimeSlot(selectedSlot),
     )

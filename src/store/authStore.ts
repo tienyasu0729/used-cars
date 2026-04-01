@@ -37,6 +37,8 @@ interface AuthState {
   initializeFromStorage: () => void
   /** Set trạng thái loading (dùng trong hooks khi gọi API) */
   setLoading: (loading: boolean) => void
+  /** Gộp dữ liệu profile sau GET/PUT /users/me hoặc đổi avatar */
+  patchUser: (partial: Partial<UserProfile>) => void
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -94,6 +96,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setLoading: (loading) => {
     set({ isLoading: loading })
+  },
+
+  patchUser: (partial) => {
+    const prev = get().user
+    if (!prev) return
+    const next: UserProfile = { ...prev, ...partial }
+    localStorage.setItem(USER_KEY, JSON.stringify(next))
+    set({ user: next })
   },
 }))
 

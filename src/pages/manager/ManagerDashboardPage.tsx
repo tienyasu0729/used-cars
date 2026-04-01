@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import type { LucideIcon } from 'lucide-react'
 import { Car, Package, TrendingUp, Calendar, Download, CalendarDays } from 'lucide-react'
 import { useManagerVehicles } from '@/hooks/useManagerVehicles'
 import { useTransfers } from '@/hooks/useTransfers'
@@ -38,11 +39,41 @@ export function ManagerDashboardPage() {
   const pendingTransfers = transfersData?.meta?.totalElements ?? 0
   const brandData = reports?.salesByBrand ?? []
 
-  const kpis = [
-    { icon: Package, label: 'Tổng xe trong chi nhánh', value: totalVehicles },
-    { icon: Car, label: 'Xe đang bán', value: availableVehicles },
-    { icon: TrendingUp, label: 'Doanh số tháng', value: monthlySales },
-    { icon: Calendar, label: 'Yêu cầu điều chuyển chờ', value: pendingTransfers },
+  const kpis: {
+    icon: LucideIcon
+    label: string
+    value: string | number
+    to: string
+    ariaLabel: string
+  }[] = [
+    {
+      icon: Package,
+      label: 'Tổng xe trong chi nhánh',
+      value: totalVehicles,
+      to: '/manager/vehicles',
+      ariaLabel: 'Mở quản lý kho xe — tổng xe trong chi nhánh',
+    },
+    {
+      icon: Car,
+      label: 'Xe đang bán',
+      value: availableVehicles,
+      to: '/manager/vehicles?status=Available',
+      ariaLabel: 'Mở quản lý kho xe — lọc xe đang bán',
+    },
+    {
+      icon: TrendingUp,
+      label: 'Doanh số tháng',
+      value: monthlySales,
+      to: '/manager/reports',
+      ariaLabel: 'Mở báo cáo chi nhánh',
+    },
+    {
+      icon: Calendar,
+      label: 'Yêu cầu điều chuyển chờ',
+      value: pendingTransfers,
+      to: '/manager/transfers?status=Pending',
+      ariaLabel: 'Mở điều chuyển — yêu cầu chờ duyệt',
+    },
   ]
 
   return (
@@ -72,18 +103,20 @@ export function ManagerDashboardPage() {
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi) => (
-          <div
+          <Link
             key={kpi.label}
-            className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+            to={kpi.to}
+            aria-label={kpi.ariaLabel}
+            className="block rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-[#1A3C6E]/35 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1A3C6E]"
           >
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm font-medium uppercase tracking-wider text-slate-500">
                 {kpi.label}
               </p>
-              <kpi.icon className="h-5 w-5 text-[#1A3C6E]" />
+              <kpi.icon className="h-5 w-5 shrink-0 text-[#1A3C6E]" aria-hidden />
             </div>
             <h3 className="text-3xl font-bold text-slate-900">{kpi.value}</h3>
-          </div>
+          </Link>
         ))}
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">

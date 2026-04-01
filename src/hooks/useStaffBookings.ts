@@ -1,8 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 import { bookingService } from '@/services/booking.service'
-import { mockBookings } from '@/mock/mockBookings'
-import { isMockMode } from '@/config/dataSource'
 import { useAuthStore } from '@/store/authStore'
 import type { UserProfile } from '@/types/auth.types'
 import type { Booking } from '@/types/booking.types'
@@ -19,26 +17,18 @@ export function useStaffBookings() {
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10))
 
   const bookingsQuery = useQuery({
-    queryKey: ['staff-bookings', branchId, isMockMode()],
+    queryKey: ['staff-bookings', branchId],
     queryFn: async (): Promise<Booking[]> => {
-      if (isMockMode()) {
-        return mockBookings.filter((b) => b.branchId === branchId)
-      }
       const page = await bookingService.getStaffBookings({ branchId, page: 0, size: 200 })
       return page.items
     },
-    staleTime: isMockMode() ? Infinity : 60_000,
+    staleTime: 60_000,
   })
 
   const scheduleQuery = useQuery({
-    queryKey: ['staff-schedule', branchId, selectedDate, isMockMode()],
-    queryFn: () => {
-      if (isMockMode()) {
-        return Promise.resolve([])
-      }
-      return bookingService.getStaffSchedule(branchId, selectedDate)
-    },
-    staleTime: isMockMode() ? Infinity : 60_000,
+    queryKey: ['staff-schedule', branchId, selectedDate],
+    queryFn: () => bookingService.getStaffSchedule(branchId, selectedDate),
+    staleTime: 60_000,
   })
 
   const invalidate = useCallback(() => {

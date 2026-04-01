@@ -143,14 +143,6 @@ export interface AdminTransfer {
   createdAt: string
 }
 
-export const mockAdminTransfers: AdminTransfer[] = [
-  { id: 't1', vehicleName: 'Toyota Camry 2.5Q 2024', vin: '4J1BU2JK5NU123456', fromBranch: 'Chi Nhánh Hải Châu', toBranch: 'Chi Nhánh Thanh Khê', status: 'pending', requestedBy: 'Nguyễn Văn A', createdAt: '2025-03-14T09:00:00' },
-  { id: 't2', vehicleName: 'Honda Civic 2023', vin: '2HGFG2B58AH567890', fromBranch: 'Chi Nhánh Sơn Trà', toBranch: 'Chi Nhánh Hải Châu', status: 'approved', requestedBy: 'Tran Van B', createdAt: '2025-03-12T10:00:00' },
-  { id: 't3', vehicleName: 'Toyota Vios 2023', vin: '4J1BU2JK5NU111111', fromBranch: 'Hải Châu', toBranch: 'Hội An', status: 'pending', requestedBy: 'Nguyễn Văn A', createdAt: '2025-03-13T14:00:00' },
-  { id: 't4', vehicleName: 'Mazda CX-5 2024', vin: 'JM3KFBDM5N0123456', fromBranch: 'Chi Nhánh Thanh Khê', toBranch: 'Chi Nhánh Sơn Trà', status: 'pending', requestedBy: 'Lê Thị C', createdAt: '2025-03-14T08:00:00' },
-  { id: 't5', vehicleName: 'VinFast VF8 2024', vin: 'VF8ABC1234567890', fromBranch: 'Chi Nhánh Hải Châu', toBranch: 'Chi Nhánh Thanh Khê', status: 'rejected', requestedBy: 'Phạm Văn D', createdAt: '2025-03-11T16:00:00' },
-]
-
 export interface AdminCMSBanner {
   id: string
   title: string

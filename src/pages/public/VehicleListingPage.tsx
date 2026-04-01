@@ -2,8 +2,10 @@
  * VehicleListingPage — Trang danh sách xe public
  *
  * Dùng useVehicles hook (API-backed) với filter + pagination thật
+ * Query `?branch=<id>` đồng bộ lọc theo chi nhánh (giữ khi bấm Tìm kiếm trong panel).
  */
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
 import { FilterPanel } from '@/features/vehicles/components/FilterPanel'
@@ -16,28 +18,88 @@ import type { VehicleSearchParams } from '@/types/vehicle.types'
 
 export function VehicleListingPage() {
   useDocumentTitle('Danh sách xe')
+  const [searchParams] = useSearchParams()
   const { vehicles, totalPages, currentPage, totalElements, isLoading, error, setFilters, setPage } = useVehicles()
   const listingFacets = useVehicleListingFacets()
-  const [sort, setSort] = useState('newest')
+  const [sortUi, setSortUi] = useState('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filterOpen, setFilterOpen] = useState(false)
 
-  // Callback từ FilterPanel khi user bấm "Tìm kiếm"
-  const handleFilterChange = (params: VehicleSearchParams) => {
-    setFilters(params)
-    setFilterOpen(false) // Đóng sidebar filter trên mobile
+  const sortToApi = (s: string): string => {
+    switch (s) {
+      case 'price-asc':
+        return 'priceAsc'
+      case 'price-desc':
+        return 'priceDesc'
+      case 'year-desc':
+        return 'yearDesc'
+      default:
+        return 'postingDateDesc'
+    }
   }
 
-  // Sắp xếp client-side (backend chưa hỗ trợ sort)
-  // TODO: chuyển sang server-side sort khi backend support
-  const sortedVehicles = [...vehicles].sort((a, b) => {
-    switch (sort) {
-      case 'price-asc': return a.price - b.price
-      case 'price-desc': return b.price - a.price
-      case 'year-desc': return b.year - a.year
-      default: return 0 // newest = thứ tự API trả về
+  const handleFilterChange = (params: VehicleSearchParams) => {
+    setFilters(params)
+    setFilterOpen(false)
+  }
+
+  const handleSortChange = (value: string) => {
+    setSortUi(value)
+    setFilters({ sort: sortToApi(value), page: 0 })
+  }
+
+  // Giá trị filter ban đầu từ URL để đồng bộ vào FilterPanel (vd. mức giá chọn ở trang chủ)
+  const urlInitialFilters = useMemo(() => {
+    const init: Partial<VehicleSearchParams> = {}
+    const minP = searchParams.get('minPrice')
+    if (minP) {
+      const n = parseInt(minP, 10)
+      if (Number.isFinite(n) && n > 0) init.minPrice = n
     }
-  })
+    const maxP = searchParams.get('maxPrice')
+    if (maxP) {
+      const n = parseInt(maxP, 10)
+      if (Number.isFinite(n) && n > 0) init.maxPrice = n
+    }
+    return init
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Chỉ tính 1 lần khi mount (URL lúc vào trang)
+
+  useEffect(() => {
+    const partial: Partial<VehicleSearchParams> = { page: 0 }
+
+    // Từ khóa tìm kiếm (q)
+    const q = searchParams.get('q')?.trim() || undefined
+    partial.q = q
+
+    // Chi nhánh — reset nếu không có trong URL
+    const branch = searchParams.get('branch')
+    if (branch) {
+      const n = parseInt(branch, 10)
+      if (Number.isFinite(n)) partial.branchId = n
+      else partial.branchId = undefined
+    } else {
+      partial.branchId = undefined
+    }
+
+    // Giá (minPrice / maxPrice) — reset rõ ràng khi không có trong URL
+    const minP = searchParams.get('minPrice')
+    if (minP) {
+      const n = parseInt(minP, 10)
+      partial.minPrice = Number.isFinite(n) && n > 0 ? n : undefined
+    } else {
+      partial.minPrice = undefined
+    }
+    const maxP = searchParams.get('maxPrice')
+    if (maxP) {
+      const n = parseInt(maxP, 10)
+      partial.maxPrice = Number.isFinite(n) && n > 0 ? n : undefined
+    } else {
+      partial.maxPrice = undefined
+    }
+
+    setFilters(partial)
+  }, [searchParams, setFilters])
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -54,7 +116,7 @@ export function VehicleListingPage() {
         style={{ transform: filterOpen ? 'translateX(0)' : 'translateX(-100%)' }}
       >
         <div className="p-4 pt-16">
-          <FilterPanel inline facets={listingFacets} onFilterChange={handleFilterChange} />
+          <FilterPanel inline facets={listingFacets} onFilterChange={handleFilterChange} initialFilters={urlInitialFilters} />
         </div>
       </div>
 
@@ -95,8 +157,8 @@ export function VehicleListingPage() {
             </div>
             <div className="relative">
               <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
+                value={sortUi}
+                onChange={(e) => handleSortChange(e.target.value)}
                 className="appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-4 pr-10 text-sm focus:border-[#1A3C6E] focus:ring-[#1A3C6E]/20"
               >
                 <option value="newest">Mới nhất</option>
@@ -119,7 +181,7 @@ export function VehicleListingPage() {
 
       {/* Content */}
       <div className="flex flex-col gap-8 lg:flex-row">
-        <FilterPanel facets={listingFacets} onFilterChange={handleFilterChange} />
+        <FilterPanel facets={listingFacets} onFilterChange={handleFilterChange} initialFilters={urlInitialFilters} />
         <section className="flex-1">
           {isLoading ? (
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -127,13 +189,26 @@ export function VehicleListingPage() {
                 <SkeletonCard key={i} />
               ))}
             </div>
-          ) : sortedVehicles.length === 0 ? (
+          ) : vehicles.length === 0 ? (
             <EmptyState
               icon={Car}
               title="Không tìm thấy xe phù hợp"
               description="Thử thay đổi bộ lọc hoặc xem tất cả xe"
               actionLabel="Xem tất cả xe"
-              onAction={() => setFilters({ page: 0, size: 20 })}
+              onAction={() =>
+                setFilters({
+                  page: 0,
+                  size: 20,
+                  brand: undefined,
+                  subcategoryId: undefined,
+                  branchId: undefined,
+                  minPrice: undefined,
+                  maxPrice: undefined,
+                  yearMin: undefined,
+                  yearMax: undefined,
+                  transmission: undefined,
+                })
+              }
             />
           ) : (
             <div
@@ -141,7 +216,7 @@ export function VehicleListingPage() {
                 viewMode === 'grid' ? 'sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'
               }`}
             >
-              {sortedVehicles.map((v, i) => (
+              {vehicles.map((v, i) => (
                 <VehicleCard key={v.id} vehicle={v} compact={viewMode === 'list'} showNewBadge={i < 3} />
               ))}
             </div>

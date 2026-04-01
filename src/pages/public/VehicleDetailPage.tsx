@@ -10,17 +10,37 @@ import { useVehicleDetail } from '@/hooks/useVehicleDetail'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { VehicleDetailGallery } from '@/features/vehicles/components/VehicleDetailGallery'
+import { DepositWizardModal } from '@/features/vehicles/components/DepositWizardModal'
 import { formatPrice, formatMileage } from '@/utils/format'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
-import { Phone, Calendar } from 'lucide-react'
+import { Phone, Calendar, Shield } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { BookingForm } from '@/components/booking/BookingForm'
+import type { UserRole } from '@/types/auth.types'
+
+/** Khớp role từ API (Customer / BranchManager …), tránh lệch chữ hoa thường. */
+function isCustomerRole(role: UserRole | string | undefined): boolean {
+  if (role == null || role === '') return false
+  return String(role).toLowerCase() === 'customer'
+}
+
+const STAFF_ROLE_HINT: Partial<Record<UserRole, string>> = {
+  BranchManager: 'quản lý chi nhánh',
+  SalesStaff: 'nhân viên bán hàng',
+  Admin: 'quản trị viên',
+}
 
 export function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>()
   const vehicleId = id ? parseInt(id, 10) : undefined
   const { vehicle, isLoading, error, isSaved, toggleSave } = useVehicleDetail(vehicleId)
   const { isAuthenticated, user } = useAuthStore()
+  const isCustomer = Boolean(user && isCustomerRole(user.role))
+  /** Đặt cọc / lái thử theo nghiệp vụ chỉ cho tài khoản khách hàng — không phải “chưa đăng nhập”. */
+  const canUseCustomerActions = isAuthenticated && isCustomer
+  const staffRoleHint =
+    user && !isCustomerRole(user.role) ? STAFF_ROLE_HINT[user.role as UserRole] : null
+
   useDocumentTitle(vehicle ? `Chi tiết xe - ${vehicle.title}` : 'Chi tiết xe')
 
   // Lấy xe tương tự (cùng category)
@@ -30,6 +50,7 @@ export function VehicleDetailPage() {
     .slice(0, 4)
 
   const [activeTab, setActiveTab] = useState('specs')
+  const [depositOpen, setDepositOpen] = useState(false)
 
   // Loading state
   if (isLoading) {
@@ -121,14 +142,64 @@ export function VehicleDetailPage() {
                 {isSaved ? '❤️ Đã lưu' : '🤍 Lưu xe'}
               </button>
 
+              {/* Nút Đặt Cọc Ngay — chỉ hiển khi xe Available */}
+              {vehicle.status === 'Available' && (
+                <>
+                  {canUseCustomerActions ? (
+                    <button
+                      onClick={() => setDepositOpen(true)}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#E8612A] py-3 font-bold text-white shadow-lg shadow-[#E8612A]/20 transition-all hover:bg-[#d4551f] hover:shadow-[#E8612A]/30"
+                    >
+                      <Shield className="h-5 w-5" />
+                      Đặt Cọc Ngay
+                    </button>
+                  ) : isAuthenticated && user && !isCustomer ? (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center text-sm text-slate-600">
+                      <p>
+                        Đặt cọc trên web chỉ dành cho{' '}
+                        <strong className="text-slate-800">tài khoản khách hàng</strong>
+                        {staffRoleHint ? (
+                          <>
+                            . Bạn đang đăng nhập với vai trò {staffRoleHint} — dùng tài khoản khách hàng để đặt cọc, hoặc
+                            liên hệ showroom.
+                          </>
+                        ) : (
+                          <>.</>
+                        )}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-[#E8612A]/20 bg-[#E8612A]/5 p-3 text-center">
+                      <p className="mb-2 text-sm text-slate-600">Đăng nhập tài khoản khách hàng để đặt cọc giữ xe này.</p>
+                      <Link
+                        to={`/login?redirect=${encodeURIComponent(`/vehicles/${vehicle.id}`)}`}
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#E8612A] px-5 py-2 text-sm font-bold text-white hover:bg-[#d4551f]"
+                      >
+                        <Shield className="h-4 w-4" />
+                        Đăng nhập
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+
               {vehicle.status === 'Available' && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-4">
                   <p className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
                     <Calendar className="h-4 w-4 text-[#1A3C6E]" />
                     Đặt lịch lái thử
                   </p>
-                  {isAuthenticated && user?.role === 'Customer' ? (
+                  {canUseCustomerActions ? (
                     <BookingForm vehicleId={vehicle.id} branchId={vehicle.branch_id} />
+                  ) : isAuthenticated && user && !isCustomer ? (
+                    <p className="text-center text-sm text-slate-600">
+                      Đặt lịch lái thử trên web dành cho <strong className="text-slate-800">khách hàng</strong>
+                      {staffRoleHint ? (
+                        <> — tài khoản {staffRoleHint} không dùng luồng này.</>
+                      ) : (
+                        <>.</>
+                      )}
+                    </p>
                   ) : (
                     <div className="space-y-3 text-center text-sm text-slate-600">
                       <p>Đăng nhập tài khoản khách hàng để chọn ngày giờ lái thử.</p>
@@ -170,6 +241,15 @@ export function VehicleDetailPage() {
           </div>
         </section>
       )}
+      {/* Deposit Wizard Modal */}
+      <DepositWizardModal
+        isOpen={depositOpen}
+        onClose={() => setDepositOpen(false)}
+        vehicleId={vehicle.id}
+        vehicleName={vehicle.title}
+        vehiclePrice={vehicle.price}
+        uiOnly
+      />
     </div>
   )
 }

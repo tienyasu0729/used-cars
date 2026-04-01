@@ -155,6 +155,7 @@ export function normalizeVehicle(raw: unknown): Vehicle {
     fuel,
     transmission,
     status: toStatus(r.status),
+    deleted: Boolean(r.deleted ?? r.is_deleted ?? r.isDeleted),
     category_id: Number.isFinite(cid) ? cid : 0,
     subcategory_id: Number.isFinite(sid) ? sid : 0,
     branch_id: Number.isFinite(bid) ? bid : 0,

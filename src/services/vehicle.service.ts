@@ -10,6 +10,7 @@ import type {
   VehicleSearchParams,
   PaginatedResponse,
   CreateVehicleRequest,
+  UpdateVehicleRequest,
 } from '@/types/vehicle.types'
 
 // Helper loại bỏ các thuộc tính undefined/null/rỗng cho HTTP Request (Params)
@@ -18,9 +19,9 @@ const cleanParams = (params?: unknown) => {
   const cleaned: Record<string, unknown> = {}
   Object.keys(params as Record<string, unknown>).forEach((key) => {
     const val = (params as Record<string, unknown>)[key]
-    if (val !== undefined && val !== null && val !== '') {
-      cleaned[key] = val
-    }
+    if (val === undefined || val === null || val === '') return
+    if (typeof val === 'number' && Number.isNaN(val)) return
+    cleaned[key] = val
   })
   return cleaned
 }
@@ -95,6 +96,39 @@ export const vehicleService = {
    * [PUBLIC] Lấy chi tiết các xe để so sánh (max 3 params ids)
    * GET /vehicles/compare?ids=1,2,3
    */
+  /**
+   * [MANAGER/ADMIN] Danh sách xe thuộc chi nhánh được quản lý (không phải toàn bộ kho công khai).
+   * GET /manager/vehicles
+   */
+  getManagerVehicles: async (params?: VehicleSearchParams): Promise<PaginatedResponse<Vehicle>> => {
+    const res = await axiosInstance.get<{ data: PaginatedResponse<Vehicle> }>('/manager/vehicles', {
+      params: cleanParams(params),
+    })
+    const apiRes = res as unknown as { data: PaginatedResponse<Vehicle>; success: boolean }
+    if (!apiRes.data) {
+      const raw = apiRes as unknown as PaginatedResponse<unknown>
+      return {
+        ...raw,
+        items: normalizeVehicleList(raw.items ?? []),
+      }
+    }
+    const body = apiRes.data as PaginatedResponse<unknown>
+    return {
+      ...body,
+      items: normalizeVehicleList(body.items ?? []),
+    }
+  },
+
+  /**
+   * [MANAGER/ADMIN] Chi tiết xe để sửa — 403 nếu không quản lý chi nhánh của xe.
+   * GET /manager/vehicles/{id}
+   */
+  getManagerVehicleById: async (id: number): Promise<Vehicle> => {
+    const res = await axiosInstance.get<{ data: unknown }>(`/manager/vehicles/${id}`)
+    const raw = (res as unknown as { data: unknown }).data ?? res
+    return normalizeVehicle(raw)
+  },
+
   compareVehicles: async (ids: number[]): Promise<Vehicle[]> => {
     if (!ids || ids.length < 2 || ids.length > 3) {
       throw new Error('Chỉ có thể so sánh từ 2 đến 3 xe')
@@ -120,7 +154,7 @@ export const vehicleService = {
    * [MANAGER/ADMIN] Sửa thông tin xe
    * PUT /manager/vehicles/{id}
    */
-  updateVehicle: async (id: number, data: Partial<CreateVehicleRequest>): Promise<Vehicle> => {
+  updateVehicle: async (id: number, data: UpdateVehicleRequest): Promise<Vehicle> => {
     const res = await axiosInstance.put<{ data: unknown }>(`/manager/vehicles/${id}`, data)
     const raw = (res as unknown as { data: unknown }).data ?? res
     return normalizeVehicle(raw)
@@ -132,5 +166,15 @@ export const vehicleService = {
    */
   deleteVehicle: async (id: number): Promise<void> => {
     await axiosInstance.delete(`/manager/vehicles/${id}`)
+  },
+
+  /**
+   * [MANAGER/ADMIN] Hiển thị lại tin đăng công khai (gỡ is_deleted)
+   * POST /manager/vehicles/{id}/restore-visibility
+   */
+  restoreVehicleVisibility: async (id: number): Promise<Vehicle> => {
+    const res = await axiosInstance.post<{ data: unknown }>(`/manager/vehicles/${id}/restore-visibility`)
+    const raw = (res as unknown as { data: unknown }).data ?? res
+    return normalizeVehicle(raw)
   },
 }

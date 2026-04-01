@@ -1,13 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { mockBranches } from '@/mock'
 import { branchService } from '@/services/branch.service'
-import { isMockMode } from '@/config/dataSource'
+import type { BranchTeamMemberDto } from '@/services/branch.service'
 import type { Branch } from '@/types/branch'
 
+/**
+ * Luôn GET /branches — không dùng mock theo VITE_DATA_SOURCE (tránh lệch DB).
+ */
 async function fetchBranches(): Promise<Branch[]> {
-  if (isMockMode()) {
-    return mockBranches
-  }
   try {
     return await branchService.getBranches()
   } catch (e) {
@@ -18,20 +17,17 @@ async function fetchBranches(): Promise<Branch[]> {
 
 export function useBranches() {
   return useQuery({
-    queryKey: ['branches', isMockMode()],
+    queryKey: ['branches'],
     queryFn: fetchBranches,
-    staleTime: isMockMode() ? Infinity : 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5,
   })
 }
 
 export function useBranch(id: string | undefined) {
   return useQuery({
-    queryKey: ['branch', id, isMockMode()],
+    queryKey: ['branch', id],
     queryFn: async () => {
       if (!id) return null
-      if (isMockMode()) {
-        return mockBranches.find((b) => b.id === id) ?? null
-      }
       try {
         return await branchService.getBranchById(id)
       } catch (e) {
@@ -40,5 +36,23 @@ export function useBranch(id: string | undefined) {
       }
     },
     enabled: !!id,
+  })
+}
+
+export function useBranchTeam(id: string | undefined) {
+  const numeric = id ? parseInt(id, 10) : NaN
+  const enabled = !!id && Number.isFinite(numeric)
+  return useQuery({
+    queryKey: ['branch', id, 'team'],
+    queryFn: async (): Promise<BranchTeamMemberDto[]> => {
+      try {
+        return await branchService.getBranchTeam(numeric)
+      } catch (e) {
+        console.error('[useBranchTeam] Lỗi tải đội ngũ:', e)
+        return []
+      }
+    },
+    enabled,
+    staleTime: 1000 * 60 * 2,
   })
 }

@@ -65,8 +65,8 @@ export const transferService = {
       if (err.errorCode === 'TRANSFER_ALREADY_EXISTS') {
         throw { ...err, message: 'Xe đang có yêu cầu điều chuyển chưa kết thúc.' }
       }
-      if (err.errorCode === 'VEHICLE_NOT_IN_BRANCH') {
-        throw { ...err, message: 'Xe không thuộc chi nhánh của bạn.' }
+      if (err.errorCode === 'VALIDATION_FAILED') {
+        throw { ...err, message: err.message || 'Dữ liệu không hợp lệ.' }
       }
       if (err.errorCode === 'VEHICLE_NOT_AVAILABLE') {
         throw { ...err, message: 'Chỉ xe Available mới tạo điều chuyển.' }

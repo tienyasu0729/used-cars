@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTransfers } from '@/hooks/useTransfers'
 import { useAuthStore } from '@/store/authStore'
 import {
@@ -8,11 +9,30 @@ import {
 } from '@/components/manager/transfers'
 import type { TransferStatus } from '@/types/transfer.types'
 
+const TRANSFER_STATUS_KEYS: readonly TransferStatus[] = ['Pending', 'Approved', 'Completed', 'Rejected']
+
 export function ManagerTransfersPage() {
   const { user } = useAuthStore()
-  const [statusTab, setStatusTab] = useState<TransferStatus | 'all'>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
   const [page, setPage] = useState(0)
   const [detailId, setDetailId] = useState<number | null>(null)
+
+  const statusTab = useMemo((): TransferStatus | 'all' => {
+    const raw = searchParams.get('status')
+    if (raw && TRANSFER_STATUS_KEYS.includes(raw as TransferStatus)) {
+      return raw as TransferStatus
+    }
+    return 'all'
+  }, [searchParams])
+
+  const handleStatusTab = (t: TransferStatus | 'all') => {
+    setPage(0)
+    if (t === 'all') {
+      setSearchParams({}, { replace: true })
+    } else {
+      setSearchParams({ status: t }, { replace: true })
+    }
+  }
 
   const { data, isLoading, refetch } = useTransfers({
     status: statusTab,
@@ -23,6 +43,8 @@ export function ManagerTransfersPage() {
   const items = data?.items ?? []
   const meta = data?.meta
   const totalPages = meta?.totalPages ?? 1
+
+  const openDetail = (id: number) => setDetailId(id)
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -37,21 +59,24 @@ export function ManagerTransfersPage() {
         items={items}
         isLoading={isLoading}
         statusTab={statusTab}
-        onStatusTab={(t) => {
-          setStatusTab(t)
-          setPage(0)
-        }}
+        onStatusTab={handleStatusTab}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
         myBranchId={user?.branchId}
-        onRowClick={(id) => setDetailId(id)}
+        onRowClick={openDetail}
+        onApprove={openDetail}
+        onReject={openDetail}
+        onComplete={openDetail}
       />
 
       <TransferDetailModal
         transferId={detailId}
         isOpen={detailId != null}
-        onClose={() => setDetailId(null)}
+        onClose={() => {
+          setDetailId(null)
+          void refetch()
+        }}
         role={user?.role ?? 'BranchManager'}
         myBranchId={user?.branchId}
       />

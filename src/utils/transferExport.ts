@@ -1,9 +1,10 @@
-import type { ManagerTransfer } from '@/mock/mockManagerData'
+import type { TransferRequest, TransferStatus } from '@/types/transfer.types'
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: 'Chờ Duyệt',
-  approved: 'Đã Duyệt',
-  rejected: 'Từ Chối',
+const STATUS_LABEL: Record<TransferStatus, string> = {
+  Pending: 'Chờ duyệt',
+  Approved: 'Đã duyệt',
+  Rejected: 'Từ chối',
+  Completed: 'Hoàn thành',
 }
 
 function escapeCsv(val: string): string {
@@ -13,35 +14,21 @@ function escapeCsv(val: string): string {
   return val
 }
 
+/** Xuất CSV từ dữ liệu API TransferRequest (không dùng mock). */
 export function exportTransfersToCsv(
-  transfers: ManagerTransfer[],
-  type: 'outgoing' | 'incoming'
+  transfers: TransferRequest[],
+  type: 'outgoing' | 'incoming',
 ): void {
   const cols =
     type === 'outgoing'
-      ? ['Mã Yêu Cầu', 'Phương Tiện', 'VIN', 'Đến Chi Nhánh', 'Khu Vực', 'Ngày Yêu Cầu', 'Trạng Thái']
-      : ['Mã Yêu Cầu', 'Phương Tiện', 'VIN', 'Từ Chi Nhánh', 'Ngày Yêu Cầu', 'Trạng Thái']
+      ? ['Mã Yêu Cầu', 'Phương Tiện', 'Mã tin', 'Đến Chi Nhánh', 'Ngày Yêu Cầu', 'Trạng Thái']
+      : ['Mã Yêu Cầu', 'Phương Tiện', 'Mã tin', 'Từ Chi Nhánh', 'Ngày Yêu Cầu', 'Trạng Thái']
   const rows = transfers.map((t) => {
     const status = STATUS_LABEL[t.status] ?? t.status
     if (type === 'outgoing') {
-      return [
-        t.id,
-        t.vehicleName,
-        t.vin ?? '',
-        t.toBranchName,
-        t.toBranchRegion ?? '',
-        t.createdAt,
-        status,
-      ]
+      return [String(t.id), t.vehicleTitle, t.vehicleListingId, t.toBranchName, t.createdAt, status]
     }
-    return [
-      t.id,
-      t.vehicleName,
-      t.vin ?? '',
-      t.fromBranchName,
-      t.createdAt,
-      status,
-    ]
+    return [String(t.id), t.vehicleTitle, t.vehicleListingId, t.fromBranchName, t.createdAt, status]
   })
   const header = cols.join(',')
   const body = rows.map((r) => r.map(escapeCsv).join(',')).join('\n')

@@ -4,8 +4,6 @@ import { useStaffBookings } from '@/hooks/useStaffBookings'
 import { useInventory } from '@/hooks/useInventory'
 import { StaffScheduleCalendar } from '@/features/staff/components/StaffScheduleCalendar'
 import { mockUsers } from '@/mock'
-import { isMockMode } from '@/config/dataSource'
-import { mockStaffSchedule } from '@/mock/mockStaffSchedule'
 import type { StaffScheduleItem } from '@/mock/mockStaffSchedule'
 import type { Booking } from '@/types/booking.types'
 import type { Vehicle } from '@/types/vehicle.types'
@@ -74,15 +72,6 @@ export function StaffSchedulePage() {
 
   const mergedSchedule = useMemo(() => {
     const vehicles = inventory ?? []
-    if (isMockMode()) {
-      const fromSched = mockStaffSchedule.filter((s) => s.date === selectedDate)
-      const fromBooks = (bookings ?? [])
-        .filter((b) => b.bookingDate === selectedDate)
-        .map((b) => bookingToScheduleItem(b, vehicles))
-      const existingIds = new Set(fromSched.map((x) => x.bookingId).filter(Boolean))
-      const extra = fromBooks.filter((b) => !existingIds.has(b.bookingId!))
-      return [...fromSched, ...extra].sort((a, b) => a.timeSlot.localeCompare(b.timeSlot))
-    }
     const fromApi = apiScheduleToItems(schedule, vehicles)
     const fromBooks = (bookings ?? [])
       .filter((b) => b.bookingDate === selectedDate)

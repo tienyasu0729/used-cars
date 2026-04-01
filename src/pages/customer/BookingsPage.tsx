@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookingCard } from '@/features/customer/components/BookingCard'
 import { BookingDetailModal } from '@/features/customer/components/BookingDetailModal'
@@ -54,6 +54,18 @@ export function BookingsPage() {
           return true
         })
 
+  const tabCounts = useMemo(() => {
+    const pending = allBookings.filter((b) => b.status === 'Pending' || b.status === 'Rescheduled').length
+    const confirmed = allBookings.filter((b) => b.status === 'Confirmed' || b.status === 'Completed').length
+    const cancelled = allBookings.filter((b) => b.status === 'Cancelled').length
+    return {
+      all: allBookings.length,
+      pending,
+      confirmed,
+      cancelled,
+    }
+  }, [allBookings])
+
   const selectedVehicle = selectedBooking
     ? vehicles.find((v) => v.id === selectedBooking.vehicleId) ?? null
     : null
@@ -67,20 +79,38 @@ export function BookingsPage() {
         <h1 className="text-2xl font-bold text-slate-900">Lịch Lái Thử</h1>
         <p className="mt-1 text-slate-500">Quản lý các lịch hẹn lái thử của bạn</p>
       </div>
-      <div className="flex gap-2 border-b border-slate-200">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setActiveTab(t.key)}
-            className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === t.key
-                ? 'border-[#1A3C6E] text-[#1A3C6E]'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap gap-2 border-b border-slate-200">
+        {tabs.map((t) => {
+          const count = tabCounts[t.key as keyof typeof tabCounts]
+          const showBadge = count > 0
+          const isPendingTab = t.key === 'pending'
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              className={`inline-flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === t.key
+                  ? 'border-[#1A3C6E] text-[#1A3C6E]'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <span>{t.label}</span>
+              {showBadge && (
+                <span
+                  className={
+                    isPendingTab
+                      ? 'min-w-[1.25rem] rounded-full bg-red-100 px-1.5 py-0.5 text-center text-xs font-bold text-red-700'
+                      : 'min-w-[1.25rem] rounded-full bg-slate-200 px-1.5 py-0.5 text-center text-xs font-semibold text-slate-700'
+                  }
+                  aria-label={`${count} lịch`}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
       {isError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">

@@ -1,14 +1,15 @@
 import { Link } from 'react-router-dom'
-import { Heart, Calendar, Wallet, ShoppingBag, Plus } from 'lucide-react'
+import { Heart, Calendar, Wallet, ShoppingBag, Plus, Eye } from 'lucide-react'
 import { DashboardStatCard } from '@/features/customer/components/DashboardStatCard'
 import { DashboardBookingCard } from '@/features/customer/components/DashboardBookingCard'
 import { DashboardOverviewCard } from '@/features/customer/components/DashboardOverviewCard'
 import { useBookings } from '@/hooks/useBookings'
-import { useDeposits } from '@/hooks/useDeposits'
 import { useSavedVehicles } from '@/hooks/useSavedVehicles'
-import { useOrders } from '@/hooks/useOrders'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useBranches } from '@/hooks/useBranches'
+import { useCustomerStats } from '@/hooks/useCustomerStats'
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
+import type { SavedVehicleItem } from '@/types/interaction.types'
 import { useAuthStore } from '@/store/authStore'
 import { EmptyState } from '@/components/ui'
 import { Button } from '@/components/ui'
@@ -25,23 +26,42 @@ function getShortName(name: string): string {
   return parts.length >= 2 ? parts.slice(-2).join(' ') : parts[0] || 'Bạn'
 }
 
+/** Đếm xe lưu có savedAt trong N ngày gần đây (theo dữ liệu GET saved-vehicles). */
+function countSavedInPastDays(records: SavedVehicleItem[], days: number): number {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
+  let n = 0
+  for (const s of records) {
+    const t = Date.parse(s.savedAt)
+    if (Number.isNaN(t) || t < cutoff) continue
+    n++
+  }
+  return n
+}
+
 export function DashboardOverviewPage() {
   const { user } = useAuthStore()
   const { data: bookings, isLoading: bookingsLoading, isError: bookingsError } = useBookings()
-  const { data: deposits } = useDeposits()
-  const { savedVehicles: saved } = useSavedVehicles()
-  const { data: orders } = useOrders()
+  const { savedVehicles: saved, savedRecords } = useSavedVehicles()
   const { vehicles } = useVehicles()
   const { data: branches } = useBranches()
+  const { data: stats, isPending: statsPending, isError: statsError } = useCustomerStats()
+  const { data: recentVehicles = [], isLoading: recentLoading } = useRecentlyViewed(4)
 
-  const recentVehicles = vehicles.slice(0, 4)
   const upcomingBookings = (bookings ?? [])
     .filter((b) => b.status === 'Confirmed' || b.status === 'Pending')
     .sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime())
     .slice(0, 3)
-  const activeDeposits = (deposits ?? []).filter((d) => d.status === 'Confirmed' || d.status === 'Pending')
   const savedCount = saved?.length ?? 0
-  const newSavedThisWeek = savedCount >= 2 ? 2 : 0
+  const newSavedIn7Days = countSavedInPastDays(savedRecords, 7)
+
+  const savedStatValue = statsPending ? '—' : statsError ? savedCount : (stats?.savedVehicles ?? savedCount)
+  const bookingsStatValue = statsPending
+    ? '—'
+    : statsError
+      ? upcomingBookings.length
+      : (stats?.upcomingBookings ?? upcomingBookings.length)
+  const depositsStatValue = statsPending ? '—' : statsError ? 0 : (stats?.activeDeposits ?? 0)
+  const ordersStatValue = statsPending ? '—' : statsError ? 0 : (stats?.totalOrders ?? 0)
 
   return (
     <div className="space-y-8">
@@ -66,27 +86,31 @@ export function DashboardOverviewPage() {
         <DashboardStatCard
           icon={Heart}
           label="Xe đã lưu"
-          value={savedCount}
-          subLabel={newSavedThisWeek > 0 ? `+${newSavedThisWeek} xe mới trong tuần` : undefined}
-          subLabelGreen={newSavedThisWeek > 0}
+          value={savedStatValue}
+          subLabel={
+            newSavedIn7Days > 0 && !statsPending
+              ? `+${newSavedIn7Days} xe lưu trong 7 ngày qua`
+              : undefined
+          }
+          subLabelGreen={newSavedIn7Days > 0 && !statsPending}
         />
         <DashboardStatCard
           icon={Calendar}
           label="Lịch lái thử"
-          value={upcomingBookings.length}
-          subLabel="Sắp tới trong 48 giờ tới"
+          value={bookingsStatValue}
+          subLabel="Pending & đã xác nhận (theo máy chủ)"
         />
         <DashboardStatCard
           icon={Wallet}
           label="Tiền đặt cọc"
-          value={activeDeposits.length}
-          subLabel="Đang chờ xử lý bàn giao"
+          value={depositsStatValue}
+          subLabel="Cọc đang xử lý (theo máy chủ)"
         />
         <DashboardStatCard
           icon={ShoppingBag}
           label="Đơn hàng"
-          value={orders?.length ?? 0}
-          subLabel="Tổng lịch sử giao dịch"
+          value={ordersStatValue}
+          subLabel="Tổng đơn (theo máy chủ)"
         />
       </div>
 
@@ -151,11 +175,30 @@ export function DashboardOverviewPage() {
               Xem tất cả
             </Link>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {recentVehicles.map((v, i) => (
-              <DashboardOverviewCard key={v.id} vehicle={v} showNewBadge={i === 0} />
-            ))}
-          </div>
+          {recentLoading ? (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-64 animate-pulse rounded-2xl bg-slate-200" />
+              ))}
+            </div>
+          ) : recentVehicles.length === 0 ? (
+            <EmptyState
+              icon={Eye}
+              title="Chưa có xe xem gần đây"
+              description="Xem vài chiếc xe trên trang danh sách để lịch sử hiển thị tại đây."
+              actionButton={
+                <Link to="/vehicles">
+                  <Button variant="accent">Xem danh sách xe</Button>
+                </Link>
+              }
+            />
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {recentVehicles.map((v, i) => (
+                <DashboardOverviewCard key={v.id} vehicle={v} showNewBadge={i === 0} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

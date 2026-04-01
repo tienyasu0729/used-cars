@@ -7,8 +7,6 @@ import { useStaffOrders } from '@/hooks/useStaffOrders'
 import { useInventory } from '@/hooks/useInventory'
 import { StaffScheduleCalendar } from '@/features/staff/components/StaffScheduleCalendar'
 import { mockUsers } from '@/mock'
-import { isMockMode } from '@/config/dataSource'
-import { mockStaffSchedule } from '@/mock/mockStaffSchedule'
 import type { StaffScheduleItem } from '@/mock/mockStaffSchedule'
 import type { Booking } from '@/types/booking.types'
 import type { Vehicle } from '@/types/vehicle.types'
@@ -80,16 +78,6 @@ export function StaffDashboardPage() {
 
   const mergedSchedule = useMemo(() => {
     const vehicles = inventory ?? []
-    if (isMockMode()) {
-      const sched = mockStaffSchedule
-      const books = (bookings ?? []).map((b) => bookingToScheduleItem(b, vehicles))
-      const existingIds = new Set(sched.map((x) => x.bookingId).filter(Boolean))
-      const extra = books.filter((b) => !existingIds.has(b.bookingId!))
-      return [...sched, ...extra].sort((a, b) => {
-        const da = a.date.localeCompare(b.date)
-        return da !== 0 ? da : a.timeSlot.localeCompare(b.timeSlot)
-      })
-    }
     const fromApi = apiScheduleToItems(schedule, vehicles)
     const fromBooks = (bookings ?? []).map((b) => bookingToScheduleItem(b, vehicles))
     const ids = new Set(fromApi.map((x) => x.bookingId).filter(Boolean))

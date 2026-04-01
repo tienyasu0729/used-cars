@@ -13,6 +13,13 @@ export interface BranchPublicDto {
   lng?: number | null
 }
 
+/** Đội ngũ công khai — GET /branches/{id}/team */
+export interface BranchTeamMemberDto {
+  name: string
+  role: string
+  avatarUrl?: string | null
+}
+
 function unwrapList(res: unknown): BranchPublicDto[] {
   const r = res as { data?: BranchPublicDto[] }
   if (Array.isArray(r)) return r
@@ -25,6 +32,13 @@ function unwrapOne(res: unknown): BranchPublicDto | null {
   if (r?.data && typeof r.data === 'object') return r.data
   if (r && typeof r === 'object' && 'id' in r) return r as BranchPublicDto
   return null
+}
+
+function unwrapTeamList(res: unknown): BranchTeamMemberDto[] {
+  const r = res as { data?: BranchTeamMemberDto[] }
+  if (Array.isArray(r)) return r
+  if (r?.data && Array.isArray(r.data)) return r.data
+  return []
 }
 
 /** Map DTO API → Branch dùng trong UI (field mock cũ có default). */
@@ -56,5 +70,10 @@ export const branchService = {
     const res = await axiosInstance.get<unknown>(`/branches/${numeric}`)
     const dto = unwrapOne(res)
     return dto ? mapBranchDtoToBranch(dto) : null
+  },
+
+  getBranchTeam: async (branchId: number): Promise<BranchTeamMemberDto[]> => {
+    const res = await axiosInstance.get<unknown>(`/branches/${branchId}/team`)
+    return unwrapTeamList(res)
   },
 }

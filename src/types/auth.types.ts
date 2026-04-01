@@ -23,6 +23,12 @@ export interface RegisterRequest {
   password: string
 }
 
+/** Body gửi lên POST /auth/change-password (cần JWT). `newPassword`: 8–100 ký tự — khớp `ChangePasswordRequest` / `RegisterRequest.password`. */
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+}
+
 // ============================================================
 // RESPONSE TYPES
 // ============================================================
@@ -33,15 +39,25 @@ export interface RegisterRequest {
  */
 export type UserRole = 'Customer' | 'SalesStaff' | 'BranchManager' | 'Admin'
 
+/** Giới tính hồ sơ — khớp cột Users.gender + CHECK constraint */
+export type ProfileGender = 'male' | 'female' | 'other'
+
 /** Thông tin user trả về sau login, nằm trong data.user */
 export interface UserProfile {
   id: number
   name: string
   email: string
-  phone: string
+  /** Có thể null khi chưa cập nhật */
+  phone: string | null
+  address?: string | null
+  /** ISO yyyy-mm-dd */
+  dateOfBirth?: string | null
+  gender?: ProfileGender | null
   role: UserRole
   /** Staff / manager — khi backend bổ sung */
   branchId?: number
+  /** Đường dẫn tương đối từ API (vd. /uploads/avatars/1.jpg) */
+  avatarUrl?: string | null
 }
 
 /** Cấu trúc data bên trong ApiResponse khi login thành công */

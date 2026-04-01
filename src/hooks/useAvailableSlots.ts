@@ -1,29 +1,24 @@
 import { useCallback, useEffect, useState } from 'react'
 import { bookingService } from '@/services/booking.service'
 import type { AvailableSlot } from '@/types/booking.types'
-import { isMockMode } from '@/config/dataSource'
 
+/**
+ * Luôn gọi GET /bookings/available-slots (không dùng mock theo VITE_DATA_SOURCE).
+ * POST đặt lịch luôn đi backend; nếu mock slot cố định sẽ lệch server (hiện “còn chỗ” nhưng 400).
+ */
 export function useAvailableSlots() {
   const [slots, setSlots] = useState<AvailableSlot[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  const fetchSlots = useCallback(async (branchId: number | undefined, date: string | undefined) => {
+  const fetchSlots = useCallback(
+    async (branchId: number | undefined, date: string | undefined, vehicleId?: number) => {
     if (branchId == null || !date) {
       setSlots([])
       return []
     }
-    if (isMockMode()) {
-      const mock = [
-        { slotTime: '09:00', availableCount: 2, maxBookings: 3 },
-        { slotTime: '10:00', availableCount: 3, maxBookings: 3 },
-        { slotTime: '14:00', availableCount: 1, maxBookings: 3 },
-      ]
-      setSlots(mock)
-      return mock
-    }
     setIsLoading(true)
     try {
-      const data = await bookingService.getAvailableSlots(branchId, date)
+      const data = await bookingService.getAvailableSlots(branchId, date, vehicleId)
       setSlots(data)
       return data
     } catch {

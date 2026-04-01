@@ -20,6 +20,7 @@ export {
   type VehicleSearchParams,
   type PaginatedResponse,
   type CreateVehicleRequest,
+  type UpdateVehicleRequest,
 } from './vehicle.types'
 export * from './branch'
 export * from './booking'

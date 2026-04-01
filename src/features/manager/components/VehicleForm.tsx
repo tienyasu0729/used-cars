@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCatalog } from '@/hooks/useCatalog'
 import { useManagerVehicle } from '@/hooks/useManagerVehicles'
 import { vehicleService } from '@/services/vehicle.service'
-import type { CreateVehicleRequest } from '@/types/vehicle.types'
+import type { CreateVehicleRequest, UpdateVehicleRequest, VehicleStatus } from '@/types/vehicle.types'
 
 interface VehicleFormProps {
   vehicleId?: number
@@ -37,6 +37,7 @@ export function VehicleForm({ vehicleId }: VehicleFormProps) {
     fuel: 'Xăng',
     transmission: 'Số tự động',
     imageUrl: '',
+    status: 'Available' as VehicleStatus,
   })
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
@@ -108,7 +109,8 @@ export function VehicleForm({ vehicleId }: VehicleFormProps) {
     }
 
     if (isEditMode && vehicleId) {
-      const result = await updateVehicle(vehicleId, data)
+      const updatePayload: UpdateVehicleRequest = { ...data, status: form.status }
+      const result = await updateVehicle(vehicleId, updatePayload)
       if (result) navigate('/manager/vehicles')
     } else {
       const result = await createVehicle(data)

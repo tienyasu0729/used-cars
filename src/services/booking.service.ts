@@ -39,9 +39,9 @@ function mapMeta(meta: unknown): PaginatedResponse<Booking>['meta'] {
 }
 
 export const bookingService = {
-  async getAvailableSlots(branchId: number, date: string): Promise<AvailableSlot[]> {
+  async getAvailableSlots(branchId: number, date: string, vehicleId?: number): Promise<AvailableSlot[]> {
     const res = (await axiosInstance.get('/bookings/available-slots', {
-      params: { branchId, date },
+      params: { branchId, date, ...(vehicleId != null ? { vehicleId } : {}) },
     })) as unknown as ApiResponse<AvailableSlot[]>
     const rows = res.data ?? []
     return rows.map((s) => ({

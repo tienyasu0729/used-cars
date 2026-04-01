@@ -11,6 +11,7 @@ export function useTransferActions() {
     qc.invalidateQueries({ queryKey: ['manager-transfers'] })
     qc.invalidateQueries({ queryKey: ['admin-transfers'] })
     qc.invalidateQueries({ queryKey: ['transfer-detail'] })
+    qc.invalidateQueries({ queryKey: ['manager-incoming-transfers'] })
   }
 
   const approve = useMutation({

@@ -4,6 +4,7 @@
  * Service này chỉ xử lý các endpoint có sẵn từ backend Dev 1:
  * - POST /auth/login
  * - POST /auth/register
+ * - POST /auth/change-password (JWT)
  * 
  * Mỗi hàm unwrap ApiResponse wrapper và trả về data thực tế.
  * Error handling: bắt lỗi từ axiosInstance (đã parse sẵn errorCode)
@@ -14,6 +15,7 @@ import axiosInstance from '@/utils/axiosInstance'
 import type {
   LoginRequest,
   RegisterRequest,
+  ChangePasswordRequest,
   AuthResponse,
   ApiResponse,
   ApiErrorResponse,
@@ -103,6 +105,35 @@ const authService = {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
     // TODO: implement khi backend xong — gọi POST /auth/logout để revoke token
+  },
+
+  /**
+   * Đổi mật khẩu khi đã đăng nhập.
+   * POST /auth/change-password — axios gắn Bearer từ localStorage.
+   */
+  async changePassword(body: ChangePasswordRequest): Promise<{ message: string }> {
+    try {
+      const apiResponse = await axiosInstance.post('/auth/change-password', {
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+      }) as unknown as ApiResponse<{ success: boolean; message: string }>
+      return { message: apiResponse.data.message || 'Mật khẩu đã được thay đổi.' }
+    } catch (error) {
+      const apiError = error as ApiErrorResponse
+      switch (apiError.errorCode) {
+        case 'INVALID_CURRENT_PASSWORD':
+          throw { ...apiError, message: 'Mật khẩu hiện tại không đúng.' }
+        case 'PASSWORD_TOO_SHORT':
+          throw { ...apiError, message: 'Mật khẩu từ 8 đến 100 ký tự.' }
+        case 'VALIDATION_FAILED':
+          throw apiError
+        case 'UNAUTHORIZED':
+          throw { ...apiError, message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' }
+        default:
+          console.error('[authService.changePassword]', apiError)
+          throw { ...apiError, message: apiError.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại sau.' }
+      }
+    }
   },
 
   // TODO: implement khi backend xong

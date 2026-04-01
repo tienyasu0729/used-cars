@@ -1,15 +1,35 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Trash2, UserPlus, Search } from 'lucide-react'
 import { useBranchStaff } from '@/hooks/useBranchStaff'
 import { Badge } from '@/components/ui'
 import { StaffDetailModal } from '@/features/manager/components'
 import type { ManagerStaffMember } from '@/mock/mockManagerData'
+import { useAuthStore } from '@/store/authStore'
+import { useToastStore } from '@/store/toastStore'
+import { managerStaffService } from '@/services/managerStaff.service'
+import { canManagerMutateStaffRow } from '@/utils/managerStaffMapper'
 
-const ROLES = ['', 'Nhân viên bán hàng', 'Tư vấn kỹ thuật', 'Trưởng nhóm kinh doanh']
+const ROLES = ['', 'Nhân viên bán hàng', 'Quản lý chi nhánh']
 
 export function ManagerStaffPage() {
+  const { user } = useAuthStore()
+  const queryClient = useQueryClient()
+  const addToast = useToastStore((s) => s.addToast)
   const { data: staff, isLoading } = useBranchStaff()
+
+  const deleteMut = useMutation({
+    mutationFn: (id: number) => managerStaffService.delete(id),
+    onSuccess: () => {
+      addToast('success', 'Đã xóa nhân viên.')
+      void queryClient.invalidateQueries({ queryKey: ['branch-staff'] })
+    },
+    onError: (e: unknown) => {
+      const m = (e as { message?: string })?.message
+      addToast('error', m ?? 'Không xóa được nhân viên.')
+    },
+  })
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [selectedStaff, setSelectedStaff] = useState<ManagerStaffMember | null>(null)
@@ -105,7 +125,9 @@ export function ManagerStaffPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {filtered.map((s) => (
+              {filtered.map((s) => {
+                const canMutate = canManagerMutateStaffRow(user, s)
+                return (
                 <tr
                   key={s.id}
                   className="cursor-pointer transition-colors hover:bg-slate-50/50"
@@ -140,18 +162,49 @@ export function ManagerStaffPage() {
                   <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-2">
                       <button
+                        type="button"
+                        title={canMutate ? 'Xem / chỉnh sửa' : 'Xem chi tiết (chỉ đọc — cùng vai trò)'}
                         onClick={() => openDetail(s)}
-                        className="rounded-lg p-1.5 text-slate-400 transition-colors hover:text-[#1A3C6E]"
+                        className={`rounded-lg p-1.5 transition-colors ${
+                          canMutate
+                            ? 'text-slate-400 hover:text-[#1A3C6E]'
+                            : 'text-slate-400 hover:text-slate-600'
+                        }`}
                       >
                         <Pencil className="h-5 w-5" />
                       </button>
-                      <button className="rounded-lg p-1.5 text-slate-400 transition-colors hover:text-red-500">
+                      <button
+                        type="button"
+                        title={canMutate ? 'Xóa' : 'Không thể thao tác với nhân sự cùng vai trò'}
+                        disabled={!canMutate || deleteMut.isPending}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (!canMutate || deleteMut.isPending) return
+                          const id = Number.parseInt(s.id, 10)
+                          if (Number.isNaN(id)) {
+                            addToast('error', 'ID nhân viên không hợp lệ — không gọi được API xóa.')
+                            return
+                          }
+                          if (
+                            !window.confirm(`Xóa nhân viên "${s.name}"? Thao tác không hoàn tác.`)
+                          ) {
+                            return
+                          }
+                          deleteMut.mutate(id)
+                        }}
+                        className={`rounded-lg p-1.5 transition-colors ${
+                          canMutate
+                            ? 'text-slate-400 hover:text-red-500'
+                            : 'cursor-not-allowed text-slate-200'
+                        }`}
+                      >
                         <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -160,6 +213,7 @@ export function ManagerStaffPage() {
         staff={selectedStaff}
         isOpen={detailOpen}
         onClose={() => setDetailOpen(false)}
+        allowMutations={selectedStaff ? canManagerMutateStaffRow(user, selectedStaff) : false}
       />
     </div>
   )

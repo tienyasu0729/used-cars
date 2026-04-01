@@ -20,9 +20,11 @@ type FormData = z.infer<typeof schema>
 interface DepositWizardModalProps {
   isOpen: boolean
   onClose: () => void
-  vehicleId: string
+  vehicleId: string | number
   vehicleName?: string
   vehiclePrice?: number
+  /** Khi true: không gọi API, chỉ hiển thị UI placeholder */
+  uiOnly?: boolean
 }
 
 export function DepositWizardModal({
@@ -31,6 +33,7 @@ export function DepositWizardModal({
   vehicleId,
   vehicleName,
   vehiclePrice,
+  uiOnly = true,
 }: DepositWizardModalProps) {
   const [step, setStep] = useState(1)
   const { user } = useAuthStore()
@@ -56,9 +59,18 @@ export function DepositWizardModal({
 
   const onSubmit = async (data: FormData) => {
     if (!user?.id) return
+
+    // B1: Chế độ UI-only — không gọi API, chỉ hiển thị thông báo
+    if (uiOnly) {
+      addToast('info', 'Tính năng đặt cọc online đang được phát triển. Vui lòng liên hệ showroom để đặt cọc.')
+      onClose()
+      return
+    }
+
+    // B2: Chế độ thật — gọi API (sẽ kích hoạt sau khi tích hợp backend)
     try {
       const res = await depositApi.createDeposit({
-        vehicleId,
+        vehicleId: String(vehicleId),
         customerId: String(user.id),
         amount: data.amount,
         paymentMethod: data.paymentMethod,

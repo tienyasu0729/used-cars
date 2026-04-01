@@ -36,6 +36,8 @@ export interface Vehicle {
   fuel: string // "Xăng" | "Dầu" | "Điện" | "Hybrid"
   transmission: string // "Số tự động" | "Số sàn"
   status: VehicleStatus
+  /** true = đã ẩn khỏi tin đăng công khai (xóa mềm), vẫn xem trong quản lý chi nhánh */
+  deleted?: boolean
   category_id: number
   subcategory_id: number
   branch_id: number
@@ -81,12 +83,21 @@ export interface Subcategory {
 export interface VehicleSearchParams {
   page?: number
   size?: number
-  brand?: number // category_id
+  /** Từ khóa tìm kiếm — tìm trong tiêu đề xe (backend LIKE %q%) */
+  q?: string
+  brand?: number // category_id → query `brand`
+  subcategoryId?: number
   minPrice?: number
   maxPrice?: number
-  /** Backend: postingDateDesc = mới đăng trước (posting_date giảm dần) */
-  sort?: 'postingDateDesc' | 'posting_date_desc' | string
-  // Các filter khác frontend xử lý
+  yearMin?: number
+  yearMax?: number
+  transmission?: string
+  /** Lọc xe theo chi nhánh (branch.id) */
+  branchId?: number
+  /** postingDateDesc | priceAsc | priceDesc | yearDesc | idDesc */
+  sort?: string
+  /** NETWORK = toàn hệ thống (read-only cho Transfer) */
+  scope?: string
 }
 
 export interface CreateVehicleRequest {
@@ -99,9 +110,22 @@ export interface CreateVehicleRequest {
   mileage: number
   fuel?: string
   transmission?: string
+  /** Khớp cột description (NVARCHAR MAX) */
+  description?: string
+  /** Khớp body_style */
+  bodyStyle?: string
+  /** Khớp origin */
+  origin?: string
   images: {
     url: string
     sortOrder: number
     primaryImage: boolean
   }[]
+}
+
+/** PUT /manager/vehicles/{id} — khớp VehicleUpdateRequest (Java). */
+export interface UpdateVehicleRequest extends CreateVehicleRequest {
+  status: VehicleStatus
+  /** yyyy-mm-dd hoặc để trống */
+  postingDate?: string | null
 }

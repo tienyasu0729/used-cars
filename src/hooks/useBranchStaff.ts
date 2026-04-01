@@ -1,18 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
-import { mockStaffMembers } from '@/mock/mockManagerData'
-import { isMockMode } from '@/config/dataSource'
 import { useAuthStore } from '@/store/authStore'
+import { managerStaffService } from '@/services/managerStaff.service'
+import { staffDtoToTableRow } from '@/utils/managerStaffMapper'
 
 export function useBranchStaff() {
   const { user } = useAuthStore()
-  const branchId = typeof user?.branchId === 'number' ? user.branchId : 1
+  const branchId = typeof user?.branchId === 'number' ? user.branchId : undefined
 
   return useQuery({
-    queryKey: ['branch-staff', branchId, isMockMode()],
+    queryKey: ['branch-staff', branchId ?? 'all'],
     queryFn: async () => {
-      // Backend not implemented for this endpoint yet, return mock to avoid 500 error
-      return mockStaffMembers
+      const list = await managerStaffService.list()
+      return list.map(staffDtoToTableRow)
     },
-    staleTime: isMockMode() ? Infinity : 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2,
   })
 }

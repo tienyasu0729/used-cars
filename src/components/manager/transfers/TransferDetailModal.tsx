@@ -39,7 +39,14 @@ export function TransferDetailModal({
   const [completeNote, setCompleteNote] = useState('')
   const [completing, setCompleting] = useState(false)
 
-  const showAdminActions = role === 'Admin' && t?.status === 'Pending'
+  // Manager chi nhánh NGUỒN (nơi có xe) → Phê duyệt / Từ chối khi Pending
+  const showApprovalActions =
+    (role === 'BranchManager' || role === 'SalesStaff') &&
+    t?.status === 'Pending' &&
+    myBranchId != null &&
+    t.fromBranchId === myBranchId
+
+  // Manager chi nhánh ĐÍCH (người yêu cầu) → Xác nhận nhận xe khi đã Approved
   const showComplete =
     role === 'BranchManager' && t?.status === 'Approved' && myBranchId != null && t.toBranchId === myBranchId
 
@@ -117,12 +124,22 @@ export function TransferDetailModal({
             </ul>
           </div>
 
-          {showAdminActions && (
+          {showApprovalActions && (
             <TransferApprovalPanel
               onApprove={(note) => approve({ id: t.id, note }).then(() => onClose())}
               onReject={(note) => reject({ id: t.id, note }).then(() => onClose())}
             />
           )}
+
+          {t.status === 'Approved' &&
+            myBranchId != null &&
+            t.toBranchId === myBranchId &&
+            role === 'SalesStaff' && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                Yêu cầu đang chờ nhận xe tại chi nhánh bạn. Chỉ <strong>Trưởng chi nhánh</strong> mới bấm được{' '}
+                <strong>Xác nhận nhận xe</strong> — vui lòng nhờ quản lý thao tác (hoặc dùng tài khoản Trưởng chi nhánh).
+              </div>
+            )}
 
           {showComplete && (
             <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">

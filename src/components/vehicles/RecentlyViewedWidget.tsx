@@ -10,10 +10,10 @@ interface RecentlyViewedWidgetProps {
 }
 
 export function RecentlyViewedWidget({ maxItems = 6 }: RecentlyViewedWidgetProps) {
-  const { recentVehicles, isLoading } = useRecentlyViewed()
-  const slice = recentVehicles.slice(0, maxItems)
+  // useRecentlyViewed = useQuery → dùng `data`, không có field `recentVehicles`
+  const { data: recentVehicles = [], isLoading } = useRecentlyViewed(maxItems)
 
-  if (!isLoading && slice.length === 0) {
+  if (!isLoading && recentVehicles.length === 0) {
     return null
   }
 
@@ -34,7 +34,7 @@ export function RecentlyViewedWidget({ maxItems = 6 }: RecentlyViewedWidgetProps
     <section className="mb-8">
       <h2 className="mb-3 text-lg font-bold text-slate-900">Xe bạn đã xem</h2>
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {slice.map((v) => {
+        {recentVehicles.map((v) => {
           const img =
             v.images?.[0]?.url ?? 'https://placehold.co/400x240?text=No+Image'
           return (

@@ -21,6 +21,11 @@ import { useRegister } from '@/hooks/useRegister'
 import { PasswordStrength } from '@/components/auth/PasswordStrength'
 import { Button, Input } from '@/components/ui'
 import type { RegisterRequest } from '@/types/auth.types'
+import {
+  ACCOUNT_PASSWORD_PLACEHOLDER,
+  PASSWORD_CONFIRM_MISMATCH_MESSAGE,
+  validateNewAccountPassword,
+} from '@/lib/auth/passwordRules'
 
 export function RegisterForm() {
   // State form — chỉ quản lý giá trị input
@@ -32,8 +37,8 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  // Lỗi validate client-side (mật khẩu không khớp)
-  const [clientError, setClientError] = useState('')
+  /** Lỗi validate client-side (độ dài mật khẩu, xác nhận không khớp) — cùng pattern với SecurityPage */
+  const [clientFieldErrors, setClientFieldErrors] = useState<Record<string, string>>({})
 
   // Hook xử lý toàn bộ logic đăng ký
   const {
@@ -48,12 +53,15 @@ export function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setClientError('')
+    setClientFieldErrors({})
 
-    // Validate client trước: password phải trùng confirmPassword
-    // (tránh gửi request thừa lên server)
+    const pwdErr = validateNewAccountPassword(password)
+    if (pwdErr) {
+      setClientFieldErrors({ password: pwdErr })
+      return
+    }
     if (password !== confirmPassword) {
-      setClientError('Mật khẩu xác nhận không khớp')
+      setClientFieldErrors({ confirmPassword: PASSWORD_CONFIRM_MISMATCH_MESSAGE })
       return
     }
 
@@ -149,13 +157,13 @@ export function RegisterForm() {
               label="Mật khẩu"
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value)
-                setClientError('')
-                clearErrors()
-              }}
-              placeholder="Tối thiểu 6 ký tự"
-              error={fieldErrors['password']}
+          onChange={(e) => {
+            setPassword(e.target.value)
+            setClientFieldErrors({})
+            clearErrors()
+          }}
+          placeholder={ACCOUNT_PASSWORD_PLACEHOLDER}
+          error={fieldErrors['password'] || clientFieldErrors['password']}
               required
               autoComplete="new-password"
             />
@@ -181,10 +189,10 @@ export function RegisterForm() {
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value)
-              setClientError('')
+              setClientFieldErrors({})
             }}
             placeholder="Nhập lại mật khẩu"
-            error={clientError || undefined}
+            error={clientFieldErrors['confirmPassword']}
             required
             autoComplete="new-password"
           />

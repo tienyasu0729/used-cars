@@ -8,14 +8,13 @@ interface BranchCardProps {
 }
 
 export function BranchCard({ branch }: BranchCardProps) {
+  const coverSrc =
+    branch.images?.[0] ??
+    `https://placehold.co/400x225/1a3c6e/white?text=${encodeURIComponent(branch.name)}`
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
       <div className="aspect-video bg-gray-100">
-        <img
-          src={`https://placehold.co/400x225/1a3c6e/white?text=${encodeURIComponent(branch.name)}`}
-          alt={branch.name}
-          className="h-full w-full object-cover"
-        />
+        <img src={coverSrc} alt={branch.name} className="h-full w-full object-cover" />
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-gray-900">{branch.name}</h3>

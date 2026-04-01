@@ -1,7 +1,6 @@
 import { api } from './apiClient'
 import {
   mockAdminUsers,
-  mockAdminTransfers,
   mockAdminBranches,
   mockAdminRoles,
   mockCatalogBrands,
@@ -22,24 +21,6 @@ export const adminApi = {
       return u
     }
     const res = await api.put<AdminUser>(`/admin/users/${id}`, data)
-    return res.data
-  },
-  async approveTransfer(id: string, note?: string) {
-    if (isMockMode()) {
-      const t = mockAdminTransfers.find((x) => x.id === id)
-      if (t) t.status = 'approved'
-      return t
-    }
-    const res = await api.post<AdminTransfer>(`/admin/transfers/${id}/approve`, { approved: true, note })
-    return res.data
-  },
-  async rejectTransfer(id: string, reason: string) {
-    if (isMockMode()) {
-      const t = mockAdminTransfers.find((x) => x.id === id)
-      if (t) t.status = 'rejected'
-      return t
-    }
-    const res = await api.post<AdminTransfer>(`/admin/transfers/${id}/approve`, { approved: false, note: reason })
     return res.data
   },
   async createRole(data: { name: string; description?: string; permissions?: Record<string, { view: boolean; create: boolean; edit: boolean; delete: boolean; approve: boolean }> }) {

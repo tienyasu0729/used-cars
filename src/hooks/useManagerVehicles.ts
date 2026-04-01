@@ -7,7 +7,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { vehicleService } from '@/services/vehicle.service'
 import { useToastStore } from '@/store/toastStore'
-import type { Vehicle, CreateVehicleRequest } from '@/types/vehicle.types'
+import type { Vehicle, CreateVehicleRequest, UpdateVehicleRequest } from '@/types/vehicle.types'
 
 // Map error code sang message thân thiện
 const ERROR_MESSAGES: Record<string, string> = {
@@ -22,8 +22,11 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 interface UseManagerVehicleReturn {
   createVehicle: (data: CreateVehicleRequest) => Promise<Vehicle | null>
-  updateVehicle: (id: number, data: Partial<CreateVehicleRequest>) => Promise<Vehicle | null>
+  updateVehicle: (id: number, data: UpdateVehicleRequest) => Promise<Vehicle | null>
+  /** Ẩn khỏi trang công khai — gọi sau khi user đã xác nhận trong UI */
   deleteVehicle: (id: number) => Promise<boolean>
+  /** Hiển thị lại — gọi sau khi user đã xác nhận trong UI */
+  restoreVehicleVisibility: (id: number) => Promise<boolean>
   isSubmitting: boolean
   error: string | null
 }
@@ -83,17 +86,14 @@ export function useManagerVehicle(): UseManagerVehicleReturn {
 
   const deleteVehicle = useCallback(
     async (id: number): Promise<boolean> => {
-      // Confirm trước khi xóa
-      if (!window.confirm('Bạn có chắc muốn xóa xe này?')) return false
-
       setIsSubmitting(true)
       setError(null)
       try {
         await vehicleService.deleteVehicle(id)
-        toast.addToast('success', 'Đã xóa xe')
+        toast.addToast('success', 'Đã ẩn xe khỏi trang công khai')
         return true
       } catch (err) {
-        handleError(err, 'Lỗi xóa xe')
+        handleError(err, 'Lỗi ẩn xe')
         return false
       } finally {
         setIsSubmitting(false)
@@ -102,32 +102,109 @@ export function useManagerVehicle(): UseManagerVehicleReturn {
     [toast, handleError]
   )
 
-  return { createVehicle, updateVehicle, deleteVehicle, isSubmitting, error }
+  const restoreVehicleVisibility = useCallback(
+    async (id: number): Promise<boolean> => {
+      setIsSubmitting(true)
+      setError(null)
+      try {
+        await vehicleService.restoreVehicleVisibility(id)
+        toast.addToast('success', 'Đã hiển thị lại tin đăng')
+        return true
+      } catch (err) {
+        handleError(err, 'Lỗi hiển thị lại xe')
+        return false
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [toast, handleError]
+  )
+
+  return { createVehicle, updateVehicle, deleteVehicle, restoreVehicleVisibility, isSubmitting, error }
 }
 
 /**
- * useManagerVehicles — Hook lấy danh sách xe cho manager (backward compat)
+ * useManagerVehicles — Danh sách xe trong phạm vi chi nhánh user quản lý (GET /manager/vehicles).
+ * scope='NETWORK' → xem xe toàn hệ thống (read-only cho yêu cầu điều chuyển).
  */
-export function useManagerVehicles() {
+export function useManagerVehicles(options?: { scope?: string }) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const scope = options?.scope
 
   const fetchVehicles = useCallback(async () => {
     setIsLoading(true)
     try {
-      // Dùng API public list (manager thấy tất cả xe)
-      const result = await vehicleService.getVehicles({ page: 0, size: 100 })
-      setVehicles(result.items)
+      if (scope === 'NETWORK') {
+        // Lấy hết trang: backend tối đa 500/trang — gom đến hết totalPages
+        const pageSize = 500
+        const acc: Vehicle[] = []
+        let page = 0
+        let totalPages = 1
+        while (page < totalPages) {
+          const r = await vehicleService.getManagerVehicles({ page, size: pageSize, scope })
+          acc.push(...r.items)
+          totalPages = r.meta.totalPages
+          page += 1
+          if (r.items.length === 0) break
+        }
+        setVehicles(acc)
+      } else {
+        const result = await vehicleService.getManagerVehicles({ page: 0, size: 100, scope })
+        setVehicles(result.items)
+      }
     } catch (err) {
       console.error('[useManagerVehicles] Lỗi:', err)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [scope])
 
   useEffect(() => {
     void fetchVehicles()
   }, [fetchVehicles])
 
   return { data: vehicles, isLoading, refetch: fetchVehicles }
+}
+
+/**
+ * Chi tiết xe cho màn sửa manager — GET /manager/vehicles/:id (403 nếu xe thuộc chi nhánh khác).
+ */
+export function useManagerManagedVehicle(id: string | number | undefined) {
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [accessDenied, setAccessDenied] = useState(false)
+
+  useEffect(() => {
+    if (!id) {
+      setIsLoading(false)
+      setVehicle(null)
+      setAccessDenied(false)
+      return
+    }
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id
+    if (Number.isNaN(numericId)) {
+      setIsLoading(false)
+      setVehicle(null)
+      setAccessDenied(false)
+      return
+    }
+
+    setIsLoading(true)
+    setAccessDenied(false)
+    vehicleService
+      .getManagerVehicleById(numericId)
+      .then((v) => {
+        setVehicle(v)
+        setAccessDenied(false)
+      })
+      .catch((err: unknown) => {
+        const status = (err as { status?: number })?.status
+        setVehicle(null)
+        setAccessDenied(status === 403)
+      })
+      .finally(() => setIsLoading(false))
+  }, [id])
+
+  return { data: vehicle, isLoading, accessDenied }
 }

@@ -1,7 +1,16 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Lock, ShieldCheck, Monitor, Smartphone, Tablet, ChevronRight, X } from 'lucide-react'
-import { Button } from '@/components/ui'
+import { Eye, EyeOff, Lock, ShieldCheck, Monitor, Smartphone, Tablet, ChevronRight, X } from 'lucide-react'
+import { Button, Input } from '@/components/ui'
+import { PasswordStrength } from '@/components/auth/PasswordStrength'
+import authService from '@/services/auth.service'
+import { useToastStore } from '@/store/toastStore'
+import type { ApiErrorResponse } from '@/types/auth.types'
+import {
+  ACCOUNT_PASSWORD_PLACEHOLDER,
+  PASSWORD_CONFIRM_MISMATCH_MESSAGE,
+  validateNewAccountPassword,
+} from '@/lib/auth/passwordRules'
 
 const mockSessions = [
   { id: '1', device: 'Chrome trên macOS', icon: Monitor, location: 'Đà Nẵng, Việt Nam • IP: 115.79.136.21', time: 'Đang hoạt động', isCurrent: true },
@@ -10,13 +19,79 @@ const mockSessions = [
 ]
 
 export function SecurityPage() {
+  const addToast = useToastStore((s) => s.addToast)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const clearFieldErrors = () => setFieldErrors({})
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    clearFieldErrors()
+
+    const next: Record<string, string> = {}
+    if (!currentPassword.trim()) {
+      next.currentPassword = 'Mật khẩu hiện tại không được để trống.'
+    }
+    const newPwdErr = validateNewAccountPassword(newPassword)
+    if (newPwdErr) next.newPassword = newPwdErr
+    if (!confirmPassword.trim()) {
+      next.confirmPassword = 'Vui lòng xác nhận mật khẩu mới.'
+    } else if (newPassword !== confirmPassword) {
+      next.confirmPassword = PASSWORD_CONFIRM_MISMATCH_MESSAGE
+    }
+
+    if (Object.keys(next).length > 0) {
+      setFieldErrors(next)
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const { message } = await authService.changePassword({
+        currentPassword,
+        newPassword,
+      })
+      addToast('success', message)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      const api = err as ApiErrorResponse
+      if (api.errorCode === 'INVALID_CURRENT_PASSWORD') {
+        setFieldErrors({ currentPassword: api.message || 'Mật khẩu hiện tại không đúng.' })
+        return
+      }
+      if (api.errorCode === 'PASSWORD_TOO_SHORT') {
+        setFieldErrors({ newPassword: api.message || 'Mật khẩu từ 8 đến 100 ký tự.' })
+        return
+      }
+      if (api.errorCode === 'VALIDATION_FAILED') {
+        if (api.errors?.length) {
+          const fe: Record<string, string> = {}
+          for (const x of api.errors) fe[x.field] = x.message
+          setFieldErrors(fe)
+          return
+        }
+        if (api.message) {
+          setFieldErrors({ newPassword: api.message })
+          return
+        }
+      }
+      addToast(
+        'error',
+        api?.errors?.length ? api.errors.map((x) => x.message).join(' ') : api?.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại.'
+      )
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -40,38 +115,97 @@ export function SecurityPage() {
         </div>
         <div className="p-6">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="md:col-span-2">
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Mật khẩu hiện tại</label>
-              <input
-                type="password"
+            <div className="relative md:col-span-2">
+              <Input
+                id="security-current-password"
+                label="Mật khẩu hiện tại"
+                type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value)
+                  clearFieldErrors()
+                }}
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-[#1A3C6E] focus:outline-none focus:ring-1 focus:ring-[#1A3C6E]"
+                error={fieldErrors.currentPassword}
+                required
+                autoComplete="current-password"
               />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-3 top-[34px] text-gray-400 hover:text-gray-600"
+                tabIndex={-1}
+                aria-label={showCurrentPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              >
+                {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Mật khẩu mới</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-[#1A3C6E] focus:outline-none focus:ring-1 focus:ring-[#1A3C6E]"
-              />
+            <div className="md:col-span-2">
+              <div className="relative">
+                <Input
+                  id="security-new-password"
+                  label="Mật khẩu mới"
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value)
+                    clearFieldErrors()
+                  }}
+                  placeholder={ACCOUNT_PASSWORD_PLACEHOLDER}
+                  error={fieldErrors.newPassword}
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-[34px] text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                  aria-label={showNewPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <PasswordStrength password={newPassword} />
             </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Xác nhận mật khẩu mới</label>
-              <input
-                type="password"
+            <div className="relative md:col-span-2">
+              <Input
+                id="security-confirm-password"
+                label="Xác nhận mật khẩu mới"
+                type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-[#1A3C6E] focus:outline-none focus:ring-1 focus:ring-[#1A3C6E]"
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value)
+                  clearFieldErrors()
+                }}
+                placeholder="Nhập lại mật khẩu"
+                error={fieldErrors.confirmPassword}
+                required
+                autoComplete="new-password"
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-[34px] text-gray-400 hover:text-gray-600"
+                tabIndex={-1}
+                aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
             <div className="flex justify-end md:col-span-2">
-              <Button type="submit" variant="primary" className="px-6 py-2.5 font-bold shadow-lg shadow-[#1A3C6E]/20">
+              <Button
+                type="submit"
+                variant="primary"
+                loading={submitting}
+                disabled={
+                  submitting ||
+                  !currentPassword.trim() ||
+                  !newPassword.trim() ||
+                  !confirmPassword.trim()
+                }
+                className="px-6 py-2.5 font-bold shadow-lg shadow-[#1A3C6E]/20"
+              >
                 Cập nhật mật khẩu
               </Button>
             </div>
