@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Eye, Plus, Search, FileDown, Trash2, ArrowRightLeft, RotateCcw, Truck } from 'lucide-react'
+import { Pencil, Eye, Plus, Search, FileDown, Trash2, ArrowRightLeft, RotateCcw, Truck, CheckSquare } from 'lucide-react'
 import { useManagerVehicle, useManagerVehicles } from '@/hooks/useManagerVehicles'
 import { useAuthStore } from '@/store/authStore'
 import { VehicleStatusBadge, Modal, Button } from '@/components/ui'
 import { VehicleDetailModal } from '@/features/manager/components'
 import { TransferDetailModal } from '@/components/manager/transfers'
 import { transferService } from '@/services/transfer.service'
+import { vehicleService } from '@/services/vehicle.service'
 import { formatPrice, formatMileage } from '@/utils/format'
 import type { Vehicle } from '@/types/vehicle.types'
 import type { UserProfile } from '@/types/auth.types'
@@ -47,18 +48,32 @@ type RowCtx = {
   navigate: ReturnType<typeof useNavigate>
   openDetail: (v: Vehicle) => void
   setVisibilityConfirm: (v: VisibilityConfirm | null) => void
+  selectedIds: Set<number>
+  toggleSelect: (id: number) => void
 }
 
 function vehicleInventoryTableRow(v: Vehicle, ctx: RowCtx) {
-  const { activeTab, user, isSubmitting, navigate, openDetail, setVisibilityConfirm } = ctx
+  const { activeTab, user, isSubmitting, navigate, openDetail, setVisibilityConfirm, selectedIds, toggleSelect } = ctx
   const im = v.images?.[0]
   const thumb = typeof im === 'string' ? im : im?.url
+  const isSelected = selectedIds.has(v.id)
   return (
     <tr
       key={v.id}
-      className="cursor-pointer transition-colors hover:bg-slate-50/50"
+      className={`cursor-pointer transition-colors ${isSelected ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'}`}
       onClick={() => openDetail(v)}
     >
+      {/* Checkbox — chỉ hiện ở tab MINE */}
+      {activeTab === 'MINE' && (
+        <td className="w-10 p-4" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => toggleSelect(v.id)}
+            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+          />
+        </td>
+      )}
       <td className="p-4">
         <div className="flex items-center gap-4">
           <div
@@ -190,6 +205,62 @@ export function ManagerVehiclesPage() {
   const [visibilityConfirm, setVisibilityConfirm] = useState<VisibilityConfirm | null>(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  // Sprint 4 — Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
+
+  const toggleSelect = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const toggleSelectAll = useCallback(() => {
+    const pageIds = paginated.map((v) => v.id)
+    setSelectedIds((prev) => {
+      const allSelected = pageIds.every((id) => prev.has(id))
+      const next = new Set(prev)
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id))
+      } else {
+        pageIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }, [])
+
+  // Hàm xử lý bulk actions — gọi API thực
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedIds.size === 0) return
+    setBulkLoading(true)
+    try {
+      await vehicleService.bulkChangeStatus(Array.from(selectedIds), newStatus)
+      setSelectedIds(new Set())
+      void refetch()
+    } catch (err) {
+      console.error('Bulk status change failed:', err)
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return
+    if (!window.confirm(`Xác nhận ẩn ${selectedIds.size} xe khỏi trang chủ?`)) return
+    setBulkLoading(true)
+    try {
+      await vehicleService.bulkDeleteVehicles(Array.from(selectedIds))
+      setSelectedIds(new Set())
+      void refetch()
+    } catch (err) {
+      console.error('Bulk delete failed:', err)
+    } finally {
+      setBulkLoading(false)
+    }
+  }
 
   const statusFilter = useMemo(() => {
     const raw = searchParams.get('status')
@@ -251,6 +322,8 @@ export function ManagerVehiclesPage() {
       setDetailOpen(true)
     },
     setVisibilityConfirm,
+    selectedIds,
+    toggleSelect,
   }
 
   const handleTabChange = (tab: TabScope) => {
@@ -483,10 +556,59 @@ export function ManagerVehiclesPage() {
             </p> */}
           </div>
         )}
+        {/* Sprint 4 — Bulk action toolbar */}
+        {activeTab === 'MINE' && selectedIds.size > 0 && (
+          <div className="flex items-center gap-3 border-b border-blue-200 bg-blue-50 px-4 py-2.5">
+            <CheckSquare className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-900">{selectedIds.size} xe đã chọn</span>
+            <div className="ml-auto flex items-center gap-2">
+              <select
+                disabled={bulkLoading}
+                onChange={(e) => {
+                  if (e.target.value) void handleBulkStatusChange(e.target.value)
+                  e.target.value = ''
+                }}
+                className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 focus:ring-2 focus:ring-blue-300"
+              >
+                <option value="">Đổi trạng thái...</option>
+                <option value="Available">→ Đang bán</option>
+                <option value="Reserved">→ Đã đặt cọc</option>
+                <option value="Sold">→ Đã bán</option>
+                <option value="Hidden">→ Ẩn</option>
+              </select>
+              <button
+                type="button"
+                disabled={bulkLoading}
+                onClick={() => void handleBulkDelete()}
+                className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+              >
+                <Trash2 className="mr-1 inline h-3.5 w-3.5" />
+                Ẩn ({selectedIds.size})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Bỏ chọn
+              </button>
+            </div>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
+                {activeTab === 'MINE' && (
+                  <th className="w-10 p-4">
+                    <input
+                      type="checkbox"
+                      checked={paginated.length > 0 && paginated.every((v) => selectedIds.has(v.id))}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                    />
+                  </th>
+                )}
                 <th className="p-4 text-sm font-semibold text-slate-600">Hình ảnh & Xe</th>
                 <th className="p-4 text-sm font-semibold text-slate-600">Mã tin</th>
                 <th className="p-4 text-sm font-semibold text-slate-600">Năm/Giá</th>

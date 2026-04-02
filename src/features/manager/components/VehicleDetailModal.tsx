@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Modal } from '@/components/ui'
 import { VehicleStatusBadge } from '@/components/ui'
+import { MaintenanceHistoryPanel } from './MaintenanceHistoryPanel'
 import { formatPrice, formatMileage } from '@/utils/format'
 import type { Vehicle } from '@/types/vehicle.types'
 
@@ -93,6 +94,8 @@ export function VehicleDetailModal({
             </p>
           </div>
         </div>
+        {/* Sprint 4 — Lịch sử bảo dưỡng */}
+        <MaintenanceHistoryPanel vehicleId={vehicle.id} />
       </div>
     </Modal>
   )

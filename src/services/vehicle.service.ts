@@ -177,4 +177,52 @@ export const vehicleService = {
     const raw = (res as unknown as { data: unknown }).data ?? res
     return normalizeVehicle(raw)
   },
+
+  // ===================== SPRINT 4 — Status + Bulk + Images =====================
+
+  /**
+   * [MANAGER/ADMIN] Đổi trạng thái xe đơn lẻ
+   * PATCH /manager/vehicles/{id}/status
+   */
+  changeVehicleStatus: async (id: number, status: string, note?: string): Promise<Vehicle> => {
+    const res = await axiosInstance.patch<{ data: unknown }>(`/manager/vehicles/${id}/status`, { status, note })
+    const raw = (res as unknown as { data: unknown }).data ?? res
+    return normalizeVehicle(raw)
+  },
+
+  /**
+   * [MANAGER/ADMIN] Đổi trạng thái xe hàng loạt
+   * PATCH /manager/vehicles/bulk-status
+   */
+  bulkChangeStatus: async (vehicleIds: number[], status: string): Promise<void> => {
+    await axiosInstance.patch('/manager/vehicles/bulk-status', { vehicleIds, status })
+  },
+
+  /**
+   * [MANAGER/ADMIN] Xóa mềm xe hàng loạt
+   * DELETE /manager/vehicles/bulk-delete
+   */
+  bulkDeleteVehicles: async (vehicleIds: number[]): Promise<void> => {
+    await axiosInstance.delete('/manager/vehicles/bulk-delete', { data: { vehicleIds } })
+  },
+
+  /**
+   * [MANAGER/ADMIN] Thêm ảnh vào xe (URL đã upload Cloudinary)
+   * POST /manager/vehicles/{id}/images
+   */
+  addVehicleImages: async (
+    vehicleId: number,
+    images: { url: string; sortOrder: number; primaryImage: boolean }[],
+  ): Promise<unknown[]> => {
+    const res = await axiosInstance.post<{ data: unknown[] }>(`/manager/vehicles/${vehicleId}/images`, { images })
+    return (res as unknown as { data: unknown[] }).data ?? res
+  },
+
+  /**
+   * [MANAGER/ADMIN] Xóa 1 ảnh xe khỏi DB
+   * DELETE /manager/vehicles/{vehicleId}/images/{imageId}
+   */
+  deleteVehicleImage: async (vehicleId: number, imageId: number): Promise<void> => {
+    await axiosInstance.delete(`/manager/vehicles/${vehicleId}/images/${imageId}`)
+  },
 }
