@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
-import { uploadMyAvatar } from '@/services/userProfile.service'
+import { uploadAvatar } from '@/services/user.service'
 import { resolveUploadPublicUrl } from '@/utils/mediaUrl'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useBookings } from '@/hooks/useBookings'
@@ -74,7 +74,7 @@ export function CustomerSidebar() {
       return
     }
     try {
-      const url = await uploadMyAvatar(file)
+      const url = await uploadAvatar(file)
       patchUser({ avatarUrl: url })
       addToast('success', 'Đã cập nhật ảnh đại diện')
     } catch {

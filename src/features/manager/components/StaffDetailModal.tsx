@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { X, Pencil, Trash2, History, ArrowRightLeft, Loader2 } from 'lucide-react'
-import type { ManagerStaffMember } from '@/mock/mockManagerData'
+import type { ManagerStaffMember } from '@/types/managerStaff.types'
 import { managerStaffService } from '@/services/managerStaff.service'
 import { branchService } from '@/services/branch.service'
 import { useToastStore } from '@/store/toastStore'
@@ -190,8 +190,8 @@ function StaffDetailPanel({
 
           {!useApi && (
             <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              Không có ID nhân viên hợp lệ từ server — chỉ xem thông tin; sửa / xóa / phân công cần dữ liệu từ{' '}
-              <code className="rounded bg-white px-1">GET /manager/staff</code>.
+              Không có mã nhân viên hợp lệ từ hệ thống — chỉ xem thông tin. Sửa, xóa hoặc phân công cần tải đủ dữ liệu
+              nhân viên từ máy chủ.
             </p>
           )}
         </div>
@@ -278,9 +278,8 @@ function StaffDetailPanel({
               Phân công chi nhánh
             </h4>
             <p className="text-xs leading-relaxed text-slate-500">
-              <strong>StaffAssignment</strong> là bản ghi &quot;nhân viên thuộc chi nhánh nào, từ ngày nào&quot;. Một người có
-              thể có nhiều dòng lịch sử; dòng <strong>active</strong> là chi nhánh hiện tại. Điều chuyển sẽ đóng phân công
-              cũ và mở phân công mới (theo API <code className="text-[11px]">POST .../assignments</code>).
+              Đây là lịch sử phân công nhân viên theo chi nhánh. Một người có thể có nhiều mốc; bản ghi đang hoạt động là
+              chi nhánh hiện tại. Khi điều chuyển, hệ thống sẽ kết thúc phân công cũ và tạo phân công mới.
             </p>
             {assignmentsLoading ? (
               <div className="flex justify-center py-4">

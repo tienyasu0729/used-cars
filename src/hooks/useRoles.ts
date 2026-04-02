@@ -1,20 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
-import { mockAdminRoles } from '@/mock/mockAdminData'
-import { isMockMode } from '@/config/dataSource'
+import type { AdminRole } from '@/types/admin.types'
+
+function asList<T>(data: unknown): T[] {
+  if (Array.isArray(data)) return data as T[]
+  if (data && typeof data === 'object' && 'content' in data && Array.isArray((data as { content: unknown }).content)) {
+    return (data as { content: T[] }).content
+  }
+  return []
+}
 
 export function useRoles() {
   return useQuery({
-    queryKey: ['admin-roles', isMockMode()],
+    queryKey: ['admin-roles'],
     queryFn: async () => {
-      if (isMockMode()) return mockAdminRoles
       try {
         const { api } = await import('@/services/apiClient')
-        const res = await api.get('/admin/roles')
-        return res.data ?? mockAdminRoles
+        const res = await api.get<unknown>('/admin/roles')
+        return asList<AdminRole>(res.data)
       } catch {
-        return mockAdminRoles
+        return [] as AdminRole[]
       }
     },
-    staleTime: isMockMode() ? Infinity : 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 2,
   })
 }

@@ -2,12 +2,11 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, MessageSquare, ShoppingBag, Package } from 'lucide-react'
 import { useStaffBookings } from '@/hooks/useStaffBookings'
-import { useConsultations } from '@/hooks/useConsultations'
-import { useStaffOrders } from '@/hooks/useStaffOrders'
+import { useStaffDashboardStats } from '@/hooks/useStaffDashboardStats'
 import { useInventory } from '@/hooks/useInventory'
 import { StaffScheduleCalendar } from '@/features/staff/components/StaffScheduleCalendar'
-import { mockUsers } from '@/mock'
-import type { StaffScheduleItem } from '@/mock/mockStaffSchedule'
+import type { StaffScheduleItem } from '@/types/staffSchedule.types'
+import { customerDisplayLabel } from '@/lib/customerDisplay'
 import type { Booking } from '@/types/booking.types'
 import type { Vehicle } from '@/types/vehicle.types'
 
@@ -30,7 +29,7 @@ const today = new Date().toISOString().slice(0, 10)
 
 function bookingToScheduleItem(b: Booking, vehicles: Vehicle[]): StaffScheduleItem {
   const v = vehicles.find((x) => x.id === b.vehicleId)
-  const cust = b.customerId != null ? mockUsers.find((u) => u.id === String(b.customerId)) : undefined
+  const customerName = customerDisplayLabel(b.customerId)
   const statusMap: Record<string, StaffScheduleItem['status']> = {
     Pending: 'pending',
     Confirmed: 'confirmed',
@@ -45,7 +44,7 @@ function bookingToScheduleItem(b: Booking, vehicles: Vehicle[]): StaffScheduleIt
     id: `b-${b.id}`,
     bookingId: String(b.id),
     customerId: String(b.customerId ?? ''),
-    customerName: cust?.name ?? `Khách #${b.customerId ?? '?'}`,
+    customerName,
     vehicleId: String(b.vehicleId),
     vehicleName: v ? `${v.brand ?? ''} ${v.model ?? ''}`.trim() || b.vehicleTitle : b.vehicleTitle,
     branchId: String(b.branchId),
@@ -72,9 +71,8 @@ function apiScheduleToItems(
 
 export function StaffDashboardPage() {
   const { bookings, schedule, isLoading: staffLoading } = useStaffBookings()
-  const { data: consultations } = useConsultations()
-  const { ordersToday, ordersThisWeek } = useStaffOrders()
-  const { data: inventory, available } = useInventory()
+  const { data: dashStats, isPending: dashStatsPending } = useStaffDashboardStats()
+  const { data: inventory } = useInventory()
 
   const mergedSchedule = useMemo(() => {
     const vehicles = inventory ?? []
@@ -88,42 +86,43 @@ export function StaffDashboardPage() {
     })
   }, [bookings, schedule, inventory])
 
-  const todayBookings = (bookings ?? []).filter((b) => b.bookingDate === today)
   const todaySchedule = useMemo(
     () => mergedSchedule.filter((s) => s.date === today),
     [mergedSchedule]
   )
 
+  const fmt = (n: number | undefined) => (dashStatsPending ? '—' : (n ?? 0))
+
   const kpis = [
     {
       icon: Calendar,
       label: 'Lịch Hẹn Hôm Nay',
-      value: todayBookings.length,
-      sub: 'cần xử lý',
+      value: fmt(dashStats?.todayBookings),
+      sub: 'Tại chi nhánh của bạn',
       color: 'text-blue-600',
       bg: 'bg-blue-100',
     },
     {
       icon: MessageSquare,
       label: 'Tư Vấn Chờ Xử Lý',
-      value: (consultations ?? []).filter((c) => c.status === 'pending').length,
-      sub: 'yêu cầu mới',
+      value: fmt(dashStats?.pendingConsultations),
+      sub: 'Lịch hẹn đang chờ xác nhận',
       color: 'text-[#E8612A]',
       bg: 'bg-orange-100',
     },
     {
       icon: ShoppingBag,
       label: 'Đơn Hàng Tuần Này',
-      value: ordersThisWeek?.length ?? 0,
-      sub: `Hôm nay: ${ordersToday.length}`,
+      value: fmt(dashStats?.weeklyOrders),
+      sub: 'Từ thứ Hai đến Chủ nhật',
       color: 'text-green-600',
       bg: 'bg-green-100',
     },
     {
       icon: Package,
       label: 'Xe Còn Khả Dụng',
-      value: available?.length ?? 0,
-      sub: 'tại chi nhánh',
+      value: fmt(dashStats?.availableVehicles),
+      sub: 'Tại chi nhánh của bạn',
       color: 'text-slate-600',
       bg: 'bg-slate-100',
     },

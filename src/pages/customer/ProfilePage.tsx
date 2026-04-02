@@ -7,11 +7,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 import { Button, Input } from '@/components/ui'
 import { Lock } from 'lucide-react'
-import {
-  fetchMyProfile,
-  updateMyProfile,
-  normalizeVNPhoneForApi,
-} from '@/services/userProfile.service'
+import { getProfile, updateProfile, normalizeVNPhoneForApi } from '@/services/user.service'
 import { isoDateToDdMmYyyy, ddMmYyyyToIso, isValidDdMmYyyyOrEmpty } from '@/utils/dateDdMmYyyy'
 import { formatDateInputDdMmYyyy } from '@/utils/dateInputMask'
 import {
@@ -87,7 +83,7 @@ export function ProfilePage() {
 
   useEffect(() => {
     let alive = true
-    fetchMyProfile()
+    getProfile()
       .then((p) => {
         if (!alive) return
         patchUser(p)
@@ -114,7 +110,7 @@ export function ProfilePage() {
     const phoneNorm = data.phone?.trim() ? normalizeVNPhoneForApi(data.phone) : null
     try {
       const iso = ddMmYyyyToIso(data.dateOfBirth)
-      const p = await updateMyProfile({
+      const p = await updateProfile({
         name: data.name,
         phone: phoneNorm,
         address: data.address?.trim() ? data.address.trim() : null,

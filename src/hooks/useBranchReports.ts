@@ -1,19 +1,21 @@
 import { useQuery } from '@tanstack/react-query'
-import { mockBranchReports } from '@/mock/mockManagerData'
-import { isMockMode } from '@/config/dataSource'
 import { useAuthStore } from '@/store/authStore'
+import type { BranchReportData } from '@/types/branchReports.types'
+import { EMPTY_BRANCH_REPORTS } from '@/types/branchReports.types'
 
+/**
+ * Báo cáo chi nhánh (biểu đồ Manager dashboard / reports).
+ * Chưa có GET API → luôn trả `EMPTY_BRANCH_REPORTS`; không fallback branchId giả, không mock số liệu.
+ * UI: hiển thị “Chưa có dữ liệu” trên Manager dashboard / reports.
+ */
 export function useBranchReports() {
   const { user } = useAuthStore()
-  const branchId = typeof user?.branchId === 'number' ? user.branchId : 1
+  const branchKey =
+    typeof user?.branchId === 'number' && user.branchId > 0 ? user.branchId : 'none'
 
-  return useQuery({
-    queryKey: ['branch-reports', branchId, isMockMode()],
-    queryFn: async () => {
-      // Tier 4 (Reports) is not fully implemented yet for the manager dashboard
-      // Return mock data for now to prevent 500 API errors
-      return mockBranchReports
-    },
-    staleTime: isMockMode() ? Infinity : 1000 * 60 * 5,
+  return useQuery<BranchReportData>({
+    queryKey: ['branch-reports', branchKey],
+    queryFn: async () => EMPTY_BRANCH_REPORTS,
+    staleTime: Infinity,
   })
 }

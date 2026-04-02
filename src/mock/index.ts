@@ -1,14 +1,4 @@
-export * from './mockUsers'
-export * from './mockVehicles'
-export * from './mockBranches'
-export * from './mockOrders'
-export * from './mockDeposits'
-export * from './mockTransactions'
-export * from './mockNotifications'
-export * from './mockChats'
-export * from './mockConsultations'
-export * from './mockStaffSchedule'
-export * from './mockManagerData'
-export * from './mockManagerNotifications'
-export * from './mockStaffNotifications'
-export * from './mockAdminData'
+/**
+ * Dữ liệu mock đã gỡ. Kiểu domain dùng @/types/* (admin.types, managerAppointment.types, …).
+ */
+export {}

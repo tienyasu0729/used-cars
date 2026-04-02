@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, EyeOff, Lock, ShieldCheck, Monitor, Smartphone, Tablet, ChevronRight, X } from 'lucide-react'
+import { Eye, EyeOff, Lock, ShieldCheck, Monitor, ChevronRight } from 'lucide-react'
 import { Button, Input } from '@/components/ui'
 import { PasswordStrength } from '@/components/auth/PasswordStrength'
 import authService from '@/services/auth.service'
@@ -11,12 +11,6 @@ import {
   PASSWORD_CONFIRM_MISMATCH_MESSAGE,
   validateNewAccountPassword,
 } from '@/lib/auth/passwordRules'
-
-const mockSessions = [
-  { id: '1', device: 'Chrome trên macOS', icon: Monitor, location: 'Đà Nẵng, Việt Nam • IP: 115.79.136.21', time: 'Đang hoạt động', isCurrent: true },
-  { id: '2', device: 'iPhone 13 Pro', icon: Smartphone, location: 'TP. Hồ Chí Minh, Việt Nam • 2 giờ trước', time: '', isCurrent: false },
-  { id: '3', device: 'Samsung Galaxy Tab S8', icon: Tablet, location: 'Đà Nẵng, Việt Nam • 1 ngày trước', time: '', isCurrent: false },
-]
 
 export function SecurityPage() {
   const addToast = useToastStore((s) => s.addToast)
@@ -246,34 +240,10 @@ export function SecurityPage() {
             Đăng xuất khỏi tất cả thiết bị
           </button>
         </div>
-        <div className="divide-y divide-slate-100">
-          {mockSessions.map((s) => (
-            <div key={s.id} className="flex items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-                  <s.icon className="h-5 w-5 text-slate-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    {s.device}
-                    {s.isCurrent && (
-                      <span className="ml-2 inline-block rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold uppercase text-green-700">
-                        Thiết bị này
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-slate-500">{s.location}</p>
-                </div>
-              </div>
-              {s.isCurrent ? (
-                <span className="text-xs text-slate-400">Đang hoạt động</span>
-              ) : (
-                <button className="text-slate-400 transition-colors hover:text-red-500">
-                  <X className="h-5 w-5" />
-                </button>
-              )}
-            </div>
-          ))}
+        <div className="divide-y divide-slate-100 px-6 py-10 text-center text-sm text-slate-500">
+          <Monitor className="mx-auto mb-3 h-10 w-10 text-slate-400" aria-hidden />
+          <p className="font-medium text-slate-700">Chưa có danh sách phiên từ API</p>
+          <p className="mt-2">Kết nối endpoint phiên đăng nhập khi backend hỗ trợ.</p>
         </div>
       </section>
     </div>

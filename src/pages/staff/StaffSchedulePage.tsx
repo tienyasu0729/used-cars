@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { useStaffBookings } from '@/hooks/useStaffBookings'
 import { useInventory } from '@/hooks/useInventory'
 import { StaffScheduleCalendar } from '@/features/staff/components/StaffScheduleCalendar'
-import { mockUsers } from '@/mock'
-import type { StaffScheduleItem } from '@/mock/mockStaffSchedule'
+import type { StaffScheduleItem } from '@/types/staffSchedule.types'
+import { customerDisplayLabel } from '@/lib/customerDisplay'
 import type { Booking } from '@/types/booking.types'
 import type { Vehicle } from '@/types/vehicle.types'
 
@@ -26,7 +26,7 @@ const TYPE_BADGE: Record<string, string> = {
 
 function bookingToScheduleItem(b: Booking, vehicles: Vehicle[]): StaffScheduleItem {
   const v = vehicles.find((x) => x.id === b.vehicleId)
-  const cust = b.customerId != null ? mockUsers.find((u) => u.id === String(b.customerId)) : undefined
+  const customerName = customerDisplayLabel(b.customerId)
   const statusMap: Record<string, StaffScheduleItem['status']> = {
     Pending: 'pending',
     Confirmed: 'confirmed',
@@ -41,7 +41,7 @@ function bookingToScheduleItem(b: Booking, vehicles: Vehicle[]): StaffScheduleIt
     id: `b-${b.id}`,
     bookingId: String(b.id),
     customerId: String(b.customerId ?? ''),
-    customerName: cust?.name ?? `Khách #${b.customerId ?? '?'}`,
+    customerName,
     vehicleId: String(b.vehicleId),
     vehicleName: v ? `${v.brand ?? ''} ${v.model ?? ''}`.trim() || b.vehicleTitle : b.vehicleTitle,
     branchId: String(b.branchId),

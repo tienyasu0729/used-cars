@@ -1,20 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
-import { mockAdminBranches } from '@/mock/mockAdminData'
-import { isMockMode } from '@/config/dataSource'
+import type { AdminBranch } from '@/types/admin.types'
+
+function asList<T>(data: unknown): T[] {
+  if (Array.isArray(data)) return data as T[]
+  if (data && typeof data === 'object' && 'content' in data && Array.isArray((data as { content: unknown }).content)) {
+    return (data as { content: T[] }).content
+  }
+  return []
+}
 
 export function useBranchesAdmin() {
   return useQuery({
-    queryKey: ['admin-branches', isMockMode()],
+    queryKey: ['admin-branches'],
     queryFn: async () => {
-      if (isMockMode()) return mockAdminBranches
       try {
         const { api } = await import('@/services/apiClient')
-        const res = await api.get('/admin/branches')
-        return res.data ?? mockAdminBranches
+        const res = await api.get<unknown>('/admin/branches')
+        return asList<AdminBranch>(res.data)
       } catch {
-        return mockAdminBranches
+        return [] as AdminBranch[]
       }
     },
-    staleTime: isMockMode() ? Infinity : 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 2,
   })
 }

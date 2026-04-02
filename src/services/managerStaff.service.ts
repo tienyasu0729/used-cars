@@ -65,6 +65,11 @@ export const managerStaffService = {
     return Array.isArray(data) ? data : []
   },
 
+  /** Alias theo spec tích hợp — cùng `list`. */
+  getStaffList(branchId?: number) {
+    return managerStaffService.list(branchId)
+  },
+
   async create(body: CreateStaffRequestBody): Promise<StaffListItemDto> {
     const res = await axiosInstance.post<unknown>('/manager/staff', body)
     return unwrapData<StaffListItemDto>(res)
@@ -75,12 +80,28 @@ export const managerStaffService = {
     return unwrapData<StaffListItemDto>(res)
   },
 
+  createStaff(body: CreateStaffRequestBody) {
+    return managerStaffService.create(body)
+  },
+
   async updateStatus(id: number, body: UpdateStaffStatusBody): Promise<void> {
     await axiosInstance.patch<unknown>(`/manager/staff/${id}/status`, body)
   },
 
+  toggleStaffStatus(id: number, body: UpdateStaffStatusBody) {
+    return managerStaffService.updateStatus(id, body)
+  },
+
   async delete(id: number): Promise<void> {
     await axiosInstance.delete<unknown>(`/manager/staff/${id}`)
+  },
+
+  deleteStaff(id: number) {
+    return managerStaffService.delete(id)
+  },
+
+  updateStaff(id: number, body: UpdateStaffBody) {
+    return managerStaffService.update(id, body)
   },
 
   async listAssignments(id: number): Promise<StaffAssignmentItemDto[]> {

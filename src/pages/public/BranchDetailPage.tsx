@@ -1,9 +1,12 @@
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Info, Car, Users, MapPin, ArrowRight, MessageCircle, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBranch, useBranchTeam } from '@/hooks/useBranches'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
+import { BRANCH_DAY_LABELS_VI } from '@/types/branch'
+import { formatBranchSlotHours } from '@/services/branch.service'
 
 function staffAvatarUrl(avatarUrl: string | null | undefined): string {
   const u = avatarUrl?.trim()
@@ -20,6 +23,29 @@ export function BranchDetailPage() {
   const { data: branch, isLoading: branchLoading } = useBranch(id)
   const { data: team = [], isLoading: teamLoading } = useBranchTeam(id)
   useDocumentTitle(branch ? `Chi nhánh - ${branch.name}` : 'Chi tiết chi nhánh')
+
+  const heroSlides = useMemo(() => {
+    if (!branch) return [] as string[]
+    const imgs = (branch.images ?? []).map((u) => u.trim()).filter(Boolean)
+    if (imgs.length > 0) return imgs
+    return [
+      `https://placehold.co/1200x400/1a3c6e/white?text=${encodeURIComponent(branch.name)}`,
+    ]
+  }, [branch])
+
+  const [heroIndex, setHeroIndex] = useState(0)
+
+  useEffect(() => {
+    setHeroIndex(0)
+  }, [branch?.id, heroSlides.join('\0')])
+
+  useEffect(() => {
+    if (heroSlides.length < 2) return undefined
+    const timer = window.setInterval(() => {
+      setHeroIndex((i) => (i + 1) % heroSlides.length)
+    }, 5200)
+    return () => window.clearInterval(timer)
+  }, [heroSlides])
 
   const {
     vehicles,
@@ -54,8 +80,7 @@ export function BranchDetailPage() {
     )
   }
 
-  const heroBg =
-    branch.images?.[0] ?? `https://placehold.co/1200x400/1a3c6e/white?text=${encodeURIComponent(branch.name)}`
+  const openDaySlots = (branch.workingHours ?? []).filter((s) => !s.closed)
   const mapUrl = `https://www.google.com/maps?q=${branch.lat},${branch.lng}`
   const branchCallDigits = branch.phone.replace(/\D/g, '')
   const canCallBranch = branchCallDigits.length >= 9
@@ -75,12 +100,34 @@ export function BranchDetailPage() {
       </nav>
 
       <div className="relative mb-8 min-h-[400px] overflow-hidden rounded-xl bg-slate-200">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${heroBg})` }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
-        <div className="relative flex flex-col justify-end p-8 md:p-12">
-          <span className="mb-4 inline-block rounded-full bg-[#1A3C6E] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white">
-            Showroom
-          </span>
+        {heroSlides.map((src, i) => (
+          <div
+            key={`${src}-${i}`}
+            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[900ms] ease-in-out ${
+              i === heroIndex ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{ backgroundImage: `url(${src})` }}
+            aria-hidden={i !== heroIndex}
+          />
+        ))}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
+        {heroSlides.length > 1 && (
+          <div className="absolute bottom-28 left-1/2 z-10 flex -translate-x-1/2 gap-2 md:bottom-32">
+            {heroSlides.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Xem ảnh ${i + 1} / ${heroSlides.length}`}
+                aria-current={i === heroIndex}
+                onClick={() => setHeroIndex(i)}
+                className={`h-2 rounded-full transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+                  i === heroIndex ? 'w-7 bg-white' : 'w-2 bg-white/45 hover:bg-white/70'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+        <div className="relative z-[1] flex flex-col justify-end p-8 md:p-12">
           <h1 className="mb-2 text-4xl font-extrabold leading-tight text-white md:text-5xl">{branch.name}</h1>
           <p className="max-w-2xl text-lg text-slate-200">{branch.description ?? 'Chi nhánh BanXeOTo Đà Nẵng.'}</p>
         </div>
@@ -106,11 +153,28 @@ export function BranchDetailPage() {
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Email</p>
                 <p className="font-medium text-slate-800">{branch.email ?? '—'}</p>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 md:col-span-2">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Giờ mở cửa</p>
-                <p className="font-medium text-slate-800">
-                  {branch.workingDays}: {branch.openTime} - {branch.closeTime}
-                </p>
+                {openDaySlots.length === 0 ? (
+                  <p className="mt-2 text-sm text-slate-600">
+                    {branch.hoursSummaryLine?.trim() ||
+                      'Vui lòng liên hệ chi nhánh để biết lịch làm việc.'}
+                  </p>
+                ) : (
+                  <ul className="mt-2 space-y-2">
+                    {openDaySlots.map((slot) => (
+                      <li
+                        key={slot.dayOfWeek}
+                        className="flex flex-wrap justify-between gap-2 text-sm font-medium text-slate-800"
+                      >
+                        <span className="text-slate-600">
+                          {BRANCH_DAY_LABELS_VI[slot.dayOfWeek] ?? `Thứ ${slot.dayOfWeek}`}
+                        </span>
+                        <span>{formatBranchSlotHours(slot)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           </section>

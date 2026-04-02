@@ -4,7 +4,7 @@ import { useStaffBookings } from '@/hooks/useStaffBookings'
 import { useBranches } from '@/hooks/useBranches'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useToastStore } from '@/store/toastStore'
-import { mockUsers } from '@/mock'
+import { customerDisplayLabel } from '@/lib/customerDisplay'
 import { BookingDetailModal } from '@/features/staff/components/BookingDetailModal'
 import { BookingActionButtons } from '@/components/staff/BookingActionButtons'
 import type { Booking } from '@/types/booking.types'
@@ -22,11 +22,6 @@ function formatTime(slot: string) {
   if (h < 12) return `${slot} sáng`
   if (h === 12) return `${slot} trưa`
   return `${String(h - 12).padStart(2, '0')}:${String(m).padStart(2, '0')} chiều`
-}
-
-function formatPhone(phone: string) {
-  if (!phone || phone.length < 10) return '*** *** ***'
-  return `${phone.slice(0, 4)} ${phone.slice(4, 7)} ${phone.slice(7)}`
 }
 
 export function StaffBookingsPage() {
@@ -78,8 +73,7 @@ export function StaffBookingsPage() {
     return <span className="rounded px-2.5 py-1 text-xs font-medium bg-sky-100 text-sky-800">Hoàn thành</span>
   }
 
-  const getCustomer = (customerId: number | undefined) =>
-    customerId != null ? mockUsers.find((u) => u.id === String(customerId)) : undefined
+  const getCustomerName = (customerId: number | undefined) => customerDisplayLabel(customerId)
 
   const wrap = async (msgOk: string, fn: () => Promise<void>) => {
     try {
@@ -151,7 +145,7 @@ export function StaffBookingsPage() {
             <tbody className="divide-y divide-slate-200">
               {paginated.map((b) => {
                 const v = vehicles?.find((x) => x.id === b.vehicleId)
-                const cust = getCustomer(b.customerId)
+                const customerName = getCustomerName(b.customerId)
                 const detail = [v?.trim && `Bản ${v.trim}`, v?.exteriorColor].filter(Boolean).join(' - ') || '-'
                 return (
                   <tr key={b.id} className="transition-colors hover:bg-slate-50/50">
@@ -177,8 +171,8 @@ export function StaffBookingsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-medium text-slate-900">{cust?.name ?? `Khách #${b.customerId ?? '?'}`}</p>
-                      <p className="text-xs text-slate-500">{cust?.phone ? formatPhone(cust.phone) : '*** *** ***'}</p>
+                      <p className="font-medium text-slate-900">{customerName}</p>
+                      <p className="text-xs text-slate-500">SĐT: chưa có từ API</p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-slate-700">{formatDate(b.bookingDate)}</p>

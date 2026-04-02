@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useFieldArray, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate, Link } from 'react-router-dom'
-import { Info, Tag, ImageIcon, Loader2, Upload, X } from 'lucide-react'
+import { Info, Tag, ImageIcon, Loader2, Upload, X, Plus, Trash2 } from 'lucide-react'
 import { Input, Button } from '@/components/ui'
 import { useCatalog } from '@/hooks/useCatalog'
 import { useBranches } from '@/hooks/useBranches'
 import { useManagerVehicle } from '@/hooks/useManagerVehicles'
 import { useToastStore } from '@/store/toastStore'
 import { useAuthStore } from '@/store/authStore'
-import { isCloudinaryConfigured, uploadImageToCloudinary } from '@/utils/cloudinaryUpload'
+import { fetchMediaUploadEnabled, uploadManagerImage } from '@/services/managerMedia.service'
+import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import type { CreateVehicleRequest } from '@/types/vehicle.types'
 
 const FUEL_OPTIONS = ['Xăng', 'Dầu', 'Điện', 'Hybrid'] as const
@@ -38,6 +39,7 @@ const schema = z.object({
   bodyStyle: z.string().optional(),
   origin: z.string().optional(),
   description: z.string().optional(),
+  imageRows: z.array(z.object({ url: z.string() })),
 })
 
 type AddVehicleFormValues = z.infer<typeof schema>
@@ -49,6 +51,19 @@ const MAX_LOCAL_IMAGES = 15
 
 type PickedImage = { id: string; file: File; preview: string }
 
+type ImagePreviewTile =
+  | { kind: 'url'; rowIndex: number; key: string }
+  | { kind: 'picked'; picked: PickedImage; key: string }
+
+function trimUrl(u: string): string {
+  return u.trim()
+}
+
+function canPreviewUrl(u: string): boolean {
+  const t = trimUrl(u)
+  return t.startsWith('http://') || t.startsWith('https://') || t.startsWith('data:')
+}
+
 export function ManagerAddVehiclePage() {
   const navigate = useNavigate()
   const toast = useToastStore()
@@ -56,6 +71,7 @@ export function ManagerAddVehiclePage() {
   const pickedRef = useRef<PickedImage[]>([])
   const [pickedImages, setPickedImages] = useState<PickedImage[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [cloudReady, setCloudReady] = useState(false)
   const { createVehicle, isSubmitting, error } = useManagerVehicle()
   const { user } = useAuthStore()
   const {
@@ -92,7 +108,7 @@ export function ManagerAddVehiclePage() {
     setValue,
     formState: { errors },
   } = useForm<AddVehicleFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<AddVehicleFormValues>,
     defaultValues: {
       categoryId: 0,
       subcategoryId: 0,
@@ -105,10 +121,26 @@ export function ManagerAddVehiclePage() {
       bodyStyle: '',
       origin: '',
       description: '',
+      imageRows: [{ url: '' }],
     },
   })
 
+  const { fields, append, remove } = useFieldArray({ control, name: 'imageRows' })
   const categoryId = watch('categoryId')
+  const watchedImageRows = watch('imageRows')
+
+  const imagePreviewTiles = useMemo((): ImagePreviewTile[] => {
+    const urlTiles: ImagePreviewTile[] = fields
+      .map((f, i) => ({ f, i }))
+      .filter(({ i }) => trimUrl(watchedImageRows?.[i]?.url ?? '').length > 0)
+      .map(({ f, i }) => ({ kind: 'url' as const, rowIndex: i, key: `url-${f.id}` }))
+    const pickTiles: ImagePreviewTile[] = pickedImages.map((p) => ({
+      kind: 'picked' as const,
+      picked: p,
+      key: `pick-${p.id}`,
+    }))
+    return [...urlTiles, ...pickTiles]
+  }, [fields, watchedImageRows, pickedImages])
 
   useEffect(() => {
     if (categoryId > 0) {
@@ -127,6 +159,10 @@ export function ManagerAddVehiclePage() {
     }
   }, [])
 
+  useEffect(() => {
+    void fetchMediaUploadEnabled().then(setCloudReady)
+  }, [])
+
   const addPickedFiles = useCallback(
     (fileList: FileList | File[]) => {
       const arr = Array.from(fileList).filter((f) => f.type.startsWith('image/'))
@@ -137,7 +173,7 @@ export function ManagerAddVehiclePage() {
       setPickedImages((prev) => {
         const room = MAX_LOCAL_IMAGES - prev.length
         if (room <= 0) {
-          toast.addToast('warning', `Tối đa ${MAX_LOCAL_IMAGES} ảnh`)
+          toast.addToast('warning', `Tối đa ${MAX_LOCAL_IMAGES} ảnh tải từ máy mỗi lần đăng`)
           return prev
         }
         const take = arr.slice(0, room)
@@ -168,23 +204,30 @@ export function ManagerAddVehiclePage() {
       return
     }
 
-    const images: CreateVehicleRequest['images'] = []
+    const urlsFromForm = data.imageRows.map((r) => trimUrl(r.url)).filter(Boolean)
+    const uploadedUrls: string[] = []
     setIsUploading(true)
     try {
       if (pickedImages.length > 0) {
-        if (isCloudinaryConfigured()) {
-          for (let i = 0; i < pickedImages.length; i++) {
-            const url = await uploadImageToCloudinary(pickedImages[i].file)
-            images.push({ url, sortOrder: i, primaryImage: i === 0 })
+        if (cloudReady) {
+          for (const p of pickedImages) {
+            uploadedUrls.push(await uploadManagerImage(p.file))
           }
         } else {
           toast.addToast(
             'info',
-            'Chưa cấu hình Cloudinary trong .env — đăng tin không kèm ảnh. Bạn có thể bổ sung ảnh sau khi sửa xe.',
-            5000,
+            'Chưa bật tải ảnh từ máy — bỏ qua ảnh chọn từ máy lần này. Bạn có thể dán URL ảnh hoặc bật cấu hình lưu ảnh rồi đăng lại.',
+            6000,
           )
         }
       }
+
+      const urls = [...urlsFromForm, ...uploadedUrls]
+      const images = urls.map((url, i) => ({
+        url,
+        sortOrder: i,
+        primaryImage: i === 0,
+      }))
 
       const payload: CreateVehicleRequest = {
         categoryId: data.categoryId,
@@ -217,7 +260,6 @@ export function ManagerAddVehiclePage() {
     }
   }
 
-  const cloudReady = isCloudinaryConfigured()
   const branchReady = effectiveBranchId > 0
   const busy = isSubmitting || isUploading
 
@@ -238,8 +280,7 @@ export function ManagerAddVehiclePage() {
       <div className="mb-8">
         <h1 className="text-3xl font-black tracking-tight text-slate-900">Thêm xe mới</h1>
         <p className="mt-1 text-slate-600">
-          Hãng và dòng xe lấy từ danh mục hệ thống; tên tin đăng do bạn nhập. Dữ liệu gửi đúng API{' '}
-          <code className="rounded bg-slate-100 px-1 text-xs">POST /manager/vehicles</code>.
+          Hãng và dòng xe lấy từ danh mục hệ thống; tiêu đề tin đăng do bạn nhập. Nhấn đăng tin để lưu lên hệ thống.
         </p>
       </div>
 
@@ -428,11 +469,10 @@ export function ManagerAddVehiclePage() {
                 Hình ảnh xe
               </h3>
               <p className="mb-4 text-xs text-slate-500">
-                Chọn ảnh từ máy (tối đa {MAX_LOCAL_IMAGES} ảnh). Khi có{' '}
-                <code className="rounded bg-slate-100 px-1">VITE_CLOUDINARY_CLOUD_NAME</code> và{' '}
-                <code className="rounded bg-slate-100 px-1">VITE_CLOUDINARY_UPLOAD_PRESET</code> trong{' '}
-                <code className="rounded bg-slate-100 px-1">.env</code>, ảnh được đẩy lên Cloudinary rồi gửi URL vào API.
-                Chưa cấu hình: vẫn đăng xe bình thường, không lỗi — thêm ảnh sau qua sửa tin.
+                Chọn ảnh từ máy (tối đa {MAX_LOCAL_IMAGES} ảnh) hoặc dán URL ở mục bên dưới. Khi hệ thống đã bật dịch vụ
+                lưu ảnh, ảnh từ máy sẽ được tải lên và gắn vào tin khi bạn đăng. Nếu chưa bật, bạn vẫn đăng tin bình
+                thường — chỉ không gửi được ảnh từ máy; hãy dán URL trong mục bên dưới.
+                Thứ tự hiển thị: URL trước, ảnh chọn từ máy sau — <strong>ô đầu tiên là ảnh bìa</strong>.
               </p>
               <div
                 role="button"
@@ -481,17 +521,27 @@ export function ManagerAddVehiclePage() {
                       : 'rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-900'
                   }
                 >
-                  {cloudReady ? 'Cloudinary: đã cấu hình — ảnh sẽ được tải lên khi đăng' : 'Cloudinary: chưa cấu hình — đăng xe không gửi ảnh'}
+                  {cloudReady
+                    ? 'Đã bật tải ảnh từ máy — sẽ đẩy lên khi đăng'
+                    : 'Chưa bật tải ảnh từ máy — vẫn đăng được khi dán URL'}
                 </span>
               </div>
-              {pickedImages.length > 0 && (
+              {imagePreviewTiles.length > 0 && (
                 <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-                  {pickedImages.map((p, idx) => (
+                  {imagePreviewTiles.map((tile, idx) => (
                     <div
-                      key={p.id}
+                      key={tile.key}
                       className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
                     >
-                      <img src={p.preview} alt="" className="h-full w-full object-cover" />
+                      {tile.kind === 'url' ? (
+                        <img
+                          src={externalImageDisplayUrl(trimUrl(watchedImageRows?.[tile.rowIndex]?.url ?? ''))}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <img src={tile.picked.preview} alt="" className="h-full w-full object-cover" />
+                      )}
                       {idx === 0 && (
                         <span className="absolute left-1 top-1 rounded bg-[#1A3C6E] px-1.5 py-0.5 text-[10px] font-bold text-white">
                           Ảnh bìa
@@ -501,7 +551,8 @@ export function ManagerAddVehiclePage() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          removePicked(p.id)
+                          if (tile.kind === 'url') remove(tile.rowIndex)
+                          else removePicked(tile.picked.id)
                         }}
                         className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
                         aria-label="Xóa ảnh"
@@ -512,6 +563,58 @@ export function ManagerAddVehiclePage() {
                   ))}
                 </div>
               )}
+
+              <details className="mt-6 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2">
+                <summary className="cursor-pointer select-none text-sm font-semibold text-slate-800">
+                  Thêm hoặc sửa ảnh bằng URL
+                </summary>
+                <p className="mt-2 text-xs text-slate-500">
+                  Mỗi dòng một URL. Thứ tự trùng với lưới ảnh phía trên (URL trước, ảnh từ máy sau).
+                </p>
+                <div className="mt-3 space-y-2">
+                  {fields.map((f, index) => {
+                    const rowUrl = watchedImageRows?.[index]?.url ?? ''
+                    const prev = canPreviewUrl(rowUrl)
+                    return (
+                      <div key={f.id} className="flex items-center gap-2">
+                        <div className="h-10 w-14 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-200">
+                          {prev ? (
+                            <img
+                              src={externalImageDisplayUrl(trimUrl(rowUrl))}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-[10px] text-slate-400">—</div>
+                          )}
+                        </div>
+                        <Input
+                          {...register(`imageRows.${index}.url`)}
+                          placeholder="https://..."
+                          className="min-w-0 flex-1 font-mono text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => remove(index)}
+                          className="shrink-0 rounded-lg border border-slate-200 bg-white p-2 text-red-600 hover:bg-red-50 disabled:opacity-40"
+                          disabled={fields.length <= 1}
+                          aria-label="Xóa dòng URL"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => append({ url: '' })}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-[#1A3C6E] hover:underline"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Thêm dòng URL
+                  </button>
+                </div>
+              </details>
             </div>
           </div>
 

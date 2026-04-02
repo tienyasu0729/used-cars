@@ -5,7 +5,7 @@ import { useStaffOrders } from '@/hooks/useStaffOrders'
 import { useVehicles } from '@/hooks/useVehicles'
 import { formatPrice } from '@/utils/format'
 import { Badge, Button, Modal } from '@/components/ui'
-import { mockUsers } from '@/mock'
+import { customerDisplayLabel } from '@/lib/customerDisplay'
 import type { Order } from '@/types'
 import type { Vehicle } from '@/types/vehicle.types'
 
@@ -15,7 +15,8 @@ function vehicleThumb(v: Vehicle | null | undefined) {
 }
 
 function OrderDetailModal({ order, vehicle, onClose }: { order: Order; vehicle: Vehicle | null; onClose: () => void }) {
-  const customer = mockUsers.find((u) => u.id === order.customerId)
+  const cid = Number(order.customerId)
+  const customerName = customerDisplayLabel(Number.isFinite(cid) ? cid : undefined)
   const paidAmount = order.deposit
   const remaining = order.price - order.deposit
   const thumb = vehicleThumb(vehicle)
@@ -34,9 +35,9 @@ function OrderDetailModal({ order, vehicle, onClose }: { order: Order; vehicle: 
       <div className="space-y-4">
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Thông tin người mua</h3>
-          <p className="font-semibold text-slate-900">{customer?.name ?? 'Khách #' + order.customerId}</p>
-          <p className="text-sm text-slate-600">{customer?.email ?? '-'}</p>
-          <p className="text-sm text-slate-600">{customer?.phone ?? '-'}</p>
+          <p className="font-semibold text-slate-900">{customerName}</p>
+          <p className="text-sm text-slate-600">Email: chưa có từ API</p>
+          <p className="text-sm text-slate-600">SĐT: chưa có từ API</p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Thông tin xe</h3>

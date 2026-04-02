@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, ChevronLeft, Check, Info } from 'lucide-react'
-import { mockUsers } from '@/mock'
 import { useInventory } from '@/hooks/useInventory'
 import { orderApi } from '@/services/orderApi'
 import { useToastStore } from '@/store/toastStore'
@@ -28,7 +27,7 @@ const step4Schema = z.object({
 type Step3Form = z.infer<typeof step3Schema>
 type Step4Form = z.infer<typeof step4Schema>
 
-const customers = mockUsers.filter((u) => u.role === 'customer')
+const customers: { id: string; name: string; phone?: string; email?: string }[] = []
 const STEPS = ['Chọn Xe', 'Khách Hàng', 'Chi Tiết', 'Xác Nhận']
 
 export function StaffCreateOrderPage() {
@@ -57,7 +56,7 @@ export function StaffCreateOrderPage() {
     const c = customers.find((u) => 'phone' in u && u.phone?.includes(phone))
     if (c) {
       step3Form.setValue('customerName', c.name)
-      step3Form.setValue('email', c.email)
+      step3Form.setValue('email', c.email ?? '')
       step3Form.setValue('phone', (c as { phone?: string }).phone || '')
       setCustomerId(c.id)
     }

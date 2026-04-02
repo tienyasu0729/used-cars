@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import type { ManagerAppointment } from '@/mock/mockManagerData'
+import type { ManagerAppointment } from '@/types/managerAppointment.types'
+import { customerDisplayLabel } from '@/lib/customerDisplay'
 import { useAuthStore } from '@/store/authStore'
 import { bookingService } from '@/services/booking.service'
 
@@ -15,8 +16,7 @@ export function useAppointments() {
         
         return res.items.map((b) => ({
           id: String(b.id),
-          customerName:
-            b.customerId != null ? `Khách hàng #${b.customerId}` : 'Khách hàng',
+          customerName: customerDisplayLabel(b.customerId),
           vehicleName: b.vehicleTitle?.trim() || `Xe #${b.vehicleId}`,
           timeSlot: b.timeSlot,
           date: b.bookingDate,

@@ -1,5 +1,5 @@
 import type { StaffListItemDto } from '@/services/managerStaff.service'
-import type { ManagerStaffMember, StaffSystemRoleCode } from '@/mock/mockManagerData'
+import type { ManagerStaffMember, StaffSystemRoleCode } from '@/types/managerStaff.types'
 import type { UserProfile } from '@/types/auth.types'
 
 function roleLabel(apiRole: string): string {

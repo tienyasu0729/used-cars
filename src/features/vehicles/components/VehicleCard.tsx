@@ -7,6 +7,7 @@
 import { Link } from 'react-router-dom'
 import { MapPin, GitCompare, Gauge, Calendar, Fuel, Cog } from 'lucide-react'
 import { formatPrice, formatMileage } from '@/utils/format'
+import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import { VehicleStatusBadge } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { useCompareVehicles } from '@/hooks/useCompareVehicles'
@@ -25,7 +26,8 @@ interface VehicleCardProps {
 function getPrimaryImage(images?: VehicleImage[]): string {
   if (!images || images.length === 0) return 'https://placehold.co/600x400?text=No+Image'
   const primary = images.find((img) => img.primaryImage)
-  return primary?.url ?? images[0]?.url ?? 'https://placehold.co/600x400?text=No+Image'
+  const raw = primary?.url ?? images[0]?.url
+  return raw ? externalImageDisplayUrl(raw) : 'https://placehold.co/600x400?text=No+Image'
 }
 
 export function VehicleCard({ vehicle, compact, showNewBadge, showSaveButton = true }: VehicleCardProps) {

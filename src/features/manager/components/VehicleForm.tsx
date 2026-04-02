@@ -58,6 +58,7 @@ export function VehicleForm({ vehicleId }: VehicleFormProps) {
         fuel: vehicle.fuel || 'Xăng',
         transmission: vehicle.transmission || 'Số tự động',
         imageUrl: vehicle.images?.[0]?.url || '',
+        status: (vehicle.status as VehicleStatus) || 'Available',
       })
       // Fetch subcategories cho hãng hiện tại
       if (vehicle.category_id) {

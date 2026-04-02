@@ -1,5 +1,5 @@
 /**
- * Hồ sơ user đăng nhập — GET/PUT /users/me, POST /users/me/avatar
+ * Hồ sơ user đăng nhập — GET/PUT /users/me; avatar: hybrid (GET signature → Cloudinary → PUT URL).
  */
 import axiosInstance from '@/utils/axiosInstance'
 import type { ApiResponse } from '@/types/auth.types'
@@ -79,7 +79,7 @@ function unwrapCustomerStats(res: unknown): CustomerStats {
       ? (r as ApiResponse<CustomerStats>).data
       : (r as CustomerStats)
   if (!d || typeof d !== 'object') throw new Error('STATS_PARSE')
-  const o = d as Record<string, unknown>
+  const o = d as unknown as Record<string, unknown>
   const num = (key: string) => {
     const v = o[key]
     const x = typeof v === 'number' ? v : Number(v)
@@ -98,16 +98,78 @@ export async function fetchCustomerStats(): Promise<CustomerStats> {
   return unwrapCustomerStats(res)
 }
 
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024
+
+function assertAvatarFile(file: File): void {
+  if (file.size > MAX_AVATAR_BYTES) {
+    throw new Error('AVATAR_TOO_LARGE')
+  }
+  const t = file.type.toLowerCase()
+  if (t !== 'image/jpeg' && t !== 'image/png') {
+    throw new Error('AVATAR_TYPE')
+  }
+}
+
+/** Ký từ backend — khớp {@link CloudinarySignedUpload} manager. */
+interface AvatarUploadSignature {
+  cloudName: string
+  apiKey: string
+  timestamp: number
+  signature: string
+  folder: string
+  publicId: string | null
+  overwrite: boolean
+  uploadUrl: string
+}
+
 export async function uploadMyAvatar(file: File): Promise<string> {
+  assertAvatarFile(file)
+  const sigRaw = await axiosInstance.get<unknown>('/users/me/avatar/upload-signature')
+  const sig = ((): AvatarUploadSignature => {
+    const r = sigRaw as ApiResponse<AvatarUploadSignature> | { data?: AvatarUploadSignature }
+    if (r && typeof r === 'object' && 'data' in r && r.data) {
+      return r.data as AvatarUploadSignature
+    }
+    return sigRaw as AvatarUploadSignature
+  })()
+
   const fd = new FormData()
-  fd.append('avatar', file)
-  const res = (await axiosInstance.post<unknown>('/users/me/avatar', fd)) as
-    | ApiResponse<{ avatarUrl: string }>
-    | { avatarUrl: string }
+  fd.append('file', file)
+  fd.append('api_key', sig.apiKey)
+  fd.append('timestamp', String(sig.timestamp))
+  fd.append('signature', sig.signature)
+  fd.append('folder', sig.folder)
+  if (sig.publicId) {
+    fd.append('public_id', sig.publicId)
+  }
+  if (sig.overwrite) {
+    fd.append('overwrite', 'true')
+  }
+
+  const up = await fetch(sig.uploadUrl, { method: 'POST', body: fd })
+  const text = await up.text()
+  let cloudJson: { secure_url?: string; error?: { message?: string } }
+  try {
+    cloudJson = JSON.parse(text) as typeof cloudJson
+  } catch {
+    throw new Error('AVATAR_CLOUDINARY_PARSE')
+  }
+  if (!up.ok) {
+    throw new Error(cloudJson.error?.message ?? 'AVATAR_CLOUDINARY_FAIL')
+  }
+  const secureUrl = cloudJson.secure_url
+  if (!secureUrl || typeof secureUrl !== 'string') {
+    throw new Error('AVATAR_URL_MISSING')
+  }
+
+  /** Khớp BE `AvatarUploadResponse` — JSON vẫn `{ avatarUrl }` */
+  const save = (await axiosInstance.put<unknown>('/users/me/avatar', {
+    avatarUrl: secureUrl,
+  })) as unknown as ApiResponse<{ avatarUrl: string }> | { avatarUrl: string }
   const data =
-    res && typeof res === 'object' && 'data' in res
-      ? (res as ApiResponse<{ avatarUrl: string }>).data
-      : (res as { avatarUrl: string })
+    save && typeof save === 'object' && 'data' in save
+      ? (save as ApiResponse<{ avatarUrl: string }>).data
+      : (save as { avatarUrl: string })
   if (!data?.avatarUrl) throw new Error('AVATAR_URL_MISSING')
   return data.avatarUrl
 }

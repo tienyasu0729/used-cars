@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { formatMileage, formatDate } from '@/utils/format'
+import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import type { Vehicle, VehicleImage } from '@/types/vehicle.types'
 
 interface VehicleDetailGalleryProps {
@@ -25,7 +26,7 @@ function getImageUrls(images?: VehicleImage[]): string[] {
     if (!a.primaryImage && b.primaryImage) return 1
     return a.sortOrder - b.sortOrder
   })
-  return sorted.map((img) => img.url)
+  return sorted.map((img) => externalImageDisplayUrl(img.url))
 }
 
 export function VehicleDetailGallery({

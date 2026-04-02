@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
 import { Car, Package, TrendingUp, Calendar, Download, CalendarDays } from 'lucide-react'
-import { useManagerVehicles } from '@/hooks/useManagerVehicles'
-import { useTransfers } from '@/hooks/useTransfers'
-import { useAppointments } from '@/hooks/useAppointments'
+import { useManagerDashboardStats } from '@/hooks/useManagerDashboardStats'
 import {
   AreaChart,
   Area,
@@ -12,32 +10,47 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
 } from 'recharts'
 import { useBranchReports } from '@/hooks/useBranchReports'
 
-const chartData = [
-  { name: 'Jan', value: 120 },
-  { name: 'Feb', value: 140 },
-  { name: 'Mar', value: 160 },
-  { name: 'Apr', value: 90 },
-  { name: 'May', value: 120 },
-  { name: 'Jun', value: 60 },
-  { name: 'Jul', value: 80 },
-]
+const MONTH_SHORT = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12']
+
+function formatVnd(n: number): string {
+  return `${n.toLocaleString('vi-VN')} ₫`
+}
+
+function parseTopStaff(raw: unknown[] | undefined): { name: string; role: string; cars: number; revLabel: string }[] {
+  if (!raw?.length) return []
+  return raw.map((item) => {
+    if (typeof item !== 'object' || item === null) {
+      return { name: '—', role: '', cars: 0, revLabel: '—' }
+    }
+    const o = item as Record<string, unknown>
+    const name = String(o.staffName ?? o.name ?? 'Nhân viên')
+    const role = String(o.role ?? 'Tư vấn')
+    const cars =
+      typeof o.salesCount === 'number' ? o.salesCount : Number(o.vehiclesSold ?? o.cars ?? 0) || 0
+    const rev = typeof o.revenue === 'number' ? o.revenue : Number(o.revenueVnd) || 0
+    return { name, role, cars, revLabel: formatVnd(rev) }
+  })
+}
 
 export function ManagerDashboardPage() {
-  const { data: vehicles } = useManagerVehicles()
-  const { data: transfersData } = useTransfers({ page: 0, size: 1, status: 'Pending' })
-  const { data: appointments } = useAppointments()
+  const { data: apiStats, isPending: statsPending } = useManagerDashboardStats()
   const { data: reports } = useBranchReports()
 
-  const totalVehicles = vehicles?.length ?? 0
-  const availableVehicles = vehicles?.filter((v) => v.status === 'Available').length ?? 0
-  const monthlySales = 48
-  const pendingTransfers = transfersData?.meta?.totalElements ?? 0
   const brandData = reports?.salesByBrand ?? []
+  const revenueSeries = (reports?.monthlyRevenue ?? []).map((value, i) => ({
+    name: MONTH_SHORT[i] ?? `${i + 1}`,
+    value,
+  }))
+  const topStaffRows = parseTopStaff(apiStats?.topStaff as unknown[] | undefined)
+
+  const revNum = apiStats?.monthlyRevenue != null ? Number(apiStats.monthlyRevenue) : 0
+  const soldNum = apiStats?.vehiclesSold ?? 0
+  /** Placeholder Tier 4 — không hiển thị 0 ₫ / 0 xe như số liệu thật */
+  const revenueDisplay = statsPending ? '—' : revNum > 0 ? formatVnd(revNum) : '—'
+  const soldDisplay = statsPending ? '—' : soldNum > 0 ? soldNum : '—'
 
   const kpis: {
     icon: LucideIcon
@@ -45,34 +58,39 @@ export function ManagerDashboardPage() {
     value: string | number
     to: string
     ariaLabel: string
+    placeholderHint?: string
   }[] = [
     {
-      icon: Package,
-      label: 'Tổng xe trong chi nhánh',
-      value: totalVehicles,
-      to: '/manager/vehicles',
-      ariaLabel: 'Mở quản lý kho xe — tổng xe trong chi nhánh',
+      icon: TrendingUp,
+      label: 'Doanh thu tháng',
+      value: revenueDisplay,
+      to: '/manager/reports',
+      ariaLabel: 'Doanh thu tháng từ API quản lý',
+      placeholderHint:
+        !statsPending && revenueDisplay === '—' ? 'Chưa có dữ liệu — báo cáo doanh thu (Tier 4)' : undefined,
     },
     {
       icon: Car,
-      label: 'Xe đang bán',
-      value: availableVehicles,
-      to: '/manager/vehicles?status=Available',
-      ariaLabel: 'Mở quản lý kho xe — lọc xe đang bán',
+      label: 'Xe đã bán',
+      value: soldDisplay,
+      to: '/manager/reports',
+      ariaLabel: 'Số xe đã bán',
+      placeholderHint:
+        !statsPending && soldDisplay === '—' ? 'Chưa có dữ liệu — thống kê bán (Tier 4)' : undefined,
     },
     {
-      icon: TrendingUp,
-      label: 'Doanh số tháng',
-      value: monthlySales,
-      to: '/manager/reports',
-      ariaLabel: 'Mở báo cáo chi nhánh',
+      icon: Package,
+      label: 'Tổng tồn kho',
+      value: statsPending ? '—' : (apiStats?.totalInventory ?? 0),
+      to: '/manager/vehicles',
+      ariaLabel: 'Tổng xe tại chi nhánh',
     },
     {
       icon: Calendar,
-      label: 'Yêu cầu điều chuyển chờ',
-      value: pendingTransfers,
-      to: '/manager/transfers?status=Pending',
-      ariaLabel: 'Mở điều chuyển — yêu cầu chờ duyệt',
+      label: 'Lịch hẹn 7 ngày tới',
+      value: statsPending ? '—' : (apiStats?.weeklyAppointments ?? 0),
+      to: '/manager/appointments',
+      ariaLabel: 'Số lịch hẹn trong tuần',
     },
   ]
 
@@ -116,6 +134,9 @@ export function ManagerDashboardPage() {
               <kpi.icon className="h-5 w-5 shrink-0 text-[#1A3C6E]" aria-hidden />
             </div>
             <h3 className="text-3xl font-bold text-slate-900">{kpi.value}</h3>
+            {kpi.placeholderHint && (
+              <p className="mt-2 text-xs font-medium text-slate-500">{kpi.placeholderHint}</p>
+            )}
           </Link>
         ))}
       </div>
@@ -125,113 +146,116 @@ export function ManagerDashboardPage() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h4 className="text-lg font-bold text-slate-900">Doanh Số Theo Tháng</h4>
-                <p className="text-sm text-slate-500">Xu hướng doanh thu theo tháng trong năm</p>
+                <p className="text-sm text-slate-500">Dữ liệu từ API báo cáo (khi có chuỗi tháng)</p>
               </div>
-              <select className="rounded-lg border-slate-200 text-sm focus:ring-[#1A3C6E]/20">
+              <select className="rounded-lg border-slate-200 text-sm focus:ring-[#1A3C6E]/20" disabled aria-disabled>
                 <option>6 Tháng Gần Nhất</option>
-                <option>Cả Năm</option>
               </select>
             </div>
             <div className="h-[280px] min-h-[280px] w-full min-w-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#1A3C6E" stopOpacity={0.1} />
-                      <stop offset="100%" stopColor="#1A3C6E" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
-                  <YAxis stroke="#94a3b8" fontSize={12} />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#1A3C6E"
-                    strokeWidth={2}
-                    fill="url(#chartGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {revenueSeries.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueSeries}>
+                    <defs>
+                      <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#1A3C6E" stopOpacity={0.1} />
+                        <stop offset="100%" stopColor="#1A3C6E" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
+                    <YAxis stroke="#94a3b8" fontSize={12} />
+                    <Tooltip />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#1A3C6E"
+                      strokeWidth={2}
+                      fill="url(#chartGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full min-h-[220px] flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+                  <p className="font-medium text-slate-700">Chưa có chuỗi doanh thu theo tháng</p>
+                  <p className="mt-1 max-w-md">
+                    KPI doanh thu tháng hiện tại hiển thị ở thẻ phía trên. Biểu đồ sẽ hiển thị khi backend cung cấp
+                    mảng doanh thu theo tháng.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <h4 className="text-lg font-bold text-slate-900">Xe Bán Theo Hãng</h4>
-              <p className="text-sm text-slate-500">Phân bố xe bán theo hãng trong tháng</p>
+              <p className="text-sm text-slate-500">Dữ liệu từ API báo cáo chi nhánh</p>
             </div>
-            <div className="space-y-4">
-              {brandData.map((item, i) => (
-                <div key={item.brand} className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-slate-700">
-                    <span>{item.brand}</span>
-                    <span>{item.count} xe</span>
+            {brandData.length > 0 ? (
+              <div className="space-y-4">
+                {brandData.map((item, i) => (
+                  <div key={item.brand} className="space-y-2">
+                    <div className="flex justify-between text-xs font-bold text-slate-700">
+                      <span>{item.brand}</span>
+                      <span>{item.count} xe</span>
+                    </div>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-[#1A3C6E]"
+                        style={{
+                          width: `${Math.min(100, (item.count / 50) * 100)}%`,
+                          opacity: 1 - i * 0.15,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-[#1A3C6E]"
-                      style={{
-                        width: `${Math.min(100, (item.count / 50) * 100)}%`,
-                        opacity: 1 - i * 0.15,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 py-8 text-center text-sm text-slate-500">
+                Chưa có phân bổ theo hãng — chờ API báo cáo hoặc nhập liệu bán hàng.
+              </p>
+            )}
           </div>
         </div>
         <div className="space-y-6 lg:col-span-4">
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h4 className="mb-6 text-lg font-bold text-slate-900">Hoạt Động Gần Đây</h4>
-            <div className="space-y-6">
-              {[
-                { title: 'Đã Bán Xe', desc: 'Toyota Corolla Altis bán bởi Nguyễn Văn A', bg: 'bg-emerald-100', text: 'text-emerald-600' },
-                { title: 'Lịch Hẹn Mới', desc: 'Lái thử Mazda CX-5 lúc 14:00', bg: 'bg-blue-100', text: 'text-blue-600' },
-                { title: 'Cập Nhật Kho', desc: '3 xe Kia Seltos mới về showroom', bg: 'bg-amber-100', text: 'text-amber-600' },
-              ].map((a) => (
-                <div key={a.title} className="flex gap-4">
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${a.bg} ${a.text}`}>
-                    <Car className="h-[18px] w-[18px]" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-900">{a.title}</p>
-                    <p className="text-xs text-slate-500">{a.desc}</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wider text-slate-400">
-                      10 phút trước
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button className="mt-6 w-full rounded-lg bg-[#1A3C6E]/5 py-2 text-sm font-bold text-[#1A3C6E] transition-colors hover:bg-[#1A3C6E]/10">
-              Xem Tất Cả
-            </button>
+            <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 py-8 text-center text-sm text-slate-500">
+              Chưa có luồng hoạt động từ API. Sẽ hiển thị khi có endpoint nhật ký / feed chi nhánh.
+            </p>
+            <Link
+              to="/manager/appointments"
+              className="mt-6 flex w-full items-center justify-center rounded-lg bg-[#1A3C6E]/5 py-2 text-sm font-bold text-[#1A3C6E] transition-colors hover:bg-[#1A3C6E]/10"
+            >
+              Xem lịch hẹn
+            </Link>
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h4 className="mb-6 text-lg font-bold text-slate-900">Nhân Viên Xuất Sắc (Tháng Này)</h4>
-            <div className="space-y-4">
-              {[
-                { name: 'Minh Tú', role: 'Tư vấn bán hàng', cars: 12, rev: '5.760.000.000 VNĐ' },
-                { name: 'Hoàng Yến', role: 'Tư vấn bán hàng', cars: 9, rev: '4.440.000.000 VNĐ' },
-                { name: 'Duy Anh', role: 'Tư vấn cấp cao', cars: 8, rev: '5.040.000.000 VNĐ' },
-              ].map((s) => (
-                <div key={s.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-slate-200" />
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">{s.name}</p>
-                      <p className="text-xs text-slate-500">{s.role}</p>
+            {topStaffRows.length > 0 ? (
+              <div className="space-y-4">
+                {topStaffRows.map((s) => (
+                  <div key={s.name + s.role} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-slate-200" />
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{s.name}</p>
+                        <p className="text-xs text-slate-500">{s.role}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-slate-900">{s.cars} xe</p>
+                      <p className="text-[10px] font-bold uppercase text-emerald-600">{s.revLabel}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-slate-900">{s.cars} xe</p>
-                    <p className="text-[10px] font-bold uppercase text-emerald-600">{s.rev}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 py-8 text-center text-sm text-slate-500">
+                Chưa có bảng xếp hạng từ API (topStaff). Backend có thể bổ sung sau.
+              </p>
+            )}
           </div>
         </div>
       </div>

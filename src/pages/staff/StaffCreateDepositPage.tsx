@@ -3,7 +3,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { Calendar, UserPlus, FileText, Info, AlertCircle } from 'lucide-react'
-import { mockUsers } from '@/mock'
 import { useInventory } from '@/hooks/useInventory'
 import { depositApi } from '@/services/depositApi'
 import { useToastStore } from '@/store/toastStore'
@@ -24,7 +23,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-const customers = mockUsers.filter((u) => u.role === 'customer')
+const customers: { id: string; name: string }[] = []
 const PAYMENT_METHODS = [
   { value: 'bank_transfer', label: 'Chuyển khoản ngân hàng' },
   { value: 'cash', label: 'Tiền mặt' },

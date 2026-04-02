@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal, Input, Button } from '@/components/ui'
 import { FEATURE_MODULES, PERM_COLS, DEFAULT_PERMISSION } from '../constants/rolePermissions'
-import type { RolePermission } from '@/mock/mockAdminData'
+import type { RolePermission } from '@/types/admin.types'
 
 const schema = z.object({
   name: z.string().min(2, 'Tối thiểu 2 ký tự'),

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { CloudUpload, Pencil, Trash2, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui'
-import type { CatalogBrand } from '@/mock/mockAdminData'
+import type { CatalogBrand } from '@/types/admin.types'
 
 interface CatalogBrandsBlockProps {
   brands: CatalogBrand[]

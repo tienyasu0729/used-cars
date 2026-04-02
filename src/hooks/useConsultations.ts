@@ -1,23 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
-import { mockConsultations } from '@/mock'
-import { isMockMode } from '@/config/dataSource'
+import axiosInstance from '@/utils/axiosInstance'
+import type { ApiResponse } from '@/types/auth.types'
 
-async function fetchConsultations() {
-  if (isMockMode()) return mockConsultations
-  try {
-    const res = await fetch('/api/consultations')
-    if (res.ok) {
-      const data = await res.json()
-      return Array.isArray(data) ? data : data?.data ?? mockConsultations
-    }
-  } catch {}
-  return mockConsultations
-}
-
+/** Danh sách tư vấn — khi backend có GET, map response tại đây. */
 export function useConsultations() {
   return useQuery({
-    queryKey: ['consultations', isMockMode()],
-    queryFn: fetchConsultations,
-    staleTime: isMockMode() ? Infinity : 1000 * 60,
+    queryKey: ['consultations'],
+    queryFn: async () => {
+      try {
+        const res = (await axiosInstance.get('/staff/consultations')) as unknown as ApiResponse<unknown[]>
+        const raw = res.data
+        return Array.isArray(raw) ? raw : []
+      } catch {
+        return [] as unknown[]
+      }
+    },
+    staleTime: 1000 * 60,
   })
 }

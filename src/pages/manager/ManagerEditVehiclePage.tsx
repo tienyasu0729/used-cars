@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
-import { useForm, Controller, useFieldArray } from 'react-hook-form'
+import { useForm, Controller, useFieldArray, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ArrowLeft, Loader2, Plus, Trash2, ImageIcon, Upload, X } from 'lucide-react'
@@ -9,7 +9,8 @@ import { useCatalog } from '@/hooks/useCatalog'
 import { useBranches } from '@/hooks/useBranches'
 import { useManagerManagedVehicle, useManagerVehicle } from '@/hooks/useManagerVehicles'
 import { useToastStore } from '@/store/toastStore'
-import { isCloudinaryConfigured, uploadImageToCloudinary } from '@/utils/cloudinaryUpload'
+import { fetchMediaUploadEnabled, uploadManagerImage } from '@/services/managerMedia.service'
+import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import type { VehicleStatus } from '@/types/vehicle.types'
 import type { UpdateVehicleRequest } from '@/types/vehicle.types'
 
@@ -83,6 +84,7 @@ export function ManagerEditVehiclePage() {
   const lastHydratedVehicleId = useRef<number | null>(null)
   const [pickedImages, setPickedImages] = useState<PickedImage[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [cloudReady, setCloudReady] = useState(false)
   const numericId = id ? parseInt(id, 10) : NaN
   const { data: vehicle, isLoading, accessDenied } = useManagerManagedVehicle(id)
   const { updateVehicle, isSubmitting, error } = useManagerVehicle()
@@ -110,7 +112,7 @@ export function ManagerEditVehiclePage() {
     reset,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
       categoryId: 0,
       subcategoryId: 0,
@@ -173,6 +175,10 @@ export function ManagerEditVehiclePage() {
     return () => {
       pickedRef.current.forEach((p) => URL.revokeObjectURL(p.preview))
     }
+  }, [])
+
+  useEffect(() => {
+    void fetchMediaUploadEnabled().then(setCloudReady)
   }, [])
 
   const addPickedFiles = useCallback((fileList: FileList | File[]) => {
@@ -252,14 +258,14 @@ export function ManagerEditVehiclePage() {
     setIsUploading(true)
     try {
       if (pickedImages.length > 0) {
-        if (isCloudinaryConfigured()) {
+        if (cloudReady) {
           for (const p of pickedImages) {
-            uploadedUrls.push(await uploadImageToCloudinary(p.file))
+            uploadedUrls.push(await uploadManagerImage(p.file))
           }
         } else {
           toast.addToast(
             'info',
-            'Chưa cấu hình Cloudinary trong .env — bỏ qua ảnh chọn từ máy lần này. Có thể dán URL ảnh hoặc cấu hình Cloudinary rồi lưu lại.',
+            'Chưa bật tải ảnh từ máy — bỏ qua ảnh chọn từ máy lần này. Bạn có thể dán URL ảnh hoặc bật cấu hình lưu ảnh rồi lưu lại.',
             6000,
           )
         }
@@ -302,7 +308,6 @@ export function ManagerEditVehiclePage() {
     }
   }
 
-  const cloudReady = isCloudinaryConfigured()
   const busy = isSubmitting || isUploading
 
   if (isLoading || accessDenied) {
@@ -509,11 +514,9 @@ export function ManagerEditVehiclePage() {
             Hình ảnh xe
           </h3>
           <p className="mb-4 text-xs text-slate-500">
-            Chọn ảnh từ máy (tối đa {MAX_LOCAL_IMAGES} ảnh). Khi có{' '}
-            <code className="rounded bg-slate-100 px-1">VITE_CLOUDINARY_CLOUD_NAME</code> và{' '}
-            <code className="rounded bg-slate-100 px-1">VITE_CLOUDINARY_UPLOAD_PRESET</code> trong{' '}
-            <code className="rounded bg-slate-100 px-1">.env</code>, ảnh được đẩy lên Cloudinary rồi gửi URL vào API khi bấm Lưu.
-            Chưa cấu hình: vẫn lưu tin bình thường — chỉ không tải được ảnh từ máy; có thể dán URL trong mục bên dưới.
+            Chọn ảnh từ máy (tối đa {MAX_LOCAL_IMAGES} ảnh). Khi hệ thống đã bật dịch vụ lưu ảnh, ảnh từ máy sẽ được tải
+            lên và gắn vào tin khi bấm Lưu. Nếu chưa bật, bạn vẫn lưu tin bình thường — chỉ không gửi được ảnh từ máy;
+            hãy dán URL trong mục bên dưới.
             Thứ tự hiển thị: URL hiện có trước, ảnh chọn từ máy sau — <strong>ô đầu tiên là ảnh bìa</strong>.
           </p>
           <div
@@ -564,8 +567,8 @@ export function ManagerEditVehiclePage() {
               }
             >
               {cloudReady
-                ? 'Cloudinary: đã cấu hình — ảnh sẽ được tải lên khi lưu'
-                : 'Cloudinary: chưa cấu hình — lưu không gửi ảnh từ máy (vẫn lưu được URL tay)'}
+                ? 'Đã bật tải ảnh từ máy — sẽ đẩy lên khi lưu'
+                : 'Chưa bật tải ảnh từ máy — vẫn lưu được khi dán URL'}
             </span>
           </div>
 
@@ -578,7 +581,7 @@ export function ManagerEditVehiclePage() {
                 >
                   {tile.kind === 'url' ? (
                     <img
-                      src={trimUrl(watchedImageRows?.[tile.rowIndex]?.url ?? '')}
+                      src={externalImageDisplayUrl(trimUrl(watchedImageRows?.[tile.rowIndex]?.url ?? ''))}
                       alt=""
                       className="h-full w-full object-cover"
                     />
@@ -622,7 +625,11 @@ export function ManagerEditVehiclePage() {
                   <div key={f.id} className="flex items-center gap-2">
                     <div className="h-10 w-14 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-200">
                       {prev ? (
-                        <img src={trimUrl(rowUrl)} alt="" className="h-full w-full object-cover" />
+                        <img
+                          src={externalImageDisplayUrl(trimUrl(rowUrl))}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
                         <div className="flex h-full items-center justify-center text-[10px] text-slate-400">—</div>
                       )}

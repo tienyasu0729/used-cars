@@ -154,7 +154,7 @@ export const vehicleService = {
    * [MANAGER/ADMIN] Sửa thông tin xe
    * PUT /manager/vehicles/{id}
    */
-  updateVehicle: async (id: number, data: UpdateVehicleRequest): Promise<Vehicle> => {
+  updateVehicle: async (id: number, data: Partial<UpdateVehicleRequest>): Promise<Vehicle> => {
     const res = await axiosInstance.put<{ data: unknown }>(`/manager/vehicles/${id}`, data)
     const raw = (res as unknown as { data: unknown }).data ?? res
     return normalizeVehicle(raw)

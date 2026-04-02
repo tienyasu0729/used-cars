@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import type { StaffScheduleItem } from '@/mock/mockStaffSchedule'
+import type { StaffScheduleItem } from '@/types/staffSchedule.types'
 
 const HOUR_HEIGHT = 36
 const START_HOUR = 8

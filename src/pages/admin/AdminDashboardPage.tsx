@@ -11,7 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { mockTopSellingVehicles } from '@/mock/mockAdminData'
+import type { TopSellingVehicle } from '@/types/admin.types'
 import { formatPriceNumber } from '@/utils/format'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -36,15 +36,15 @@ export function AdminDashboardPage() {
   const totalSold = reports?.reduce((s: number, r: { vehiclesSold: number }) => s + r.vehiclesSold, 0) ?? 0
   const uniqueCustomers = users?.length ?? 0
   const avgPrice = totalSold > 0 ? totalRevenue / totalSold : 0
-  const viewsCount = 8420
+  const viewsCount = 0
   const conversionRate = viewsCount > 0 ? ((totalSold / viewsCount) * 100).toFixed(1) : '0'
 
   const kpis = [
-    { label: 'Doanh thu tổng', value: `₫${(totalRevenue / 1e9).toFixed(1)}B`, trend: 12.5, up: true },
-    { label: 'Số xe bán', value: String(totalSold), trend: 8.2, up: true },
-    { label: 'Giá TB', value: `₫${(avgPrice / 1e6).toFixed(0)}M`, trend: 2.1, up: false },
-    { label: 'Khách hàng mới', value: String(uniqueCustomers), trend: 15.7, up: true },
-    { label: 'Tỷ lệ chuyển đổi', value: `${conversionRate}%`, trend: 0.8, up: true },
+    { label: 'Doanh thu tổng', value: `₫${(totalRevenue / 1e9).toFixed(1)}B`, trend: 0, up: true },
+    { label: 'Số xe bán', value: String(totalSold), trend: 0, up: true },
+    { label: 'Giá TB', value: `₫${(avgPrice / 1e6).toFixed(0)}M`, trend: 0, up: true },
+    { label: 'Khách hàng mới', value: String(uniqueCustomers), trend: 0, up: true },
+    { label: 'Tỷ lệ chuyển đổi', value: `${conversionRate}%`, trend: 0, up: true },
   ]
 
   const revenueData = reports?.map((r: { branchName: string; revenue: number }) => ({
@@ -53,15 +53,17 @@ export function AdminDashboardPage() {
   })) ?? []
 
   const funnelData = [
-    { name: 'Lượt xem', value: viewsCount, pct: '100%' },
-    { name: 'Đặt lịch', value: 1240, pct: '14.7%' },
-    { name: 'Đặt cọc', value: 248, pct: '2.9%' },
-    { name: 'Mua xe', value: totalSold, pct: `${conversionRate}%` },
+    { name: 'Lượt xem', value: viewsCount, pct: '—' },
+    { name: 'Đặt lịch', value: 0, pct: '—' },
+    { name: 'Đặt cọc', value: 0, pct: '—' },
+    { name: 'Mua xe', value: totalSold, pct: totalSold > 0 ? `${totalSold}` : '—' },
   ]
 
-  const topVehicles = mockTopSellingVehicles
+  const funnelMax = Math.max(...funnelData.map((r) => r.value), 1)
+
+  const topVehicles: TopSellingVehicle[] = []
   const perPage = 4
-  const totalPages = Math.ceil(topVehicles.length / perPage)
+  const totalPages = Math.max(1, Math.ceil(topVehicles.length / perPage))
   const paginated = topVehicles.slice((page - 1) * perPage, page * perPage)
 
   return (
@@ -128,7 +130,7 @@ export function AdminDashboardPage() {
                 <div className="flex-1">
                   <div
                     className="h-8 rounded bg-[#1A3C6E]"
-                    style={{ width: `${Math.max(10, (row.value / viewsCount) * 100)}%` }}
+                    style={{ width: `${Math.max(8, (row.value / funnelMax) * 100)}%` }}
                   />
                 </div>
                 <div className="flex w-20 shrink-0 justify-between text-xs">
@@ -169,33 +171,43 @@ export function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {paginated.map((v) => (
-                <tr key={v.id} className="transition-colors hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <img src={v.image} alt="" className="h-12 w-20 rounded object-cover" />
-                      <div>
-                        <p className="font-semibold text-slate-900">{v.name}</p>
-                        <p className="text-xs text-slate-500">{v.category}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{v.totalUnits} xe</td>
-                  <td className="px-4 py-3 text-slate-600">{v.topBranch}</td>
-                  <td className="px-4 py-3 font-medium text-slate-900">₫{(v.revenue / 1e9).toFixed(1)}B</td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-1 text-xs font-bold ${STATUS_CLASS[v.status]}`}>
-                      {STATUS_LABELS[v.status]}
-                    </span>
+              {paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-slate-500">
+                    Chưa có dữ liệu xe bán chạy từ API báo cáo.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginated.map((v) => (
+                  <tr key={v.id} className="transition-colors hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <img src={v.image} alt="" className="h-12 w-20 rounded object-cover" />
+                        <div>
+                          <p className="font-semibold text-slate-900">{v.name}</p>
+                          <p className="text-xs text-slate-500">{v.category}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{v.totalUnits} xe</td>
+                    <td className="px-4 py-3 text-slate-600">{v.topBranch}</td>
+                    <td className="px-4 py-3 font-medium text-slate-900">₫{(v.revenue / 1e9).toFixed(1)}B</td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-2 py-1 text-xs font-bold ${STATUS_CLASS[v.status]}`}>
+                        {STATUS_LABELS[v.status]}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
         <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4">
           <p className="text-sm text-slate-500">
-            Hiển thị {(page - 1) * perPage + 1} - {Math.min(page * perPage, topVehicles.length)} trong {topVehicles.length} xe
+            {topVehicles.length === 0
+              ? 'Không có mục nào'
+              : `Hiển thị ${(page - 1) * perPage + 1} - ${Math.min(page * perPage, topVehicles.length)} trong ${topVehicles.length} xe`}
           </p>
           <div className="flex items-center gap-1">
             <button

@@ -22,7 +22,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 interface UseManagerVehicleReturn {
   createVehicle: (data: CreateVehicleRequest) => Promise<Vehicle | null>
-  updateVehicle: (id: number, data: UpdateVehicleRequest) => Promise<Vehicle | null>
+  updateVehicle: (id: number, data: Partial<UpdateVehicleRequest>) => Promise<Vehicle | null>
   /** Ẩn khỏi trang công khai — gọi sau khi user đã xác nhận trong UI */
   deleteVehicle: (id: number) => Promise<boolean>
   /** Hiển thị lại — gọi sau khi user đã xác nhận trong UI */
@@ -67,7 +67,7 @@ export function useManagerVehicle(): UseManagerVehicleReturn {
   )
 
   const updateVehicle = useCallback(
-    async (id: number, data: Partial<CreateVehicleRequest>): Promise<Vehicle | null> => {
+    async (id: number, data: Partial<UpdateVehicleRequest>): Promise<Vehicle | null> => {
       setIsSubmitting(true)
       setError(null)
       try {

@@ -382,9 +382,8 @@ export function ManagerVehiclesPage() {
 
       {splitInventory && user?.role === 'BranchManager' && myBranchId == null && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Chưa gán chi nhánh cho tài khoản — không hiển thị đúng xe đang chuyển đến. Hãy{' '}
-          <strong>đăng xuất và đăng nhập lại</strong> sau khi DB đã có <code className="rounded bg-white px-1">Branches.manager_id</code>{' '}
-          hoặc <code className="rounded bg-white px-1">StaffAssignments</code> cho bạn.
+          Chưa gán chi nhánh cho tài khoản — danh sách xe đang chuyển đến có thể không đầy đủ. Hãy{' '}
+          <strong>đăng xuất và đăng nhập lại</strong> sau khi quản trị đã cập nhật quyền và phân công chi nhánh cho bạn.
         </div>
       )}
 

@@ -5,7 +5,7 @@ import { useManagerBookingMutations } from '@/hooks/useManagerBookingMutations'
 import { AppointmentDetailModal } from '@/features/manager/components'
 import { formatPrice } from '@/utils/format'
 import { useAuthStore } from '@/store/authStore'
-import type { ManagerAppointment } from '@/mock/mockManagerData'
+import type { ManagerAppointment } from '@/types/managerAppointment.types'
 
 const TYPE_LABELS: Record<string, string> = {
   test_drive: 'Lái Thử',

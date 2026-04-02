@@ -5,7 +5,7 @@ import { useBranchesAdmin } from '@/hooks/useBranchesAdmin'
 import { useUpdateUser } from '@/hooks/useAdminMutations'
 import { EditUserModal } from '@/features/admin/components/EditUserModal'
 import { Button } from '@/components/ui'
-import type { AdminUser } from '@/mock/mockAdminData'
+import type { AdminUser } from '@/types/admin.types'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const ROLE_LABELS: Record<string, string> = {

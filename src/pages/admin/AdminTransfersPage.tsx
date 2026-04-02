@@ -102,7 +102,7 @@ export function AdminTransfersPage() {
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Duyệt điều chuyển xe</h2>
-        <p className="mt-1 text-sm text-slate-500">API /manager/transfers — Admin phê duyệt / từ chối yêu cầu Pending</p>
+        <p className="mt-1 text-sm text-slate-500">Xem và phê duyệt hoặc từ chối yêu cầu điều chuyển xe giữa các chi nhánh.</p>
       </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

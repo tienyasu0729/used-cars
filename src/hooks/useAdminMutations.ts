@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '@/services/adminApi'
 import { transferService } from '@/services/transfer.service'
-import type { AdminUser } from '@/mock/mockAdminData'
+import type { AdminUser } from '@/types/admin.types'
 
 export function useCreateRole() {
   const qc = useQueryClient()

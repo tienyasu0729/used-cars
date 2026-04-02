@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { useBranchesAdmin } from '@/hooks/useBranchesAdmin'
 import { Button } from '@/components/ui'
-import type { AdminBranch } from '@/mock/mockAdminData'
+import type { AdminBranch } from '@/types/admin.types'
 
 export function AdminBranchesPage() {
   const { data: branches, isLoading } = useBranchesAdmin()

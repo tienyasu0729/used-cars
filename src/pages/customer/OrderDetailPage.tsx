@@ -19,7 +19,7 @@ import {
   Loader2,
   Clock,
 } from 'lucide-react'
-import { mockOrderPaymentBreakdown, mockOrderTimeline, mockOrderExtras } from '@/mock/mockOrderDetails'
+import type { Order, OrderStatus } from '@/types/order'
 
 const statusLabels: Record<string, string> = {
   Pending: 'Chờ xác nhận',
@@ -34,14 +34,44 @@ function formatOrderDate(s: string) {
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
 
+type TimelineStep = { id: string; title: string; date?: string; desc?: string; status: 'done' | 'current' | 'pending' }
+
+function buildOrderTimeline(order: Order): TimelineStep[] {
+  const created = formatOrderDate(order.createdAt)
+  if (order.status === 'Cancelled') {
+    return [
+      { id: '1', title: 'Đặt hàng', date: created, status: 'done' },
+      { id: '2', title: 'Đã hủy', desc: 'Đơn không còn hiệu lực', status: 'current' },
+    ]
+  }
+  const flow: { title: string; match: OrderStatus }[] = [
+    { title: 'Đặt hàng', match: 'Pending' },
+    { title: 'Xác nhận đơn', match: 'Confirmed' },
+    { title: 'Đang xử lý', match: 'Processing' },
+    { title: 'Hoàn tất', match: 'Completed' },
+  ]
+  const currentIndex = flow.findIndex((s) => s.match === order.status)
+  const idx = currentIndex >= 0 ? currentIndex : 0
+  return flow.map((step, i) => {
+    let status: TimelineStep['status']
+    if (i < idx) status = 'done'
+    else if (i === idx) status = 'current'
+    else status = 'pending'
+    return {
+      id: String(i + 1),
+      title: step.title,
+      date: i === 0 ? created : undefined,
+      status,
+    }
+  })
+}
+
 export function OrderDetailPage() {
   const { id } = useParams()
   const { data: order, isLoading } = useOrder(id)
   const { data: vehicle } = useVehicle(order?.vehicleId)
   const { data: branch } = useBranch(vehicle?.branch_id != null ? String(vehicle.branch_id) : undefined)
-  const payment = id ? mockOrderPaymentBreakdown[id] : null
-  const timeline = id ? mockOrderTimeline[id] : []
-  const extras = id ? mockOrderExtras[id] : null
+  const timeline = order ? buildOrderTimeline(order) : []
 
   if (isLoading || !order) {
     return (
@@ -52,9 +82,7 @@ export function OrderDetailPage() {
     )
   }
 
-  const total = payment
-    ? payment.listPrice + payment.registrationTax + payment.registrationFee + payment.serviceFee - payment.discount
-    : order.price
+  const total = order.price
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -110,8 +138,8 @@ export function OrderDetailPage() {
                   <div className="grid grid-cols-2 gap-y-2 text-sm">
                     <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500">Mã vận đơn</p>
                     <p className="text-[10px] font-medium uppercase tracking-widest text-slate-500">Đại lý bàn giao</p>
-                    <p className="font-semibold text-slate-900">{extras?.trackingNumber ?? '-'}</p>
-                    <p className="font-semibold text-slate-900">{extras?.deliveryBranch ?? branch?.name ?? '-'}</p>
+                    <p className="font-semibold text-slate-900">-</p>
+                    <p className="font-semibold text-slate-900">{branch?.name ?? '-'}</p>
                   </div>
                 </div>
                 <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
@@ -153,43 +181,17 @@ export function OrderDetailPage() {
               <h2 className="text-lg font-bold">Chi tiết thanh toán</h2>
             </div>
             <div className="space-y-4 p-6">
-              {payment ? (
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Giá xe niêm yết</span>
-                    <span className="font-semibold">{formatPrice(payment.listPrice)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Thuế trước bạ (Tạm tính)</span>
-                    <span className="font-semibold">{formatPrice(payment.registrationTax)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Phí đăng ký & biển số</span>
-                    <span className="font-semibold">{formatPrice(payment.registrationFee)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Phí dịch vụ hồ sơ</span>
-                    <span className="font-semibold">{formatPrice(payment.serviceFee)}</span>
-                  </div>
-                  {payment.discount > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium text-green-600">Khuyến mãi ({payment.discountLabel})</span>
-                      <span className="font-semibold text-green-600">- {formatPrice(payment.discount)}</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Giá xe</span>
-                    <span className="font-semibold">{formatPrice(order.price)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Tiền cọc đã đặt</span>
-                    <span className="font-semibold">{formatPrice(order.deposit)}</span>
-                  </div>
-                </>
-              )}
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Giá xe</span>
+                <span className="font-semibold">{formatPrice(order.price)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Tiền cọc đã đặt</span>
+                <span className="font-semibold">{formatPrice(order.deposit)}</span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Chi tiết thuế, phí và khuyến mãi sẽ hiển thị khi API đơn hàng trả đủ trường.
+              </p>
               <div className="flex items-center justify-between border-t border-slate-100 pt-4">
                 <span className="text-lg font-bold">Tổng cộng</span>
                 <span className="text-2xl font-black text-[#1A3C6E]">{formatPrice(total)}</span>
@@ -233,8 +235,8 @@ export function OrderDetailPage() {
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-slate-200" />
                   <div>
-                    <p className="text-sm font-bold">{extras?.salesName ?? 'Nhân viên'}</p>
-                    <p className="text-xs text-slate-500">{extras?.salesPhone ?? '-'}</p>
+                    <p className="text-sm font-bold">Nhân viên phụ trách</p>
+                    <p className="text-xs text-slate-500">Chưa có từ API</p>
                   </div>
                 </div>
               </div>

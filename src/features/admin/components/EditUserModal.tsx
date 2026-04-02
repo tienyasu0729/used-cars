@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal, Input, Button } from '@/components/ui'
-import type { AdminUser } from '@/mock/mockAdminData'
+import type { AdminUser } from '@/types/admin.types'
 
 const schema = z.object({
   name: z.string().min(2, 'Tối thiểu 2 ký tự'),

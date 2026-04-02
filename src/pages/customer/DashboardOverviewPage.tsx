@@ -54,14 +54,21 @@ export function DashboardOverviewPage() {
   const savedCount = saved?.length ?? 0
   const newSavedIn7Days = countSavedInPastDays(savedRecords, 7)
 
-  const savedStatValue = statsPending ? '—' : statsError ? savedCount : (stats?.savedVehicles ?? savedCount)
-  const bookingsStatValue = statsPending
-    ? '—'
-    : statsError
-      ? upcomingBookings.length
-      : (stats?.upcomingBookings ?? upcomingBookings.length)
-  const depositsStatValue = statsPending ? '—' : statsError ? 0 : (stats?.activeDeposits ?? 0)
-  const ordersStatValue = statsPending ? '—' : statsError ? 0 : (stats?.totalOrders ?? 0)
+  const savedStatValue = statsPending ? '—' : statsError ? '—' : (stats?.savedVehicles ?? 0)
+  const bookingsStatValue = statsPending ? '—' : statsError ? '—' : (stats?.upcomingBookings ?? 0)
+  /** Tier 4: API hiện trả 0 cố định — không hiển thị "0" như số liệu thật */
+  const depositsStatValue =
+    statsPending || statsError
+      ? '—'
+      : (stats?.activeDeposits ?? 0) > 0
+        ? (stats?.activeDeposits ?? 0)
+        : '—'
+  const ordersStatValue =
+    statsPending || statsError
+      ? '—'
+      : (stats?.totalOrders ?? 0) > 0
+        ? (stats?.totalOrders ?? 0)
+        : '—'
 
   return (
     <div className="space-y-8">
@@ -104,13 +111,21 @@ export function DashboardOverviewPage() {
           icon={Wallet}
           label="Tiền đặt cọc"
           value={depositsStatValue}
-          subLabel="Cọc đang xử lý (theo máy chủ)"
+          subLabel={
+            depositsStatValue === '—' && !statsPending && !statsError
+              ? 'Chưa có dữ liệu — module cọc (Tier 4)'
+              : 'Cọc đang xử lý (theo máy chủ)'
+          }
         />
         <DashboardStatCard
           icon={ShoppingBag}
           label="Đơn hàng"
           value={ordersStatValue}
-          subLabel="Tổng đơn (theo máy chủ)"
+          subLabel={
+            ordersStatValue === '—' && !statsPending && !statsError
+              ? 'Chưa có dữ liệu — module đơn hàng (Tier 4)'
+              : 'Tổng đơn (theo máy chủ)'
+          }
         />
       </div>
 

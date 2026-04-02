@@ -1,6 +1,6 @@
 import { Modal } from '@/components/ui'
 import { Badge } from '@/components/ui'
-import type { ManagerAppointment } from '@/mock/mockManagerData'
+import type { ManagerAppointment } from '@/types/managerAppointment.types'
 
 interface AppointmentDetailModalProps {
   appointment: ManagerAppointment | null

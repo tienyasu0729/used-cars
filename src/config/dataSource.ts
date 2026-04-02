@@ -1,9 +1,9 @@
 export type DataSourceMode = 'mock' | 'api'
 
+/** Mặc định API thật; chỉ đặt VITE_DATA_SOURCE=mock nếu cần debug tách biệt (không dùng dữ liệu giả trong UI). */
 export const DATA_SOURCE: DataSourceMode =
-  (import.meta.env.VITE_DATA_SOURCE as DataSourceMode) || 'mock'
+  (import.meta.env.VITE_DATA_SOURCE as DataSourceMode) === 'mock' ? 'mock' : 'api'
 
-export const isMockMode = () => DATA_SOURCE === 'mock'
 export const isApiMode = () => DATA_SOURCE === 'api'
 
 /**

@@ -1,26 +1,24 @@
 import { useQuery } from '@tanstack/react-query'
 import axiosInstance from '@/utils/axiosInstance'
-import { mockNotifications } from '@/mock'
-import { customerExtrasApiEnabled, isMockMode } from '@/config/dataSource'
+import { customerExtrasApiEnabled } from '@/config/dataSource'
 import type { ApiResponse } from '@/types/auth.types'
 import type { Notification } from '@/types'
 
 async function fetchNotifications(): Promise<Notification[]> {
-  if (isMockMode() || !customerExtrasApiEnabled()) return mockNotifications
+  if (!customerExtrasApiEnabled()) return []
   try {
     const res = (await axiosInstance.get('/notifications')) as unknown as ApiResponse<Notification[]>
     const raw = res.data
-    if (Array.isArray(raw)) return raw
-    return mockNotifications
+    return Array.isArray(raw) ? raw : []
   } catch {
-    return mockNotifications
+    return []
   }
 }
 
 export function useNotifications() {
   return useQuery({
-    queryKey: ['notifications', isMockMode(), customerExtrasApiEnabled()],
+    queryKey: ['notifications', customerExtrasApiEnabled()],
     queryFn: fetchNotifications,
-    staleTime: isMockMode() ? Infinity : 1000 * 60,
+    staleTime: 1000 * 60,
   })
 }

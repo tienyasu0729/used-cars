@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useInventory } from '@/hooks/useInventory'
-import { mockUsers } from '@/mock'
 import { depositApi } from '@/services/depositApi'
 import { useToastStore } from '@/store/toastStore'
 import { useQueryClient } from '@tanstack/react-query'
@@ -31,7 +30,7 @@ export function StaffInventoryPage() {
     return matchTab && matchSearch
   })
 
-  const customers = mockUsers.filter((u) => u.role === 'customer')
+  const customers: { id: string; name: string }[] = []
   const toast = useToastStore()
   const queryClient = useQueryClient()
 
