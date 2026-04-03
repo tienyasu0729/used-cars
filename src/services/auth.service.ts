@@ -103,6 +103,7 @@ const authService = {
    */
   logout(): void {
     localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem('token')
     localStorage.removeItem(USER_KEY)
     // TODO: implement khi backend xong — gọi POST /auth/logout để revoke token
   },

@@ -12,7 +12,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { useNotifications } from '@/hooks/useNotifications'
+import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 import { useBookings } from '@/hooks/useBookings'
 import { useDeposits } from '@/hooks/useDeposits'
 import { useConversations } from '@/hooks/useChats'
@@ -36,12 +36,11 @@ interface MobileSidebarProps {
 
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const { user, logout } = useAuthStore()
-  const { data: notifications } = useNotifications()
+  const { data: notificationUnread = 0 } = useNotificationUnreadCount()
   const { data: bookings } = useBookings()
   const { data: deposits } = useDeposits()
   const { data: conversations } = useConversations()
 
-  const notificationUnread = notifications?.filter((n) => !n.read).length ?? 0
   const bookingPending = bookings?.filter((b) => b.status === 'Pending').length ?? 0
   const depositActive = deposits?.filter((d) => d.status === 'Confirmed').length ?? 0
   const chatUnread = conversations?.reduce((s, c) => s + (c.unreadCount ?? 0), 0) ?? 0

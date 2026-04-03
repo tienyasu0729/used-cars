@@ -124,13 +124,17 @@ interface AvatarUploadSignature {
 
 export async function uploadMyAvatar(file: File): Promise<string> {
   assertAvatarFile(file)
-  const sigRaw = await axiosInstance.get<unknown>('/users/me/avatar/upload-signature')
+  const sigRes = await axiosInstance.get<unknown>('/users/me/avatar/upload-signature')
   const sig = ((): AvatarUploadSignature => {
-    const r = sigRaw as ApiResponse<AvatarUploadSignature> | { data?: AvatarUploadSignature }
+    const raw = sigRes.data
+    const r = raw as ApiResponse<AvatarUploadSignature> | AvatarUploadSignature | null | undefined
     if (r && typeof r === 'object' && 'data' in r && r.data) {
       return r.data as AvatarUploadSignature
     }
-    return sigRaw as AvatarUploadSignature
+    if (r && typeof r === 'object' && 'apiKey' in r && 'signature' in r) {
+      return r as AvatarUploadSignature
+    }
+    throw new Error('AVATAR_SIG_PARSE')
   })()
 
   const fd = new FormData()

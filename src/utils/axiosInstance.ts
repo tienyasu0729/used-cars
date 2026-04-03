@@ -14,23 +14,26 @@ import type { InternalAxiosRequestConfig } from 'axios'
 import type { ApiErrorResponse } from '@/types/auth.types'
 import { useSessionRevokedStore } from '@/store/sessionRevokedStore'
 import { shouldOpenAccountSuspendedModal } from '@/utils/accountSuspendedModalPolicy'
+import { getStoredAuthToken } from '@/utils/authToken'
 
 // Đọc base URL từ biến môi trường Vite, fallback qua proxy khi dev
 const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
-/**
- * GET công khai (permitAll trên backend) — nếu vì lý do định tuyến / filter mà trả 401,
- * không được xóa JWT và ép về /login (ảnh hưởng manager/staff vẫn gửi Bearer khi xem trang chủ).
- */
-function isPublicCatalogGet(config: InternalAxiosRequestConfig | undefined): boolean {
-  if (!config) return false
-  const m = (config.method ?? 'get').toLowerCase()
-  if (m !== 'get') return false
+function apiV1PathAfterPrefix(config: InternalAxiosRequestConfig | undefined): string | null {
+  if (!config) return null
   const full = `${config.baseURL ?? ''}${config.url ?? ''}`.split('?')[0]
   const marker = '/api/v1/'
   const idx = full.indexOf(marker)
-  if (idx < 0) return false
-  const path = full.slice(idx + marker.length)
+  if (idx < 0) return null
+  return full.slice(idx + marker.length)
+}
+
+function isOptionalAuthPublicApi(config: InternalAxiosRequestConfig | undefined): boolean {
+  const path = apiV1PathAfterPrefix(config)
+  if (!path || !config) return false
+  const m = (config.method ?? 'get').toLowerCase()
+  if (m === 'post' && /^vehicles\/\d+\/view$/.test(path)) return true
+  if (m !== 'get') return false
   if (path === 'vehicles') return true
   if (/^vehicles\/\d+$/.test(path)) return true
   if (path === 'vehicles/recently-viewed') return true
@@ -57,7 +60,7 @@ const axiosInstance = axios.create({
 // Token lấy từ localStorage key "auth_token" (key cố định theo spec).
 axiosInstance.interceptors.request.use(
   (config) => {
-    const authToken = localStorage.getItem('auth_token')
+    const authToken = getStoredAuthToken()
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`
     }
@@ -106,11 +109,12 @@ axiosInstance.interceptors.response.use(
     // Nếu lỗi 401 (UNAUTHORIZED) → token hết hạn hoặc không hợp lệ
     // Xóa token và redirect về trang login
     if (error.response.status === 401 && errorData?.errorCode === 'UNAUTHORIZED') {
-      if (isPublicCatalogGet(error.config)) {
+      if (isOptionalAuthPublicApi(error.config)) {
         return Promise.reject(errorData)
       }
       console.warn('[axiosInstance] Token hết hạn, xóa session và redirect /login')
       localStorage.removeItem('auth_token')
+      localStorage.removeItem('token')
       localStorage.removeItem('auth_user')
 
       // Chỉ redirect nếu đang không ở trang login (tránh loop)

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { ArrowLeft, Loader2, Plus, Trash2, ImageIcon, Upload, X } from 'lucide-react'
 import { Input, Button } from '@/components/ui'
 import { useCatalog } from '@/hooks/useCatalog'
+import { useVehicleRegistryLabels } from '@/hooks/useVehicleRegistryLabels'
 import { useBranches } from '@/hooks/useBranches'
 import { useManagerManagedVehicle, useManagerVehicle } from '@/hooks/useManagerVehicles'
 import { useToastStore } from '@/store/toastStore'
@@ -31,8 +32,6 @@ function canPreviewUrl(u: string): boolean {
   return t.startsWith('http://') || t.startsWith('https://') || t.startsWith('data:')
 }
 
-const FUEL_OPTIONS = ['Xăng', 'Dầu', 'Điện', 'Hybrid'] as const
-const TRANSMISSION_OPTIONS = ['Số tự động', 'Số sàn'] as const
 const BODY_STYLE_OPTIONS = [
   { value: 'Sedan', label: 'Sedan' },
   { value: 'SUV', label: 'SUV / Crossover' },
@@ -102,6 +101,7 @@ export function ManagerEditVehiclePage() {
     isLoadingSubcategories,
     fetchSubcategories,
   } = useCatalog()
+  const { fuelOptions, transmissionOptions } = useVehicleRegistryLabels()
   const { data: branches = [] } = useBranches()
 
   const {
@@ -141,18 +141,18 @@ export function ManagerEditVehiclePage() {
 
   // DB/API có thể trả giá trị nhiên liệu / hộp số khác bộ option cố định → luôn thêm option đúng giá trị hiện tại
   const fuelSelectOptions = useMemo(() => {
-    const base: string[] = [...FUEL_OPTIONS]
+    const base: string[] = [...fuelOptions]
     const v = (watchedFuel ?? '').trim()
     if (v && !base.includes(v)) return [v, ...base]
     return base
-  }, [watchedFuel])
+  }, [fuelOptions, watchedFuel])
 
   const transmissionSelectOptions = useMemo(() => {
-    const base: string[] = [...TRANSMISSION_OPTIONS]
+    const base: string[] = [...transmissionOptions]
     const v = (watchedTransmission ?? '').trim()
     if (v && !base.includes(v)) return [v, ...base]
     return base
-  }, [watchedTransmission])
+  }, [transmissionOptions, watchedTransmission])
 
   const imagePreviewTiles = useMemo((): ImagePreviewTile[] => {
     const urlTiles: ImagePreviewTile[] = fields

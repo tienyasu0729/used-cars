@@ -1,4 +1,12 @@
-export type DepositStatus = 'Pending' | 'Confirmed' | 'Refunded' | 'ConvertedToOrder'
+export type DepositStatus =
+  | 'Pending'
+  | 'Confirmed'
+  | 'Refunded'
+  | 'ConvertedToOrder'
+  | 'RefundPending'
+  | 'RefundFailed'
+  | 'Cancelled'
+  | 'Expired'
 
 export interface Deposit {
   id: string

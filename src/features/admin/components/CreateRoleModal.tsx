@@ -29,11 +29,13 @@ export function CreateRoleModal({ isOpen, onClose, permissionsCatalog, onSubmit 
     defaultValues: { name: '' },
   })
   const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [permError, setPermError] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen) {
       form.reset({ name: '' })
       setSelected(new Set())
+      setPermError(null)
     }
   }, [isOpen, form])
 
@@ -48,6 +50,7 @@ export function CreateRoleModal({ isOpen, onClose, permissionsCatalog, onSubmit 
   }, [permissionsCatalog])
 
   const toggle = (id: number) => {
+    setPermError(null)
     setSelected((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -56,16 +59,24 @@ export function CreateRoleModal({ isOpen, onClose, permissionsCatalog, onSubmit 
     })
   }
 
+  const canSubmit = selected.size > 0 && permissionsCatalog.length > 0
+
   const handleSubmit = form.handleSubmit(async (data) => {
+    if (selected.size === 0) {
+      setPermError('Vui lòng chọn ít nhất một quyền.')
+      return
+    }
     await onSubmit({ name: data.name.trim(), permissionIds: [...selected] })
     form.reset()
     setSelected(new Set())
+    setPermError(null)
     onClose()
   })
 
   const handleClose = () => {
     form.reset()
     setSelected(new Set())
+    setPermError(null)
     onClose()
   }
 
@@ -77,7 +88,13 @@ export function CreateRoleModal({ isOpen, onClose, permissionsCatalog, onSubmit 
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={handleClose}>Hủy</Button>
-          <Button variant="primary" type="button" onClick={() => handleSubmit()} loading={form.formState.isSubmitting}>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={() => handleSubmit()}
+            loading={form.formState.isSubmitting}
+            disabled={!canSubmit}
+          >
             Tạo vai trò
           </Button>
         </div>
@@ -85,8 +102,13 @@ export function CreateRoleModal({ isOpen, onClose, permissionsCatalog, onSubmit 
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Tên vai trò" {...form.register('name')} error={form.formState.errors.name?.message} required />
-        <p className="text-xs text-slate-500">Chọn quyền từ danh sách permission trong hệ thống (theo DB).</p>
-        <div className="max-h-72 overflow-y-auto rounded-lg border border-slate-200 p-2 text-sm">
+        <p className="text-xs text-slate-500">Bắt buộc chọn ít nhất một quyền từ danh sách bên dưới.</p>
+        {permError ? <p className="text-sm text-red-600">{permError}</p> : null}
+        <div
+          className={`max-h-72 overflow-y-auto rounded-lg border p-2 text-sm ${
+            permError ? 'border-red-300' : 'border-slate-200'
+          }`}
+        >
           {permissionsCatalog.length === 0 ? (
             <p className="py-4 text-center text-slate-500">Đang tải quyền...</p>
           ) : (

@@ -3,7 +3,7 @@
  *
  * Fetch categories từ GET /catalog/categories
  * Fetch subcategories cascade khi chọn hãng
- * Các chức năng ngoài Dev 2 (colors, fuelTypes...) giữ mock nếu cần
+ * Dùng cho form xe công khai; admin catalog dùng GET /admin/catalog.
  */
 import { useState, useEffect, useCallback } from 'react'
 import { vehicleService } from '@/services/vehicle.service'

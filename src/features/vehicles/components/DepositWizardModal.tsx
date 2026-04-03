@@ -8,10 +8,11 @@ import { Button } from '@/components/ui'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 import { depositApi } from '@/services/depositApi'
+import { paymentApi } from '@/services/paymentApi'
 import { formatPrice } from '@/utils/format'
 
 const schema = z.object({
-  amount: z.number().min(10000000, 'Tối thiểu 10.000.000 ₫'),
+  amount: z.number().min(1000000, 'Tối thiểu 1.000.000 ₫'),
   paymentMethod: z.string().min(1, 'Vui lòng chọn phương thức'),
 })
 
@@ -25,6 +26,8 @@ interface DepositWizardModalProps {
   vehiclePrice?: number
   /** Khi true: không gọi API, chỉ hiển thị UI placeholder */
   uiOnly?: boolean
+  orderId?: number
+  defaultAmount?: number
 }
 
 export function DepositWizardModal({
@@ -34,6 +37,8 @@ export function DepositWizardModal({
   vehicleName,
   vehiclePrice,
   uiOnly = true,
+  orderId,
+  defaultAmount,
 }: DepositWizardModalProps) {
   const [step, setStep] = useState(1)
   const { user } = useAuthStore()
@@ -42,11 +47,13 @@ export function DepositWizardModal({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
     watch,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      amount: defaultAmount ?? 10000000,
       paymentMethod: 'bank_transfer',
     },
   })
@@ -56,6 +63,15 @@ export function DepositWizardModal({
   useEffect(() => {
     if (!isOpen) setStep(1)
   }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        amount: defaultAmount ?? 10000000,
+        paymentMethod: 'bank_transfer',
+      })
+    }
+  }, [isOpen, defaultAmount, reset])
 
   const onSubmit = async (data: FormData) => {
     if (!user?.id) return
@@ -67,7 +83,23 @@ export function DepositWizardModal({
       return
     }
 
-    // B2: Chế độ thật — gọi API (sẽ kích hoạt sau khi tích hợp backend)
+    if (
+      orderId != null &&
+      (data.paymentMethod === 'vnpay' || data.paymentMethod === 'zalopay')
+    ) {
+      try {
+        const url =
+          data.paymentMethod === 'vnpay'
+            ? await paymentApi.createVnpay(orderId, data.amount)
+            : await paymentApi.createZaloPay(orderId, data.amount)
+        window.location.href = url
+        return
+      } catch {
+        addToast('error', 'Không tạo được liên kết thanh toán.')
+        return
+      }
+    }
+
     try {
       const res = await depositApi.createDeposit({
         vehicleId: String(vehicleId),
@@ -137,7 +169,7 @@ export function DepositWizardModal({
               {[
                 { value: 'bank_transfer', label: 'Chuyển khoản ngân hàng' },
                 { value: 'vnpay', label: 'VNPay' },
-                { value: 'momo', label: 'MoMo' },
+                { value: 'zalopay', label: 'ZaloPay' },
               ].map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2">
                   <input

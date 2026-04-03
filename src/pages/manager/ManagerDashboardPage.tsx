@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { useBranchReports } from '@/hooks/useBranchReports'
+import { useAuthStore } from '@/store/authStore'
 
 const MONTH_SHORT = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12']
 
@@ -36,8 +37,10 @@ function parseTopStaff(raw: unknown[] | undefined): { name: string; role: string
 }
 
 export function ManagerDashboardPage() {
+  const { user } = useAuthStore()
+  const branchId = typeof user?.branchId === 'number' && user.branchId > 0 ? user.branchId : undefined
   const { data: apiStats, isPending: statsPending } = useManagerDashboardStats()
-  const { data: reports } = useBranchReports()
+  const { data: reports } = useBranchReports(branchId)
 
   const brandData = reports?.salesByBrand ?? []
   const revenueSeries = (reports?.monthlyRevenue ?? []).map((value, i) => ({

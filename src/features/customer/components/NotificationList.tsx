@@ -20,7 +20,7 @@ interface NotificationListProps {
   onMarkRead?: (id: string) => void
 }
 
-export function NotificationList({ notifications }: NotificationListProps) {
+export function NotificationList({ notifications, onMarkRead }: NotificationListProps) {
   if (notifications.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-slate-500">
@@ -37,6 +37,10 @@ export function NotificationList({ notifications }: NotificationListProps) {
           <Link
             key={n.id}
             to={n.link ?? '#'}
+            onClick={(e) => {
+              if (!n.read) onMarkRead?.(n.id)
+              if (!n.link) e.preventDefault()
+            }}
             className={`flex gap-4 rounded-xl border p-4 transition-colors hover:bg-slate-50 ${
               n.read ? 'border-slate-200 bg-white' : 'border-[#1A3C6E]/20 bg-blue-50/50'
             }`}

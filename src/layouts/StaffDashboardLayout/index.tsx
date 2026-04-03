@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useAccountStatusHeartbeat } from '@/hooks/useAccountStatusHeartbeat'
+import { useInboxNotificationsWebSocket } from '@/hooks/useInboxNotificationsWebSocket'
 import { StaffSidebar } from './StaffSidebar'
 import { StaffTopbar } from './StaffTopbar'
 import { StaffMobileSidebar } from './MobileSidebar'
@@ -26,6 +27,7 @@ function getPageTitle(pathname: string): string {
 
 export function StaffDashboardLayout() {
   useAccountStatusHeartbeat()
+  useInboxNotificationsWebSocket()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { pathname } = useLocation()
   const title = getPageTitle(pathname)

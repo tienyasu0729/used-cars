@@ -92,6 +92,18 @@ export const vehicleService = {
     return (res as unknown as { data: Subcategory[] }).data ?? res
   },
 
+  getCatalogFuelTypesActive: async (): Promise<string[]> => {
+    const res = await axiosInstance.get<{ data: unknown }>('/catalog/fuel-types')
+    const raw = (res as { data?: unknown }).data
+    return Array.isArray(raw) ? (raw as string[]) : []
+  },
+
+  getCatalogTransmissionsActive: async (): Promise<string[]> => {
+    const res = await axiosInstance.get<{ data: unknown }>('/catalog/transmissions')
+    const raw = (res as { data?: unknown }).data
+    return Array.isArray(raw) ? (raw as string[]) : []
+  },
+
   /**
    * [PUBLIC] Lấy chi tiết các xe để so sánh (max 3 params ids)
    * GET /vehicles/compare?ids=1,2,3

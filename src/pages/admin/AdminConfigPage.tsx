@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { ConfigPaymentTab } from '@/features/admin/components/config/ConfigPaymentTab'
 import { ConfigNotificationTab } from '@/features/admin/components/config/ConfigNotificationTab'
+import { useAdminConfig, usePutAdminConfig, configListToMap } from '@/hooks/useAdminConfig'
+import { useToastStore } from '@/store/toastStore'
 
 type TabId = 'payment' | 'notification' | 'general'
 
@@ -14,7 +16,34 @@ const TABS: { id: TabId; label: string }[] = [
 ]
 
 export function AdminConfigPage() {
+  const toast = useToastStore()
   const [tab, setTab] = useState<TabId>('payment')
+  const { data, isLoading } = useAdminConfig()
+  const putCfg = usePutAdminConfig()
+  const [siteTitle, setSiteTitle] = useState('')
+  const [supportEmail, setSupportEmail] = useState('')
+  const [maintenance, setMaintenance] = useState(false)
+
+  useEffect(() => {
+    if (!data) return
+    const m = configListToMap(data)
+    setSiteTitle(m.site_title ?? '')
+    setSupportEmail(m.support_email ?? '')
+    setMaintenance(String(m.maintenance_mode).toLowerCase() === 'true')
+  }, [data])
+
+  const saveGeneral = async () => {
+    try {
+      await putCfg.mutateAsync([
+        { key: 'site_title', value: siteTitle },
+        { key: 'support_email', value: supportEmail },
+        { key: 'maintenance_mode', value: maintenance ? 'true' : 'false' },
+      ])
+      toast.addToast('success', 'Đã lưu.')
+    } catch {
+      toast.addToast('error', 'Không lưu được.')
+    }
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -23,22 +52,18 @@ export function AdminConfigPage() {
         <ChevronRight className="h-4 w-4" />
         <span className="text-slate-700">Cấu hình hệ thống</span>
       </div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Cấu Hình Hệ Thống</h2>
-          <p className="mt-1 text-slate-500">Thiết lập các thông số vận hành cho toàn bộ website BanXeOTo Da Nang</p>
-        </div>
-        <Button variant="primary" size="sm">Lưu Thay Đổi</Button>
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900">Cấu Hình Hệ Thống</h2>
+        <p className="mt-1 text-slate-500">Đọc/ghi SystemConfigs qua API</p>
       </div>
       <div className="flex gap-2 border-b border-slate-200">
         {TABS.map((t) => (
           <button
             key={t.id}
+            type="button"
             onClick={() => setTab(t.id)}
             className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.id
-                ? 'border-[#1A3C6E] text-[#1A3C6E]'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+              tab === t.id ? 'border-[#1A3C6E] text-[#1A3C6E]' : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
             {t.label}
@@ -49,36 +74,35 @@ export function AdminConfigPage() {
       {tab === 'notification' && <ConfigNotificationTab />}
       {tab === 'general' && (
         <div className="space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Tên công ty</label>
-            <input
-              type="text"
-              defaultValue="BanXeOTo Đà Nẵng"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#1A3C6E] focus:ring-1 focus:ring-[#1A3C6E]"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Email hỗ trợ</label>
-            <input
-              type="email"
-              defaultValue="support@banxeoto.vn"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 focus:border-[#1A3C6E] focus:ring-1 focus:ring-[#1A3C6E]"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Cài đặt thông báo</label>
-            <div className="space-y-2">
+          {isLoading ? (
+            <div className="py-8 text-center text-slate-500">Đang tải...</div>
+          ) : (
+            <>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Tên website</label>
+                <input
+                  type="text"
+                  value={siteTitle}
+                  onChange={(e) => setSiteTitle(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Email hỗ trợ</label>
+                <input
+                  type="email"
+                  value={supportEmail}
+                  onChange={(e) => setSupportEmail(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2"
+                />
+              </div>
               <label className="flex items-center gap-2">
-                <input type="checkbox" defaultChecked className="rounded" />
-                <span className="text-sm text-slate-600">Gửi email xác nhận đặt lịch</span>
+                <input type="checkbox" checked={maintenance} onChange={(e) => setMaintenance(e.target.checked)} className="rounded" />
+                <span className="text-sm text-slate-600">Chế độ bảo trì</span>
               </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" defaultChecked className="rounded" />
-                <span className="text-sm text-slate-600">Gửi thông báo khi có xe mới</span>
-              </label>
-            </div>
-          </div>
-          <Button variant="primary">Lưu cấu hình</Button>
+              <Button variant="primary" onClick={saveGeneral} loading={putCfg.isPending}>Lưu</Button>
+            </>
+          )}
         </div>
       )}
     </div>

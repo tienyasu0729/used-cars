@@ -18,7 +18,6 @@ const ROLE_OPTIONS = [
   { value: 'Customer', label: 'Khách hàng' },
   { value: 'SalesStaff', label: 'Nhân viên bán hàng' },
   { value: 'BranchManager', label: 'Quản lý chi nhánh' },
-  { value: 'Admin', label: 'Admin' },
 ]
 
 interface CreateUserModalProps {

@@ -5,10 +5,15 @@ import { asApiArray } from '@/utils/asApiArray'
 function mapRole(raw: Record<string, unknown>): AdminRole {
   const perms = raw.permissions
   const permissionKeys = Array.isArray(perms) ? (perms as string[]).map(String) : []
+  const idRaw = raw.permissionIds
+  const permissionIds = Array.isArray(idRaw)
+    ? (idRaw as unknown[]).map((x) => Number(x)).filter((n) => Number.isInteger(n) && n > 0)
+    : []
   return {
     id: String(raw.id ?? ''),
     name: String(raw.name ?? ''),
     userCount: Number(raw.userCount ?? 0),
+    permissionIds,
     permissionKeys,
     systemRole: Boolean(raw.systemRole),
   }

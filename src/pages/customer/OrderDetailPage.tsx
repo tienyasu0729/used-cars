@@ -1,9 +1,11 @@
 import { useParams, Link } from 'react-router-dom'
+import { useState } from 'react'
 import { useOrder } from '@/hooks/useOrders'
 import { useVehicle } from '@/hooks/useVehicles'
 import { useBranch } from '@/hooks/useBranches'
 import { formatPrice } from '@/utils/format'
 import { Button } from '@/components/ui'
+import { DepositWizardModal } from '@/features/vehicles/components/DepositWizardModal'
 import {
   Info,
   Car,
@@ -68,6 +70,7 @@ function buildOrderTimeline(order: Order): TimelineStep[] {
 
 export function OrderDetailPage() {
   const { id } = useParams()
+  const [payOpen, setPayOpen] = useState(false)
   const { data: order, isLoading } = useOrder(id)
   const { data: vehicle } = useVehicle(order?.vehicleId)
   const { data: branch } = useBranch(vehicle?.branch_id != null ? String(vehicle.branch_id) : undefined)
@@ -83,6 +86,8 @@ export function OrderDetailPage() {
   }
 
   const total = order.price
+  const numericOrderId = /^\d+$/.test(order.id) ? Number(order.id) : undefined
+  const canPayOnline = numericOrderId != null && order.status === 'Pending'
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -106,12 +111,18 @@ export function OrderDetailPage() {
           </div>
           <p className="text-slate-500">Ngày đặt: {formatOrderDate(order.createdAt)}</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          {canPayOnline && (
+            <Button variant="primary" className="flex items-center gap-2" onClick={() => setPayOpen(true)}>
+              <CreditCard className="h-5 w-5" />
+              Thanh toán online
+            </Button>
+          )}
           <Button variant="outline" className="flex items-center gap-2">
             <Download className="h-5 w-5" />
             Tải hóa đơn
           </Button>
-          <Button variant="primary" className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
             Liên hệ hỗ trợ
           </Button>
@@ -244,6 +255,20 @@ export function OrderDetailPage() {
           </section>
         </div>
       </div>
+      {canPayOnline && numericOrderId != null && (
+        <DepositWizardModal
+          isOpen={payOpen}
+          onClose={() => setPayOpen(false)}
+          vehicleId={order.vehicleId}
+          vehicleName={
+            vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.trim ?? ''} ${vehicle.year}`.trim() : undefined
+          }
+          vehiclePrice={vehicle?.price}
+          uiOnly={false}
+          orderId={numericOrderId}
+          defaultAmount={order.deposit}
+        />
+      )}
     </div>
   )
 }

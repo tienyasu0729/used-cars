@@ -18,7 +18,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 import { uploadAvatar } from '@/services/user.service'
 import { resolveUploadPublicUrl } from '@/utils/mediaUrl'
-import { useNotifications } from '@/hooks/useNotifications'
+import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 import { useBookings } from '@/hooks/useBookings'
 import { useDeposits } from '@/hooks/useDeposits'
 import { useConversations } from '@/hooks/useChats'
@@ -41,12 +41,11 @@ export function CustomerSidebar() {
   const { user, logout, patchUser } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const avatarInputRef = useRef<HTMLInputElement>(null)
-  const { data: notifications } = useNotifications()
+  const { data: notificationUnread = 0 } = useNotificationUnreadCount()
   const { data: bookings } = useBookings()
   const { data: deposits } = useDeposits()
   const { data: conversations } = useConversations()
 
-  const notificationUnread = notifications?.filter((n) => !n.read).length ?? 0
   const bookingPending = bookings?.filter((b) => b.status === 'Pending').length ?? 0
   const depositActive = deposits?.filter((d) => d.status === 'Confirmed').length ?? 0
   const chatUnread = conversations?.reduce((s, c) => s + (c.unreadCount ?? 0), 0) ?? 0

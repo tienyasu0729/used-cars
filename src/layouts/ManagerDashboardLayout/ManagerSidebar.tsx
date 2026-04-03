@@ -13,7 +13,7 @@ import {
   Lock,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { useManagerNotifications } from '@/hooks/useManagerNotifications'
+import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 import { BrandLogo } from '@/components/common/BrandLogo'
 
 const navItems = [
@@ -30,8 +30,7 @@ const navItems = [
 
 export function ManagerSidebar() {
   const { user } = useAuthStore()
-  const { data: notifications } = useManagerNotifications()
-  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0
+  const { data: unreadCount = 0 } = useNotificationUnreadCount()
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[220px] flex-shrink-0 flex-col bg-[#1A3C6E] lg:flex">

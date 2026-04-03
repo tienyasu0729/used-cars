@@ -70,15 +70,16 @@ export function AdminBranchesPage() {
 
   const handleSaveBranch = async (
     id: string,
-    data: { name: string; address: string; phone: string; status: 'active' | 'inactive' }
+    data: { name: string; address: string; phone?: string; status: 'active' | 'inactive' }
   ) => {
     try {
+      const ph = (data.phone ?? '').trim()
       await updateBranch.mutateAsync({
         id,
         body: {
           name: data.name,
           address: data.address,
-          phone: data.phone.trim() === '' ? null : data.phone.trim(),
+          phone: ph === '' ? null : ph,
           status: data.status,
         },
       })

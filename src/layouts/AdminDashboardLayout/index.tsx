@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { useInboxNotificationsWebSocket } from '@/hooks/useInboxNotificationsWebSocket'
 import { AdminSidebar } from './AdminSidebar'
 import { AdminTopbar } from './AdminTopbar'
 import { AdminMobileSidebar } from './AdminMobileSidebar'
@@ -13,7 +14,7 @@ const pageTitles: Record<string, string> = {
   '/admin/branches/new': 'Thêm Chi Nhánh',
   '/admin/catalog': 'Danh Mục Xe',
   '/admin/transfers': 'Duyệt Điều Chuyển',
-  '/admin/cms': 'Quản Lý Nội Dung',
+  '/admin/home-banners': 'Banner trang chủ',
   '/admin/config': 'Cấu Hình Hệ Thống',
   '/admin/reports': 'Báo Cáo Tổng',
   '/admin/logs': 'Nhật Ký Hoạt Động',
@@ -26,6 +27,7 @@ function getPageTitle(pathname: string): string {
 }
 
 export function AdminDashboardLayout() {
+  useInboxNotificationsWebSocket()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { pathname } = useLocation()
   const title = getPageTitle(pathname)

@@ -6,13 +6,9 @@ export function useSystemReports() {
   return useQuery({
     queryKey: ['admin-reports'],
     queryFn: async () => {
-      try {
-        const { api } = await import('@/services/apiClient')
-        const res = await api.get<unknown>('/admin/reports')
-        return asApiArray<AdminReport>(res.data)
-      } catch {
-        return [] as AdminReport[]
-      }
+      const { api } = await import('@/services/apiClient')
+      const res = await api.get<unknown>('/admin/reports')
+      return asApiArray<AdminReport>(res.data)
     },
     staleTime: 1000 * 60 * 2,
   })

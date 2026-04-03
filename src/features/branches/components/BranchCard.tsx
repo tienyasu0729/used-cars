@@ -8,13 +8,29 @@ interface BranchCardProps {
 }
 
 export function BranchCard({ branch }: BranchCardProps) {
+  const temporarilyClosed = branch.status === 'inactive'
   const coverSrc =
     branch.images?.[0] ??
     `https://placehold.co/400x225/1a3c6e/white?text=${encodeURIComponent(branch.name)}`
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-      <div className="aspect-video bg-gray-100">
-        <img src={coverSrc} alt={branch.name} className="h-full w-full object-cover" />
+    <div
+      className={`overflow-hidden rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
+        temporarilyClosed ? 'border-amber-200/90' : 'border-gray-200'
+      }`}
+    >
+      <div className="relative aspect-video bg-gray-100">
+        <img
+          src={coverSrc}
+          alt={branch.name}
+          className={`h-full w-full object-cover ${temporarilyClosed ? 'opacity-80' : ''}`}
+        />
+        {temporarilyClosed && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/35 px-3">
+            <span className="rounded-md bg-amber-600/95 px-3 py-1.5 text-center text-xs font-semibold text-white shadow-sm">
+              Tạm đóng cửa
+            </span>
+          </div>
+        )}
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-gray-900">{branch.name}</h3>

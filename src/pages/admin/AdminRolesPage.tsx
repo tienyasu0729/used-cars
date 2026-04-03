@@ -9,12 +9,25 @@ import { Button, Modal } from '@/components/ui'
 import { useToastStore } from '@/store/toastStore'
 
 function keysToIds(keys: string[], catalog: AdminPermissionRow[]): Set<number> {
-  const want = new Set(keys)
+  const want = new Set(keys.map((k) => k.trim().toLowerCase()))
   const ids = new Set<number>()
   for (const p of catalog) {
-    if (want.has(`${p.module}.${p.action}`)) ids.add(p.id)
+    const key = `${p.module}.${p.action}`.trim().toLowerCase()
+    if (want.has(key)) ids.add(p.id)
   }
   return ids
+}
+
+function roleToDraftIds(role: AdminRole, catalog: AdminPermissionRow[]): Set<number> {
+  const catalogIdSet = new Set(catalog.map((p) => p.id))
+  if (role.permissionIds.length > 0) {
+    const next = new Set<number>()
+    for (const id of role.permissionIds) {
+      if (catalogIdSet.has(id)) next.add(id)
+    }
+    return next
+  }
+  return keysToIds(role.permissionKeys, catalog)
 }
 
 function apiErr(e: unknown, fallback: string) {
@@ -22,10 +35,26 @@ function apiErr(e: unknown, fallback: string) {
   return ax.response?.data?.message || fallback
 }
 
+function canEditRolePermissions(role: AdminRole | null): boolean {
+  if (!role) return false
+  return role.name.trim().toLowerCase() !== 'admin'
+}
+
+const EMPTY_PERMISSION_CATALOG: AdminPermissionRow[] = []
+
+function setsEqualIds(a: Set<number>, b: Set<number>): boolean {
+  if (a.size !== b.size) return false
+  for (const id of b) {
+    if (!a.has(id)) return false
+  }
+  return true
+}
+
 export function AdminRolesPage() {
   const toast = useToastStore()
   const { data: roles, isLoading } = useRoles()
-  const { data: permissionsCatalog = [], isLoading: permLoading } = useAdminPermissions()
+  const { data: permData, isLoading: permLoading } = useAdminPermissions()
+  const permissionsCatalog = permData ?? EMPTY_PERMISSION_CATALOG
   const createRole = useCreateRole()
   const updateRole = useUpdateRole()
   const deleteRole = useDeleteRole()
@@ -44,13 +73,22 @@ export function AdminRolesPage() {
 
   const selectedRole = roles?.find((r) => r.id === selectedRoleId) ?? null
 
+  const permIdsKey = selectedRole?.permissionIds?.join(',') ?? ''
+  const permKeysKey = selectedRole?.permissionKeys?.join('|') ?? ''
+  const catalogKey = useMemo(
+    () => permissionsCatalog.map((p) => p.id).join(','),
+    [permissionsCatalog],
+  )
+
   useEffect(() => {
-    if (!selectedRole || !permissionsCatalog.length) {
-      setDraftIds(new Set())
+    const role = roles?.find((r) => r.id === selectedRoleId) ?? null
+    if (!role || !permissionsCatalog.length) {
+      setDraftIds((prev) => (prev.size === 0 ? prev : new Set()))
       return
     }
-    setDraftIds(keysToIds(selectedRole.permissionKeys, permissionsCatalog))
-  }, [selectedRole?.id, selectedRole?.permissionKeys, permissionsCatalog])
+    const next = roleToDraftIds(role, permissionsCatalog)
+    setDraftIds((prev) => (setsEqualIds(prev, next) ? prev : next))
+  }, [roles, selectedRoleId, permIdsKey, permKeysKey, catalogKey, permissionsCatalog])
 
   const displayRoles = search.trim()
     ? roles?.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))
@@ -66,7 +104,7 @@ export function AdminRolesPage() {
   }, [permissionsCatalog])
 
   const togglePerm = (id: number) => {
-    if (selectedRole?.systemRole) return
+    if (!canEditRolePermissions(selectedRole)) return
     setDraftIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -76,7 +114,7 @@ export function AdminRolesPage() {
   }
 
   const handleSave = async () => {
-    if (!selectedRole || selectedRole.systemRole) return
+    if (!selectedRole || !canEditRolePermissions(selectedRole)) return
     try {
       await updateRole.mutateAsync({
         id: selectedRole.id,
@@ -108,7 +146,7 @@ export function AdminRolesPage() {
       setConfirmDelete(null)
       setSelectedRoleId(null)
     } catch (e) {
-      toast.addToast('error', apiErr(e, 'Không xóa được (có thể ROLE_IN_USE).'))
+      toast.addToast('error', apiErr(e, 'Không xóa được vai trò.'))
     }
   }
 
@@ -165,23 +203,27 @@ export function AdminRolesPage() {
                 <div>
                   <h4 className="text-lg font-semibold text-slate-900">{selectedRole.name}</h4>
                   <p className="mt-1 text-sm text-slate-500">
-                    {selectedRole.systemRole
-                      ? 'Vai trò hệ thống: chỉ xem quyền, không sửa/xóa qua giao diện này.'
-                      : 'Chọn permission (theo API permissionIds).'}
+                    {canEditRolePermissions(selectedRole)
+                      ? selectedRole.systemRole
+                        ? 'Vai trò hệ thống: chỉnh được bộ quyền; không đổi tên, không xóa.'
+                        : 'Chọn permission (theo API permissionIds).'
+                      : 'Vai trò Admin: chỉ xem quyền, không chỉnh từ đây.'}
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  {!selectedRole.systemRole && (
+                  {canEditRolePermissions(selectedRole) && (
                     <>
-                      <Button variant="outline" size="sm" onClick={() => setDraftIds(keysToIds(selectedRole.permissionKeys, permissionsCatalog))}>
+                      <Button variant="outline" size="sm" onClick={() => setDraftIds(roleToDraftIds(selectedRole, permissionsCatalog))}>
                         Hoàn tác
                       </Button>
                       <Button variant="primary" size="sm" onClick={handleSave} disabled={permLoading}>
                         Lưu
                       </Button>
-                      <Button variant="danger" size="sm" onClick={() => setConfirmDelete(selectedRole)}>
-                        Xóa
-                      </Button>
+                      {!selectedRole.systemRole && (
+                        <Button variant="danger" size="sm" onClick={() => setConfirmDelete(selectedRole)}>
+                          Xóa
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>
@@ -196,10 +238,14 @@ export function AdminRolesPage() {
                       <ul className="space-y-1 pl-2">
                         {rows.map((p) => (
                           <li key={p.id}>
-                            <label className={`flex items-start gap-2 rounded px-1 py-0.5 ${selectedRole.systemRole ? '' : 'cursor-pointer hover:bg-slate-50'}`}>
+                            <label
+                              className={`flex items-start gap-2 rounded px-1 py-0.5 ${
+                                canEditRolePermissions(selectedRole) ? 'cursor-pointer hover:bg-slate-50' : ''
+                              }`}
+                            >
                               <input
                                 type="checkbox"
-                                disabled={selectedRole.systemRole}
+                                disabled={!canEditRolePermissions(selectedRole)}
                                 checked={draftIds.has(p.id)}
                                 onChange={() => togglePerm(p.id)}
                                 className="mt-1 rounded"
@@ -238,7 +284,8 @@ export function AdminRolesPage() {
         }
       >
         <p className="text-sm text-slate-600">
-          Xóa vai trò <strong>{confirmDelete?.name}</strong>? Nếu còn user gán vai trò này, API trả lỗi ROLE_IN_USE.
+          Xóa vai trò <strong>{confirmDelete?.name}</strong>? Toàn bộ người dùng đang có vai trò này sẽ được chuyển về{' '}
+          <strong>CUSTOMER</strong> (Khách hàng).
         </p>
       </Modal>
     </div>

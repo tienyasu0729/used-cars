@@ -6,7 +6,7 @@ const PAYMENT_OPTIONS = [
   { value: 'cash', label: 'Tiền mặt', sub: 'Tại cửa hàng' },
   { value: 'bank_transfer', label: 'Chuyển khoản', sub: 'Bank Transfer' },
   { value: 'vnpay', label: 'VNPay', sub: 'QR Code' },
-  { value: 'momo', label: 'MoMo', sub: 'Ví điện tử' },
+  { value: 'zalopay', label: 'ZaloPay', sub: 'Ví / QR' },
 ]
 
 interface CreateOrderStepDetailsProps {

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { Car, Handshake, Calendar, Shield, FileText, Building2, Wrench, Search, Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
@@ -8,6 +9,9 @@ import { useBranches } from '@/hooks/useBranches'
 import { RecentlyViewedWidget } from '@/components/vehicles/RecentlyViewedWidget'
 import { Button } from '@/components/ui'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { fetchPublicHomeBanners } from '@/services/homeBanners.service'
+
+const DEFAULT_HERO_BG = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1920'
 
 const PRICE_OPTIONS = [
   { label: 'Khoảng giá', minPrice: '', maxPrice: '' },
@@ -41,6 +45,30 @@ export function HomePage() {
   const { data: branches, isLoading: branchesLoading } = useBranches()
   const branchesList = Array.isArray(branches) ? branches : []
 
+  const { data: heroBanners = [] } = useQuery({
+    queryKey: ['public-home-banners'],
+    queryFn: fetchPublicHomeBanners,
+    staleTime: 60_000,
+  })
+
+  const heroSlides = useMemo(() => {
+    if (!heroBanners.length) return [DEFAULT_HERO_BG]
+    return heroBanners.map((b) => b.imageUrl)
+  }, [heroBanners])
+
+  const [heroIndex, setHeroIndex] = useState(0)
+  useEffect(() => {
+    setHeroIndex(0)
+  }, [heroSlides.join('\0')])
+
+  useEffect(() => {
+    if (heroSlides.length < 2) return undefined
+    const t = window.setInterval(() => {
+      setHeroIndex((i) => (i + 1) % heroSlides.length)
+    }, 6000)
+    return () => window.clearInterval(t)
+  }, [heroSlides.length])
+
   const features = [
     { icon: Shield, title: 'Kiểm định 160 bước', desc: 'Mọi xe đều được kiểm tra kỹ thuật nghiêm ngặt bởi đội ngũ kỹ thuật viên giàu kinh nghiệm.' },
     { icon: FileText, title: 'Lịch sử minh bạch', desc: 'Cam kết không xe đâm đụng, không ngập nước, hồ sơ pháp lý rõ ràng từng chiếc xe.' },
@@ -58,12 +86,32 @@ export function HomePage() {
     <div>
       <section className="relative flex h-[500px] items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#1A3C6E]/90 to-[#1A3C6E]/50" />
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1920)`,
-          }}
-        />
+        {heroSlides.map((src, i) => (
+          <div
+            key={`${src}-${i}`}
+            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ${
+              i === heroIndex ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{ backgroundImage: `url(${src})` }}
+            aria-hidden={i !== heroIndex}
+          />
+        ))}
+        {heroSlides.length > 1 && (
+          <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+            {heroSlides.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Banner ${i + 1}`}
+                aria-current={i === heroIndex}
+                onClick={() => setHeroIndex(i)}
+                className={`h-2 rounded-full transition-all ${
+                  i === heroIndex ? 'w-7 bg-white' : 'w-2 bg-white/45 hover:bg-white/70'
+                }`}
+              />
+            ))}
+          </div>
+        )}
         <div className="relative z-20 mx-auto max-w-4xl px-4 text-center">
           <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-white md:text-6xl">
             Tìm xe ô tô phù hợp nhất tại Đà Nẵng

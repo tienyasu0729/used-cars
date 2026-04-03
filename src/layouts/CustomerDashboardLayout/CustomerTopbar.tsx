@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell, ChevronDown, Menu, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { useNotifications } from '@/hooks/useNotifications'
+import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 
 interface CustomerTopbarProps {
   title: string
@@ -13,8 +13,7 @@ export function CustomerTopbar({ title, onMenuClick }: CustomerTopbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { user, logout } = useAuthStore()
-  const { data: notifications } = useNotifications()
-  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0
+  const { data: unreadCount = 0 } = useNotificationUnreadCount()
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

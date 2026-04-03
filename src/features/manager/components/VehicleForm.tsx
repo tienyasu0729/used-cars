@@ -5,9 +5,10 @@
  * Cascade select: hãng → dòng xe
  * Validate: required fields, price > 0, year hợp lệ
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCatalog } from '@/hooks/useCatalog'
+import { useVehicleRegistryLabels } from '@/hooks/useVehicleRegistryLabels'
 import { useManagerVehicle } from '@/hooks/useManagerVehicles'
 import { vehicleService } from '@/services/vehicle.service'
 import type { CreateVehicleRequest, UpdateVehicleRequest, VehicleStatus } from '@/types/vehicle.types'
@@ -16,13 +17,11 @@ interface VehicleFormProps {
   vehicleId?: number
 }
 
-const FUEL_OPTIONS = ['Xăng', 'Dầu', 'Điện', 'Hybrid']
-const TRANSMISSION_OPTIONS = ['Số tự động', 'Số sàn']
-
 export function VehicleForm({ vehicleId }: VehicleFormProps) {
   const navigate = useNavigate()
   const isEditMode = vehicleId !== undefined
   const { categories, subcategories, fetchSubcategories } = useCatalog()
+  const { fuelOptions, transmissionOptions } = useVehicleRegistryLabels()
   const { createVehicle, updateVehicle, isSubmitting, error } = useManagerVehicle()
 
   // Form state
@@ -41,6 +40,20 @@ export function VehicleForm({ vehicleId }: VehicleFormProps) {
   })
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+  const fuelSelectOptions = useMemo(() => {
+    const base = [...fuelOptions]
+    const v = form.fuel.trim()
+    if (v && !base.includes(v)) return [v, ...base]
+    return base
+  }, [fuelOptions, form.fuel])
+
+  const transmissionSelectOptions = useMemo(() => {
+    const base = [...transmissionOptions]
+    const v = form.transmission.trim()
+    if (v && !base.includes(v)) return [v, ...base]
+    return base
+  }, [transmissionOptions, form.transmission])
 
   // Load xe hiện tại nếu edit mode
   useEffect(() => {
@@ -254,7 +267,7 @@ export function VehicleForm({ vehicleId }: VehicleFormProps) {
             onChange={(e) => updateField('fuel', e.target.value)}
             className={inputClass('fuel')}
           >
-            {FUEL_OPTIONS.map((f) => (
+            {fuelSelectOptions.map((f) => (
               <option key={f} value={f}>{f}</option>
             ))}
           </select>
@@ -266,7 +279,7 @@ export function VehicleForm({ vehicleId }: VehicleFormProps) {
             onChange={(e) => updateField('transmission', e.target.value)}
             className={inputClass('transmission')}
           >
-            {TRANSMISSION_OPTIONS.map((t) => (
+            {transmissionSelectOptions.map((t) => (
               <option key={t} value={t}>{t}</option>
             ))}
           </select>

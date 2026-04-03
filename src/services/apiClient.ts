@@ -2,6 +2,7 @@ import axios from 'axios'
 import type { InternalAxiosRequestConfig } from 'axios'
 import { useSessionRevokedStore } from '@/store/sessionRevokedStore'
 import { shouldOpenAccountSuspendedModal } from '@/utils/accountSuspendedModalPolicy'
+import { getStoredAuthToken } from '@/utils/authToken'
 
 // Phải khớp prefix Spring Boot: /api/v1/... (trước đây /api khiến /admin/users → /api/admin/users → sai route).
 export const api = axios.create({
@@ -12,7 +13,7 @@ export const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token') || localStorage.getItem('token')
+  const token = getStoredAuthToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }

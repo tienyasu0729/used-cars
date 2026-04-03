@@ -18,6 +18,7 @@ export interface BranchPublicDto {
   name: string
   address: string
   phone?: string | null
+  status?: string | null
   lat?: number | null
   lng?: number | null
   showroomImageUrls?: string[] | null
@@ -184,11 +185,13 @@ export function mapBranchDtoToBranch(d: BranchPublicDto): Branch {
     )
   const sortedDows = [...new Set(openDays.map((s) => s.dayOfWeek))].sort((a, b) => a - b)
 
+  const st = (d.status ?? 'active').trim().toLowerCase()
   return {
     id: String(d.id),
     name: d.name,
     address: d.address,
     phone: d.phone?.trim() || '—',
+    status: st === 'inactive' ? 'inactive' : 'active',
     lat,
     lng,
     images: images.length > 0 ? images : undefined,

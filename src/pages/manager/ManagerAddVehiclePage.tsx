@@ -6,6 +6,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Info, Tag, ImageIcon, Loader2, Upload, X, Plus, Trash2 } from 'lucide-react'
 import { Input, Button } from '@/components/ui'
 import { useCatalog } from '@/hooks/useCatalog'
+import { useVehicleRegistryLabels } from '@/hooks/useVehicleRegistryLabels'
 import { useBranches } from '@/hooks/useBranches'
 import { useManagerVehicle } from '@/hooks/useManagerVehicles'
 import { useToastStore } from '@/store/toastStore'
@@ -14,8 +15,6 @@ import { fetchMediaUploadEnabled, uploadManagerImage } from '@/services/managerM
 import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import type { CreateVehicleRequest } from '@/types/vehicle.types'
 
-const FUEL_OPTIONS = ['Xăng', 'Dầu', 'Điện', 'Hybrid'] as const
-const TRANSMISSION_OPTIONS = ['Số tự động', 'Số sàn'] as const
 const BODY_STYLE_OPTIONS = [
   { value: 'Sedan', label: 'Sedan' },
   { value: 'SUV', label: 'SUV / Crossover' },
@@ -81,6 +80,7 @@ export function ManagerAddVehiclePage() {
     isLoadingSubcategories,
     fetchSubcategories,
   } = useCatalog()
+  const { fuelOptions, transmissionOptions } = useVehicleRegistryLabels()
   const { data: branches = [], isLoading: branchesLoading } = useBranches()
 
   /** Chi nhánh gửi API: ưu tiên branch gán cho Manager/Staff; Admin không có branchId thì lấy chi nhánh đầu danh sách. */
@@ -416,7 +416,7 @@ export function ManagerAddVehiclePage() {
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700">Nhiên liệu</label>
                   <select {...register('fuel')} className={selectClass}>
-                    {FUEL_OPTIONS.map((f) => (
+                    {fuelOptions.map((f) => (
                       <option key={f} value={f}>
                         {f}
                       </option>
@@ -427,7 +427,7 @@ export function ManagerAddVehiclePage() {
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700">Hộp số</label>
                   <select {...register('transmission')} className={selectClass}>
-                    {TRANSMISSION_OPTIONS.map((t) => (
+                    {transmissionOptions.map((t) => (
                       <option key={t} value={t}>
                         {t}
                       </option>

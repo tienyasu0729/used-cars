@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { useInboxNotificationsWebSocket } from '@/hooks/useInboxNotificationsWebSocket'
 import { CustomerSidebar } from './CustomerSidebar'
 import { CustomerTopbar } from './CustomerTopbar'
 import { MobileSidebar } from './MobileSidebar'
@@ -23,6 +24,7 @@ function getPageTitle(pathname: string): string {
 }
 
 export function CustomerDashboardLayout() {
+  useInboxNotificationsWebSocket()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { pathname } = useLocation()
   const title = getPageTitle(pathname)

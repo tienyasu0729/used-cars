@@ -36,6 +36,7 @@ export interface AdminRole {
   id: string
   name: string
   userCount: number
+  permissionIds: number[]
   /** Chuỗi module.action từ backend */
   permissionKeys: string[]
   systemRole: boolean
@@ -105,23 +106,6 @@ export interface AdminTransfer {
   createdAt: string
 }
 
-export interface AdminCMSBanner {
-  id: string
-  title: string
-  image: string
-  link: string
-  status: 'published' | 'draft'
-}
-
-export interface AdminCMSArticle {
-  id: string
-  title: string
-  category: string
-  author: string
-  publishedAt: string
-  status: 'published' | 'draft'
-}
-
 export interface AdminReport {
   branchName: string
   revenue: number
@@ -129,15 +113,22 @@ export interface AdminReport {
   orders: number
 }
 
-export interface TopSellingVehicle {
-  id: string
-  name: string
-  category: string
-  image: string
-  totalUnits: number
-  topBranch: string
-  revenue: number
-  status: 'LOW_STOCK' | 'STABLE' | 'HIGH_DEMAND'
+export interface CatalogSalesModelRow {
+  subcategoryId: number
+  modelName: string
+  brandName: string
+  soldCount: number
+}
+
+export interface CatalogSalesBrandRow {
+  categoryId: number
+  brandName: string
+  soldCount: number
+}
+
+export interface AdminDashboardCatalogSales {
+  topModels: CatalogSalesModelRow[]
+  topBrands: CatalogSalesBrandRow[]
 }
 
 export interface AdminLog {

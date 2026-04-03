@@ -5,6 +5,16 @@ import {
   type UpdateAdminBranchBody,
   type UpdateAdminUserBody,
 } from '@/services/adminApi'
+import {
+  createCatalogBrand,
+  createCatalogModel,
+  createFuelType,
+  createTransmission,
+  updateCatalogBrand,
+  updateCatalogFuelType,
+  updateCatalogModel,
+  updateCatalogTransmission,
+} from '@/services/adminCatalog.service'
 import { transferService } from '@/services/transfer.service'
 
 export function useCreateRole() {
@@ -120,100 +130,71 @@ export function useCreateBranch() {
   })
 }
 
+export function useUpdateCatalogModel() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, name, status }: { id: number; name: string; status: string }) =>
+      updateCatalogModel(id, { name, status }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog-models'] }),
+  })
+}
+
 export function useCreateCatalogBrand() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: adminApi.createCatalogBrand,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
-  })
-}
-
-export function useCreateCatalogModel() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: adminApi.createCatalogModel,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
-  })
-}
-
-export function useCreateCatalogColor() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: adminApi.createCatalogColor,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
-  })
-}
-
-export function useCreateCatalogFuelType() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: adminApi.createCatalogFuelType,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
-  })
-}
-
-export function useCreateCatalogTransmission() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: adminApi.createCatalogTransmission,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
+    mutationFn: (body: { name: string; status: string }) => createCatalogBrand(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog-brands'] }),
   })
 }
 
 export function useUpdateCatalogBrand() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      adminApi.updateCatalogBrand(id, data as Parameters<typeof adminApi.updateCatalogBrand>[1]),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
+    mutationFn: ({ id, body }: { id: number; body: { name: string; status: string } }) =>
+      updateCatalogBrand(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog-brands'] }),
   })
 }
 
-export function useDeleteCatalogBrand() {
+export function useCreateCatalogModel() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: adminApi.deleteCatalogBrand,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
+    mutationFn: (body: { categoryId: number; name: string; status: string }) => createCatalogModel(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog-models'] }),
   })
 }
 
-export function useUploadCatalogBrandLogo() {
+export function useCreateFuelType() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ brandId, file }: { brandId: string; file: File }) =>
-      adminApi.uploadCatalogBrandLogo(brandId, file),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
+    mutationFn: (name: string) => createFuelType(name),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog-fuel-types'] }),
   })
 }
 
-export function useDeleteCatalogModel() {
+export function useCreateTransmission() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: adminApi.deleteCatalogModel,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
+    mutationFn: (name: string) => createTransmission(name),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog-transmissions'] }),
   })
 }
 
-export function useDeleteCatalogColor() {
+export function useUpdateCatalogFuelType() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: adminApi.deleteCatalogColor,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
+    mutationFn: ({ id, body }: { id: number; body: { name: string; status: string } }) =>
+      updateCatalogFuelType(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog-fuel-types'] }),
   })
 }
 
-export function useDeleteCatalogFuelType() {
+export function useUpdateCatalogTransmission() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: adminApi.deleteCatalogFuelType,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
+    mutationFn: ({ id, body }: { id: number; body: { name: string; status: string } }) =>
+      updateCatalogTransmission(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog-transmissions'] }),
   })
 }
 
-export function useDeleteCatalogTransmission() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: adminApi.deleteCatalogTransmission,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-catalog'] }),
-  })
-}

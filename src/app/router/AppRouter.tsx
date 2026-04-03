@@ -27,6 +27,9 @@ const ForgotPasswordPage = lazy(() => import('@/pages/public/ForgotPasswordPage'
 const ResetPasswordPage = lazy(() => import('@/pages/public/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
 const TermsPage = lazy(() => import('@/pages/public/TermsPage').then((m) => ({ default: m.TermsPage })))
 const PrivacyPage = lazy(() => import('@/pages/public/PrivacyPage').then((m) => ({ default: m.PrivacyPage })))
+const PaymentResultPage = lazy(() =>
+  import('@/pages/public/PaymentResultPage').then((m) => ({ default: m.PaymentResultPage })),
+)
 
 const DashboardOverviewPage = lazy(() => import('@/pages/customer/DashboardOverviewPage').then((m) => ({ default: m.DashboardOverviewPage })))
 const ProfilePage = lazy(() => import('@/pages/customer/ProfilePage').then((m) => ({ default: m.ProfilePage })))
@@ -71,7 +74,7 @@ const AdminBranchesPage = lazy(() => import('@/pages/admin').then((m) => ({ defa
 const AdminAddBranchPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminAddBranchPage })))
 const AdminCatalogPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminCatalogPage })))
 const AdminTransfersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminTransfersPage })))
-const AdminCMSPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminCMSPage })))
+const AdminHomeBannersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminHomeBannersPage })))
 const AdminConfigPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminConfigPage })))
 const AdminReportsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminReportsPage })))
 const AdminLogsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminLogsPage })))
@@ -100,6 +103,7 @@ const router = createBrowserRouter([
       { path: 'news', element: <Suspense fallback={<Fallback />}><AboutPage /></Suspense> },
       { path: 'terms', element: <Suspense fallback={<Fallback />}><TermsPage /></Suspense> },
       { path: 'privacy', element: <Suspense fallback={<Fallback />}><PrivacyPage /></Suspense> },
+      { path: 'payment/result', element: <Suspense fallback={<Fallback />}><PaymentResultPage /></Suspense> },
     ],
   },
   {
@@ -208,7 +212,7 @@ const router = createBrowserRouter([
       { path: 'branches/new', element: <Suspense fallback={<Fallback />}><AdminAddBranchPage /></Suspense> },
       { path: 'catalog', element: <Suspense fallback={<Fallback />}><AdminCatalogPage /></Suspense> },
       { path: 'transfers', element: <Suspense fallback={<Fallback />}><AdminTransfersPage /></Suspense> },
-      { path: 'cms', element: <Suspense fallback={<Fallback />}><AdminCMSPage /></Suspense> },
+      { path: 'home-banners', element: <Suspense fallback={<Fallback />}><AdminHomeBannersPage /></Suspense> },
       { path: 'config', element: <Suspense fallback={<Fallback />}><AdminConfigPage /></Suspense> },
       { path: 'reports', element: <Suspense fallback={<Fallback />}><AdminReportsPage /></Suspense> },
       { path: 'logs', element: <Suspense fallback={<Fallback />}><AdminLogsPage /></Suspense> },

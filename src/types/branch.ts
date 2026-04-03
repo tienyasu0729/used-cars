@@ -21,6 +21,7 @@ export interface Branch {
   name: string
   address: string
   phone: string
+  status?: string
   email?: string
   district?: string
   lat: number

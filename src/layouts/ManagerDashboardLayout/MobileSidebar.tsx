@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { X, LayoutDashboard, Car, Users, Calendar, ArrowLeftRight, BarChart3, Bell, Settings, User, Lock } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { useManagerNotifications } from '@/hooks/useManagerNotifications'
+import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 
 interface MobileSidebarProps {
   isOpen: boolean
@@ -22,8 +22,7 @@ const navItems = [
 
 export function ManagerMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const { user } = useAuthStore()
-  const { data: notifications } = useManagerNotifications()
-  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0
+  const { data: unreadCount = 0 } = useNotificationUnreadCount()
 
   if (!isOpen) return null
 

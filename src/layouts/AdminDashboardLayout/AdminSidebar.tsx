@@ -25,7 +25,7 @@ const navItems = [
   { to: '/admin/branches', icon: Building2, label: 'Chi nhánh' },
   { to: '/admin/catalog', icon: BookOpen, label: 'Danh mục xe' },
   { to: '/admin/transfers', icon: ArrowLeftRight, label: 'Điều chuyển', badgeKey: 'transfers' },
-  { to: '/admin/cms', icon: FileText, label: 'Quản lý nội dung' },
+  { to: '/admin/home-banners', icon: FileText, label: 'Banner trang chủ' },
   { to: '/admin/config', icon: Settings, label: 'Cấu hình hệ thống' },
   { to: '/admin/reports', icon: BarChart3, label: 'Báo cáo' },
   { to: '/admin/logs', icon: ScrollText, label: 'Nhật ký hoạt động' },

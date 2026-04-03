@@ -84,6 +84,7 @@ export function BranchDetailPage() {
   const mapUrl = `https://www.google.com/maps?q=${branch.lat},${branch.lng}`
   const branchCallDigits = branch.phone.replace(/\D/g, '')
   const canCallBranch = branchCallDigits.length >= 9
+  const branchTemporarilyClosed = branch.status === 'inactive'
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-10">
@@ -98,6 +99,15 @@ export function BranchDetailPage() {
         <span>/</span>
         <span className="font-medium text-slate-800">{branch.name}</span>
       </nav>
+
+      {branchTemporarilyClosed && (
+        <div
+          role="status"
+          className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-950 md:text-base"
+        >
+          Tạm đóng cửa
+        </div>
+      )}
 
       <div className="relative mb-8 min-h-[400px] overflow-hidden rounded-xl bg-slate-200">
         {heroSlides.map((src, i) => (

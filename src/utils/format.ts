@@ -32,3 +32,10 @@ export function formatDateTime(dateStr: string): string {
   const d = new Date(dateStr)
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
+
+export function formatLogInstant(raw: string | null | undefined): string {
+  const s = raw?.trim()
+  if (!s) return '—'
+  const d = new Date(s)
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('vi-VN')
+}

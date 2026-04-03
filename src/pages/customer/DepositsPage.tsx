@@ -5,8 +5,14 @@ import { useVehicles } from '@/hooks/useVehicles'
 import { formatPrice, formatDate } from '@/utils/format'
 import { Plus, Building2, CheckCircle, AlertTriangle } from 'lucide-react'
 
-const ACTIVE_STATUSES = ['Confirmed', 'Pending']
-const HISTORY_STATUSES = ['Refunded', 'ConvertedToOrder']
+const ACTIVE_STATUSES = ['Confirmed', 'Pending', 'RefundPending']
+const HISTORY_STATUSES = [
+  'Refunded',
+  'ConvertedToOrder',
+  'Expired',
+  'Cancelled',
+  'RefundFailed',
+]
 
 function isExpiringSoon(expiryDate: string, withinDays = 3): boolean {
   const expiry = new Date(expiryDate)
@@ -22,8 +28,12 @@ function getStatusDisplay(status: string, expiryDate: string) {
   const map: Record<string, { label: string; className: string }> = {
     Confirmed: { label: 'Đang giữ chỗ', className: 'bg-green-100 text-green-700' },
     Pending: { label: 'Chờ xác nhận', className: 'bg-amber-100 text-amber-700' },
+    RefundPending: { label: 'Đang hoàn cọc', className: 'bg-amber-100 text-amber-800' },
     Refunded: { label: 'Đã hoàn cọc', className: 'bg-slate-100 text-slate-600' },
+    RefundFailed: { label: 'Hoàn cọc thất bại', className: 'bg-red-100 text-red-700' },
     ConvertedToOrder: { label: 'Đã chuyển đơn', className: 'bg-purple-100 text-purple-700' },
+    Expired: { label: 'Hết hạn', className: 'bg-slate-100 text-slate-600' },
+    Cancelled: { label: 'Đã hủy', className: 'bg-slate-100 text-slate-500' },
   }
   return map[status] ?? { label: status, className: 'bg-slate-100 text-slate-600' }
 }

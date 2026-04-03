@@ -33,11 +33,10 @@ const schema = baseSchema.superRefine((data, ctx) => {
 
 type FormData = z.infer<typeof schema>
 
-const ROLE_OPTIONS = [
+const ROLE_OPTIONS_ASSIGNABLE = [
   { value: 'Customer', label: 'Khách hàng' },
   { value: 'SalesStaff', label: 'Nhân viên bán hàng' },
   { value: 'BranchManager', label: 'Quản lý chi nhánh' },
-  { value: 'Admin', label: 'Admin' },
 ]
 
 interface EditUserModalProps {
@@ -90,6 +89,9 @@ export function EditUserModal({
     if (isOpen && user) void form.trigger()
   }, [isOpen, user?.id, form])
 
+  if (!user) return null
+
+  const isTargetAdmin = user.role === 'Admin'
   const needsBranch = requiresBranch(role)
   const branchMissing = needsBranch && !String(branchId ?? '').trim()
 
@@ -110,12 +112,9 @@ export function EditUserModal({
   })
 
   const handleDeactivate = async () => {
-    if (!user) return
     await onDeactivate(user.id)
     onClose()
   }
-
-  if (!user) return null
 
   return (
     <Modal
@@ -149,11 +148,22 @@ export function EditUserModal({
         <Input label="Số điện thoại" {...form.register('phone')} error={form.formState.errors.phone?.message} />
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Vai trò</label>
-          <select {...form.register('role')} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
-            {ROLE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
+          <select
+            {...form.register('role')}
+            disabled={isTargetAdmin}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-600"
+          >
+            {isTargetAdmin ? (
+              <option value="Admin">Admin</option>
+            ) : (
+              ROLE_OPTIONS_ASSIGNABLE.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))
+            )}
           </select>
+          {isTargetAdmin ? (
+            <p className="mt-1 text-xs text-slate-500">Tài khoản Admin không đổi vai trò qua giao diện này.</p>
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">

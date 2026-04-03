@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
+import { isApiMode } from '@/config/dataSource'
+import { adminAnnouncementsListKey, fetchAdminAnnouncements, type AdminAnnouncementRow } from '@/services/adminAnnouncements.service'
 
-type AdminNotifRow = { id: string; title: string; message: string; type: string; read: boolean; createdAt: string }
-
-/** Backend chưa có GET thông báo admin — trả rỗng. */
 export function useAdminNotifications() {
   return useQuery({
-    queryKey: ['admin-notifications'],
-    queryFn: async () => [] as AdminNotifRow[],
-    staleTime: 1000 * 60,
+    queryKey: [...adminAnnouncementsListKey],
+    queryFn: async () => {
+      if (!isApiMode()) return [] as AdminAnnouncementRow[]
+      const { items } = await fetchAdminAnnouncements(0, 100)
+      return items
+    },
+    staleTime: 60_000,
   })
 }

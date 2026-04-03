@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Bell, ChevronDown, Menu, Settings, LogOut, Key, Home } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { useStaffNotifications } from '@/hooks/useStaffNotifications'
+import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 
 interface StaffTopbarProps {
   title: string
@@ -13,8 +13,7 @@ export function StaffTopbar({ title, onMenuClick }: StaffTopbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { user, logout } = useAuthStore()
-  const { data: notifications } = useStaffNotifications()
-  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0
+  const { data: unreadCount = 0 } = useNotificationUnreadCount()
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

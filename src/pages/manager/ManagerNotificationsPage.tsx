@@ -1,10 +1,18 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bell, Calendar, Car, ArrowRightLeft, CheckCheck, Check } from 'lucide-react'
 import { useManagerNotifications } from '@/hooks/useManagerNotifications'
+import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 import { Button } from '@/components/ui'
 import type { Notification } from '@/types'
 import { formatDate } from '@/utils/format'
+import {
+  inboxNotificationsListKey,
+  inboxNotificationsUnreadKey,
+  markAllInboxNotificationsRead,
+  markInboxNotificationRead,
+} from '@/services/inboxNotifications.service'
 
 const typeIcons: Record<string, typeof Bell> = {
   AppointmentTestDrive: Car,
@@ -22,11 +30,15 @@ const filters = [
   { key: 'TransferOutgoing', label: 'Điều Chuyển Đi' },
 ]
 
-function NotificationCard({ n }: { n: Notification }) {
+function NotificationCard({ n, onMarkRead }: { n: Notification; onMarkRead?: (id: string) => void }) {
   const Icon = typeIcons[n.type] ?? Bell
   return (
     <Link
       to={n.link ?? '#'}
+      onClick={(e) => {
+        if (!n.read) onMarkRead?.(n.id)
+        if (!n.link) e.preventDefault()
+      }}
       className={`flex gap-4 rounded-xl border p-5 transition-all hover:shadow-md ${
         n.read ? 'border-slate-200 bg-white' : 'border-[#1A3C6E]/30 bg-gradient-to-r from-blue-50/80 to-white'
       }`}
@@ -58,7 +70,25 @@ function NotificationCard({ n }: { n: Notification }) {
 
 export function ManagerNotificationsPage() {
   const [filter, setFilter] = useState('all')
+  const qc = useQueryClient()
   const { data: notifications } = useManagerNotifications()
+  const { data: unreadFromApi = 0 } = useNotificationUnreadCount()
+
+  const markOne = useMutation({
+    mutationFn: (id: string) => markInboxNotificationRead(Number(id)),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...inboxNotificationsListKey] })
+      void qc.invalidateQueries({ queryKey: [...inboxNotificationsUnreadKey] })
+    },
+  })
+
+  const markAll = useMutation({
+    mutationFn: () => markAllInboxNotificationsRead(),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...inboxNotificationsListKey] })
+      void qc.invalidateQueries({ queryKey: [...inboxNotificationsUnreadKey] })
+    },
+  })
 
   const filtered =
     filter === 'all'
@@ -67,8 +97,6 @@ export function ManagerNotificationsPage() {
         ? (notifications ?? []).filter((n) => !n.read)
         : (notifications ?? []).filter((n) => n.type === filter)
 
-  const unreadCount = (notifications ?? []).filter((n) => !n.read).length
-
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -76,15 +104,15 @@ export function ManagerNotificationsPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Thông Báo</h1>
             <p className="mt-1 text-slate-500">Trung tâm thông báo quản lý chi nhánh</p>
-            {unreadCount > 0 && (
+            {unreadFromApi > 0 && (
               <p className="mt-2 flex items-center gap-2 text-sm text-[#1A3C6E]">
                 <Check className="h-4 w-4" />
-                {unreadCount} thông báo chưa đọc
+                {unreadFromApi} thông báo chưa đọc
               </p>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2" disabled={markAll.isPending} onClick={() => markAll.mutate()}>
               <CheckCheck className="h-4 w-4" />
               Đánh Dấu Tất Cả Đã Đọc
             </Button>
@@ -114,7 +142,9 @@ export function ManagerNotificationsPage() {
             <p className="mt-1 text-sm text-slate-400">Các thông báo mới sẽ hiển thị tại đây</p>
           </div>
         ) : (
-          filtered.map((n) => <NotificationCard key={n.id} n={n} />)
+          filtered.map((n) => (
+            <NotificationCard key={n.id} n={n} onMarkRead={(id) => markOne.mutate(id)} />
+          ))
         )}
       </div>
     </div>

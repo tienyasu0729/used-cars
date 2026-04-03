@@ -6,6 +6,8 @@ import { useVehicles } from '@/hooks/useVehicles'
 import { formatPrice } from '@/utils/format'
 import { Badge, Button, Modal } from '@/components/ui'
 import { customerDisplayLabel } from '@/lib/customerDisplay'
+import { StaffOrderPaymentsPanel } from '@/features/staff/components/StaffOrderPaymentsPanel'
+import { useAuthStore } from '@/store/authStore'
 import type { Order } from '@/types'
 import type { Vehicle } from '@/types/vehicle.types'
 
@@ -15,6 +17,7 @@ function vehicleThumb(v: Vehicle | null | undefined) {
 }
 
 function OrderDetailModal({ order, vehicle, onClose }: { order: Order; vehicle: Vehicle | null; onClose: () => void }) {
+  const staffRole = useAuthStore((s) => s.user?.role)
   const cid = Number(order.customerId)
   const customerName = customerDisplayLabel(Number.isFinite(cid) ? cid : undefined)
   const paidAmount = order.deposit
@@ -63,6 +66,9 @@ function OrderDetailModal({ order, vehicle, onClose }: { order: Order; vehicle: 
               <span className="text-slate-600">Còn lại:</span>
               <span className="font-bold">{formatPrice(remaining)}</span>
             </p>
+          </div>
+          <div className="mt-4">
+            <StaffOrderPaymentsPanel orderIdRaw={order.id} staffRole={staffRole} />
           </div>
         </div>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">

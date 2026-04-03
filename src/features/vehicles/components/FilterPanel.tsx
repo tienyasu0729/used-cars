@@ -10,6 +10,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Car, DollarSign, Calendar, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { useCatalog } from '@/hooks/useCatalog'
+import { useVehicleRegistryLabels } from '@/hooks/useVehicleRegistryLabels'
 import type { VehicleListingFacets } from '@/hooks/useVehicleListingFacets'
 import type { VehicleSearchParams } from '@/types/vehicle.types'
 
@@ -111,6 +112,7 @@ const CURRENT_YEAR = new Date().getFullYear().toString()
 
 export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: FilterPanelProps) {
   const { categories, subcategories, isLoadingCategories, fetchSubcategories } = useCatalog()
+  const { transmissionOptions } = useVehicleRegistryLabels()
 
   // Local state cho form — mặc định: Giá từ = 0, Năm đến = năm hiện tại
   const [selectedBrand, setSelectedBrand] = useState<number | ''>('')
@@ -188,6 +190,13 @@ export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: 
     facets && !facets.error && !facets.isLoading
       ? Math.max(facets.priceMax, 1_000_000)
       : 50_000_000_000
+
+  const transmissionFilterChoices = useMemo(() => {
+    const base = [...transmissionOptions]
+    const cur = selectedTransmission.trim()
+    if (cur && !base.includes(cur)) return [cur, ...base]
+    return base
+  }, [transmissionOptions, selectedTransmission])
 
   const parseOptInt = (s: string): number | undefined => {
     if (s === '' || s === '0') return undefined
@@ -363,7 +372,6 @@ export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: 
             </div>
           </div>
 
-          {/* Hộp số — TODO: chuyển sang server-side filter khi backend support */}
           <div>
             <label className="mb-3 flex items-center gap-2 text-sm font-semibold">
               <Settings2 className="h-5 w-5 text-[#1A3C6E]" />
@@ -381,28 +389,19 @@ export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: 
                 />
                 <span className="text-sm">Tất cả</span>
               </label>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  name="gear"
-                  value="Số tự động"
-                  checked={selectedTransmission === 'Số tự động'}
-                  onChange={() => setSelectedTransmission('Số tự động')}
-                  className="text-[#1A3C6E] focus:ring-[#1A3C6E]"
-                />
-                <span className="text-sm">Số tự động (AT)</span>
-              </label>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  name="gear"
-                  value="Số sàn"
-                  checked={selectedTransmission === 'Số sàn'}
-                  onChange={() => setSelectedTransmission('Số sàn')}
-                  className="text-[#1A3C6E] focus:ring-[#1A3C6E]"
-                />
-                <span className="text-sm">Số sàn (MT)</span>
-              </label>
+              {transmissionFilterChoices.map((label) => (
+                <label key={label} className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    name="gear"
+                    value={label}
+                    checked={selectedTransmission === label}
+                    onChange={() => setSelectedTransmission(label)}
+                    className="text-[#1A3C6E] focus:ring-[#1A3C6E]"
+                  />
+                  <span className="text-sm">{label}</span>
+                </label>
+              ))}
             </div>
           </div>
         </div>
