@@ -24,6 +24,10 @@ export function LoginPage() {
   // Nếu đã login rồi thì redirect luôn, không cần hiện form
   useEffect(() => {
     if (isAuthenticated && user) {
+      if (user.passwordChangeRequired === true) {
+        navigate('/login/set-new-password', { replace: true })
+        return
+      }
       const redirectMap: Record<string, string> = {
         Customer: '/dashboard',
         SalesStaff: '/staff',

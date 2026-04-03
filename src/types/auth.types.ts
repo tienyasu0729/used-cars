@@ -58,6 +58,8 @@ export interface UserProfile {
   branchId?: number
   /** Đường dẫn tương đối từ API (vd. /uploads/avatars/1.jpg) */
   avatarUrl?: string | null
+  /** true sau khi admin đặt lại MK — phải đặt MK mới trước khi dùng app */
+  passwordChangeRequired?: boolean
 }
 
 /** Cấu trúc data bên trong ApiResponse khi login thành công */

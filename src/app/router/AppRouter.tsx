@@ -19,6 +19,9 @@ const BranchDetailPage = lazy(() => import('@/pages/public/BranchDetailPage').th
 const ContactPage = lazy(() => import('@/pages/public/ContactPage').then((m) => ({ default: m.ContactPage })))
 const AboutPage = lazy(() => import('@/pages/public/AboutPage').then((m) => ({ default: m.AboutPage })))
 const LoginPage = lazy(() => import('@/pages/public/LoginPage').then((m) => ({ default: m.LoginPage })))
+const MandatoryNewPasswordPage = lazy(() =>
+  import('@/pages/public/MandatoryNewPasswordPage').then((m) => ({ default: m.MandatoryNewPasswordPage })),
+)
 const RegisterPage = lazy(() => import('@/pages/public/RegisterPage').then((m) => ({ default: m.RegisterPage })))
 const ForgotPasswordPage = lazy(() => import('@/pages/public/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
 const ResetPasswordPage = lazy(() => import('@/pages/public/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
@@ -103,6 +106,14 @@ const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: 'login', element: <Suspense fallback={<Fallback />}><LoginPage /></Suspense> },
+      {
+        path: 'login/set-new-password',
+        element: (
+          <Suspense fallback={<Fallback />}>
+            <MandatoryNewPasswordPage />
+          </Suspense>
+        ),
+      },
       { path: 'register', element: <Suspense fallback={<Fallback />}><RegisterPage /></Suspense> },
       { path: 'forgot-password', element: <Suspense fallback={<Fallback />}><ForgotPasswordPage /></Suspense> },
       { path: 'reset-password', element: <Suspense fallback={<Fallback />}><ResetPasswordPage /></Suspense> },

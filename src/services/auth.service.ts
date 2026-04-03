@@ -111,6 +111,31 @@ const authService = {
    * Đổi mật khẩu khi đã đăng nhập.
    * POST /auth/change-password — axios gắn Bearer từ localStorage.
    */
+  /**
+   * Sau đăng nhập bằng mật khẩu tạm (admin reset) — đặt mật khẩu mới, nhận JWT đầy đủ quyền.
+   */
+  async completeRequiredPasswordChange(body: { newPassword: string }): Promise<AuthResponse> {
+    try {
+      const apiResponse = await axiosInstance.post(
+        '/auth/complete-required-password-change',
+        { newPassword: body.newPassword },
+      ) as unknown as ApiResponse<AuthResponse>
+      return apiResponse.data
+    } catch (error) {
+      const apiError = error as ApiErrorResponse
+      switch (apiError.errorCode) {
+        case 'PASSWORD_TOO_SHORT':
+        case 'VALIDATION_FAILED':
+          throw apiError
+        case 'UNAUTHORIZED':
+          throw { ...apiError, message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' }
+        default:
+          console.error('[authService.completeRequiredPasswordChange]', apiError)
+          throw { ...apiError, message: apiError.message || 'Không đặt được mật khẩu mới.' }
+      }
+    }
+  },
+
   async changePassword(body: ChangePasswordRequest): Promise<{ message: string }> {
     try {
       const apiResponse = await axiosInstance.post('/auth/change-password', {

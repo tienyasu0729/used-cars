@@ -15,7 +15,6 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { ShieldX } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import type { UserRole } from '@/types/auth.types'
-
 interface ProtectedRouteProps {
   children: React.ReactNode
   /** Danh sách role được phép truy cập route này */
@@ -52,6 +51,10 @@ export function ProtectedRoute({ children, allowedRoles, roles }: ProtectedRoute
   // Lưu path hiện tại vào state.from để sau login redirect lại
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  if (user.passwordChangeRequired === true) {
+    return <Navigate to="/login/set-new-password" replace />
   }
 
   // Bước 2: Đã login nhưng role không nằm trong danh sách cho phép → 403

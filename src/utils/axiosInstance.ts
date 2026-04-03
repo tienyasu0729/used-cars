@@ -12,6 +12,8 @@
 import axios from 'axios'
 import type { InternalAxiosRequestConfig } from 'axios'
 import type { ApiErrorResponse } from '@/types/auth.types'
+import { useSessionRevokedStore } from '@/store/sessionRevokedStore'
+import { shouldOpenAccountSuspendedModal } from '@/utils/accountSuspendedModalPolicy'
 
 // Đọc base URL từ biến môi trường Vite, fallback qua proxy khi dev
 const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
@@ -94,6 +96,12 @@ axiosInstance.interceptors.response.use(
     }
 
     const errorData = error.response.data as ApiErrorResponse
+
+    if (error.response.status === 403 && errorData?.errorCode === 'ACCOUNT_SUSPENDED') {
+      if (shouldOpenAccountSuspendedModal(error.config)) {
+        useSessionRevokedStore.getState().openBlocking(errorData.message)
+      }
+    }
 
     // Nếu lỗi 401 (UNAUTHORIZED) → token hết hạn hoặc không hợp lệ
     // Xóa token và redirect về trang login

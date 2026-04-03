@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Trash2, UserPlus, Search } from 'lucide-react'
+import { Pencil, RotateCcw, Trash2, UserPlus, Search } from 'lucide-react'
 import { useBranchStaff } from '@/hooks/useBranchStaff'
-import { Badge } from '@/components/ui'
+import { Badge, Button, Modal } from '@/components/ui'
 import { StaffDetailModal } from '@/features/manager/components'
 import type { ManagerStaffMember } from '@/types/managerStaff.types'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 import { managerStaffService } from '@/services/managerStaff.service'
-import { canManagerMutateStaffRow } from '@/utils/managerStaffMapper'
+import { canManagerMutateStaffRow, canManagerRestoreStaffRow } from '@/utils/managerStaffMapper'
 
 const ROLES = ['', 'Nhân viên bán hàng', 'Quản lý chi nhánh']
 
@@ -19,10 +19,28 @@ export function ManagerStaffPage() {
   const addToast = useToastStore((s) => s.addToast)
   const { data: staff, isLoading } = useBranchStaff()
 
+  const restoreMut = useMutation({
+    mutationFn: (id: number) =>
+      managerStaffService.restore(
+        id,
+        user?.role === 'Admin' && typeof user.branchId === 'number' ? { branchId: user.branchId } : undefined,
+      ),
+    onSuccess: () => {
+      addToast('success', 'Đã khôi phục nhân viên vào nhân sự chi nhánh.')
+      setConfirmRestore(null)
+      void queryClient.invalidateQueries({ queryKey: ['branch-staff'] })
+    },
+    onError: (e: unknown) => {
+      const m = (e as { message?: string })?.message
+      addToast('error', m ?? 'Không khôi phục được nhân viên.')
+    },
+  })
+
   const deleteMut = useMutation({
     mutationFn: (id: number) => managerStaffService.delete(id),
     onSuccess: () => {
-      addToast('success', 'Đã xóa nhân viên.')
+      addToast('success', 'Đã gỡ nhân viên. Hồ sơ vẫn nằm trong danh sách với trạng thái đã gỡ.')
+      setConfirmRemove(null)
       void queryClient.invalidateQueries({ queryKey: ['branch-staff'] })
     },
     onError: (e: unknown) => {
@@ -34,6 +52,8 @@ export function ManagerStaffPage() {
   const [roleFilter, setRoleFilter] = useState('')
   const [selectedStaff, setSelectedStaff] = useState<ManagerStaffMember | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState<ManagerStaffMember | null>(null)
+  const [confirmRestore, setConfirmRestore] = useState<ManagerStaffMember | null>(null)
 
   const filtered = (staff ?? []).filter((s) => {
     const matchSearch =
@@ -127,10 +147,11 @@ export function ManagerStaffPage() {
             <tbody className="divide-y divide-slate-200">
               {filtered.map((s) => {
                 const canMutate = canManagerMutateStaffRow(user, s)
+                const canRestore = canManagerRestoreStaffRow(user, s)
                 return (
                 <tr
                   key={s.id}
-                  className="cursor-pointer transition-colors hover:bg-slate-50/50"
+                  className={`cursor-pointer transition-colors hover:bg-slate-50/50 ${s.accountRemoved ? 'bg-slate-50/80' : ''}`}
                   onClick={() => openDetail(s)}
                 >
                   <td className="px-6 py-4">
@@ -155,15 +176,45 @@ export function ManagerStaffPage() {
                   <td className="px-6 py-4 text-sm">{s.startDate}</td>
                   <td className="px-6 py-4 text-sm font-medium">{s.orderCount} đơn</td>
                   <td className="px-6 py-4">
-                    <Badge variant={s.status === 'active' ? 'available' : 'default'}>
-                      {s.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
-                    </Badge>
+                    {s.accountRemoved ? (
+                      <Badge variant="danger">Đã gỡ khỏi nhân sự</Badge>
+                    ) : (
+                      <Badge variant={s.status === 'active' ? 'available' : 'default'}>
+                        {s.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                      </Badge>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-2">
+                      {canRestore ? (
+                        <button
+                          type="button"
+                          title="Khôi phục nhân sự"
+                          disabled={restoreMut.isPending}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (restoreMut.isPending) return
+                            const id = Number.parseInt(s.id, 10)
+                            if (Number.isNaN(id)) {
+                              addToast('error', 'ID nhân viên không hợp lệ.')
+                              return
+                            }
+                            setConfirmRestore(s)
+                          }}
+                          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:text-[#1A3C6E]"
+                        >
+                          <RotateCcw className="h-5 w-5" />
+                        </button>
+                      ) : null}
                       <button
                         type="button"
-                        title={canMutate ? 'Xem / chỉnh sửa' : 'Xem chi tiết (chỉ đọc — cùng vai trò)'}
+                        title={
+                          s.accountRemoved
+                            ? 'Xem chi tiết & lịch sử'
+                            : canMutate
+                              ? 'Xem / chỉnh sửa'
+                              : 'Xem chi tiết (chỉ đọc — cùng vai trò)'
+                        }
                         onClick={() => openDetail(s)}
                         className={`rounded-lg p-1.5 transition-colors ${
                           canMutate
@@ -175,22 +226,23 @@ export function ManagerStaffPage() {
                       </button>
                       <button
                         type="button"
-                        title={canMutate ? 'Xóa' : 'Không thể thao tác với nhân sự cùng vai trò'}
-                        disabled={!canMutate || deleteMut.isPending}
+                        title={
+                          s.accountRemoved
+                            ? 'Đã gỡ khỏi nhân sự'
+                            : canMutate
+                              ? 'Gỡ khỏi nhân sự'
+                              : 'Không thể thao tác với nhân sự cùng vai trò'
+                        }
+                        disabled={!canMutate || deleteMut.isPending || s.accountRemoved}
                         onClick={(e) => {
                           e.stopPropagation()
-                          if (!canMutate || deleteMut.isPending) return
+                          if (!canMutate || deleteMut.isPending || s.accountRemoved) return
                           const id = Number.parseInt(s.id, 10)
                           if (Number.isNaN(id)) {
                             addToast('error', 'ID nhân viên không hợp lệ — không gọi được API xóa.')
                             return
                           }
-                          if (
-                            !window.confirm(`Xóa nhân viên "${s.name}"? Thao tác không hoàn tác.`)
-                          ) {
-                            return
-                          }
-                          deleteMut.mutate(id)
+                          setConfirmRemove(s)
                         }}
                         className={`rounded-lg p-1.5 transition-colors ${
                           canMutate
@@ -214,7 +266,70 @@ export function ManagerStaffPage() {
         isOpen={detailOpen}
         onClose={() => setDetailOpen(false)}
         allowMutations={selectedStaff ? canManagerMutateStaffRow(user, selectedStaff) : false}
+        allowRestore={selectedStaff ? canManagerRestoreStaffRow(user, selectedStaff) : false}
       />
+      <Modal
+        isOpen={!!confirmRemove}
+        onClose={() => {
+          if (!deleteMut.isPending) setConfirmRemove(null)
+        }}
+        title="Gỡ nhân viên khỏi danh sách làm việc?"
+        footer={
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" disabled={deleteMut.isPending} onClick={() => setConfirmRemove(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="danger"
+              loading={deleteMut.isPending}
+              onClick={() => {
+                if (!confirmRemove) return
+                const id = Number.parseInt(confirmRemove.id, 10)
+                if (Number.isNaN(id)) return
+                deleteMut.mutate(id)
+              }}
+            >
+              Đồng ý
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          Nhân viên <strong>{confirmRemove?.name}</strong> sẽ bị gỡ khỏi nhân sự (không xóa hẳn dữ liệu). Họ vẫn hiển thị
+          trong bảng với trạng thái &quot;Đã gỡ khỏi nhân sự&quot; và không thể đăng nhập. Tiếp tục?
+        </p>
+      </Modal>
+      <Modal
+        isOpen={!!confirmRestore}
+        onClose={() => {
+          if (!restoreMut.isPending) setConfirmRestore(null)
+        }}
+        title="Khôi phục nhân viên?"
+        footer={
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" disabled={restoreMut.isPending} onClick={() => setConfirmRestore(null)}>
+              Hủy
+            </Button>
+            <Button
+              className="bg-[#1A3C6E] text-white"
+              loading={restoreMut.isPending}
+              onClick={() => {
+                if (!confirmRestore) return
+                const id = Number.parseInt(confirmRestore.id, 10)
+                if (Number.isNaN(id)) return
+                restoreMut.mutate(id)
+              }}
+            >
+              Đồng ý
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          Khôi phục <strong>{confirmRestore?.name}</strong> vào nhân sự chi nhánh: tài khoản có thể đăng nhập lại (trạng
+          thái hoạt động) và phân công làm việc được tạo lại nếu cần. Tiếp tục?
+        </p>
+      </Modal>
     </div>
   )
 }

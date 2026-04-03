@@ -1,66 +1,71 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal, Input, Button } from '@/components/ui'
-import { FEATURE_MODULES, PERM_COLS, DEFAULT_PERMISSION } from '../constants/rolePermissions'
-import type { RolePermission } from '@/types/admin.types'
+import type { AdminPermissionRow } from '@/types/admin.types'
 
 const schema = z.object({
   name: z.string().min(2, 'Tối thiểu 2 ký tự'),
-  description: z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
 
-export interface CreateRolePayload {
+export interface CreateRoleSubmitPayload {
   name: string
-  description?: string
-  permissions: Record<string, RolePermission>
+  permissionIds: number[]
 }
 
 interface CreateRoleModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: CreateRolePayload) => Promise<void>
+  permissionsCatalog: AdminPermissionRow[]
+  onSubmit: (data: CreateRoleSubmitPayload) => Promise<void>
 }
 
-export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalProps) {
+export function CreateRoleModal({ isOpen, onClose, permissionsCatalog, onSubmit }: CreateRoleModalProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', description: '' },
+    defaultValues: { name: '' },
   })
-  const [permissions, setPermissions] = useState<Record<string, RolePermission>>(() => {
-    const p: Record<string, RolePermission> = {}
-    FEATURE_MODULES.forEach((m) => { p[m.key] = { ...DEFAULT_PERMISSION } })
-    return p
-  })
+  const [selected, setSelected] = useState<Set<number>>(new Set())
 
-  const handlePermChange = (moduleKey: string, perm: keyof RolePermission, value: boolean) => {
-    setPermissions((prev) => ({
-      ...prev,
-      [moduleKey]: { ...(prev[moduleKey] ?? { ...DEFAULT_PERMISSION }), [perm]: value },
-    }))
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({ name: '' })
+      setSelected(new Set())
+    }
+  }, [isOpen, form])
+
+  const byModule = useMemo(() => {
+    const m = new Map<string, AdminPermissionRow[]>()
+    for (const p of permissionsCatalog) {
+      const k = p.module
+      if (!m.has(k)) m.set(k, [])
+      m.get(k)!.push(p)
+    }
+    return m
+  }, [permissionsCatalog])
+
+  const toggle = (id: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   const handleSubmit = form.handleSubmit(async (data) => {
-    await onSubmit({ ...data, permissions })
+    await onSubmit({ name: data.name.trim(), permissionIds: [...selected] })
     form.reset()
-    setPermissions(() => {
-      const p: Record<string, RolePermission> = {}
-      FEATURE_MODULES.forEach((m) => { p[m.key] = { ...DEFAULT_PERMISSION } })
-      return p
-    })
+    setSelected(new Set())
     onClose()
   })
 
   const handleClose = () => {
     form.reset()
-    setPermissions(() => {
-      const p: Record<string, RolePermission> = {}
-      FEATURE_MODULES.forEach((m) => { p[m.key] = { ...DEFAULT_PERMISSION } })
-      return p
-    })
+    setSelected(new Set())
     onClose()
   }
 
@@ -72,7 +77,7 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={handleClose}>Hủy</Button>
-          <Button variant="primary" onClick={handleSubmit} loading={form.formState.isSubmitting}>
+          <Button variant="primary" type="button" onClick={() => handleSubmit()} loading={form.formState.isSubmitting}>
             Tạo vai trò
           </Button>
         </div>
@@ -80,54 +85,38 @@ export function CreateRoleModal({ isOpen, onClose, onSubmit }: CreateRoleModalPr
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Tên vai trò" {...form.register('name')} error={form.formState.errors.name?.message} required />
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Mô tả</label>
-          <textarea {...form.register('description')} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" rows={2} />
-        </div>
-        <div>
-          <p className="mb-2 text-sm font-medium text-slate-700">Quyền hạn</p>
-          <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200">
-            <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 bg-slate-50">
-                <tr className="border-b border-slate-200">
-                  <th className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-500">Module</th>
-                  <th className="px-2 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-500">View</th>
-                  <th className="px-2 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Create</th>
-                  <th className="px-2 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Edit</th>
-                  <th className="px-2 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Delete</th>
-                  <th className="px-2 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Approve</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {FEATURE_MODULES.map((m) => {
-                  const p = permissions[m.key] ?? { ...DEFAULT_PERMISSION }
-                  return (
-                    <tr key={m.key} className="hover:bg-slate-50">
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <m.icon className="h-4 w-4 text-slate-400" />
-                          <div>
-                            <p className="font-medium text-slate-900">{m.label}</p>
-                            <p className="text-xs text-slate-500">{m.desc}</p>
-                          </div>
-                        </div>
-                      </td>
-                      {PERM_COLS.map((col) => (
-                        <td key={col} className="px-2 py-2 text-center">
+        <p className="text-xs text-slate-500">Chọn quyền từ danh sách permission trong hệ thống (theo DB).</p>
+        <div className="max-h-72 overflow-y-auto rounded-lg border border-slate-200 p-2 text-sm">
+          {permissionsCatalog.length === 0 ? (
+            <p className="py-4 text-center text-slate-500">Đang tải quyền...</p>
+          ) : (
+            [...byModule.entries()].map(([mod, rows]) => (
+              <div key={mod} className="mb-3">
+                <p className="mb-1 font-semibold text-slate-800">{mod}</p>
+                <ul className="space-y-1 pl-2">
+                  {rows.map((p) => {
+                    const label = `${p.module}.${p.action}`
+                    return (
+                      <li key={p.id}>
+                        <label className="flex cursor-pointer items-start gap-2 rounded px-1 py-0.5 hover:bg-slate-50">
                           <input
                             type="checkbox"
-                            checked={p[col]}
-                            onChange={(e) => handlePermChange(m.key, col, e.target.checked)}
-                            className="rounded"
+                            checked={selected.has(p.id)}
+                            onChange={() => toggle(p.id)}
+                            className="mt-1 rounded"
                           />
-                        </td>
-                      ))}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                          <span>
+                            <span className="font-mono text-xs text-slate-800">{label}</span>
+                            {p.description ? <span className="ml-2 text-xs text-slate-500">{p.description}</span> : null}
+                          </span>
+                        </label>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))
+          )}
         </div>
       </form>
     </Modal>

@@ -1,21 +1,35 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { adminApi } from '@/services/adminApi'
+import {
+  adminApi,
+  type CreateAdminUserBody,
+  type UpdateAdminBranchBody,
+  type UpdateAdminUserBody,
+} from '@/services/adminApi'
 import { transferService } from '@/services/transfer.service'
-import type { AdminUser } from '@/types/admin.types'
 
 export function useCreateRole() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: adminApi.createRole,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-roles'] }),
+    mutationFn: (body: { name: string; permissionIds: number[] }) => adminApi.createRole(body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-roles'] })
+    },
   })
 }
 
 export function useUpdateRole() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, permissions }: { id: string; permissions: Record<string, { view: boolean; create: boolean; edit: boolean; delete: boolean; approve: boolean }> }) =>
-      adminApi.updateRole(id, { permissions }),
+    mutationFn: ({ id, name, permissionIds }: { id: string; name: string; permissionIds: number[] }) =>
+      adminApi.updateRole(id, { name, permissionIds }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-roles'] }),
+  })
+}
+
+export function useDeleteRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteRole(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-roles'] }),
   })
 }
@@ -23,8 +37,56 @@ export function useUpdateRole() {
 export function useUpdateUser() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<AdminUser> }) => adminApi.updateUser(id, data),
+    mutationFn: ({ id, body }: { id: string; body: UpdateAdminUserBody }) => adminApi.updateUser(id, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
+}
+
+export function useCreateUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: CreateAdminUserBody) => adminApi.createUser(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
+}
+
+export function usePatchUserStatus() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status, reason }: { id: string; status: string; reason?: string }) =>
+      adminApi.patchUserStatus(id, { status, reason }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteUser(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
+}
+
+export function useResetUserPassword() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => adminApi.resetPassword(id),
+  })
+}
+
+export function useUpdateBranch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateAdminBranchBody }) => adminApi.updateBranch(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-branches'] }),
+  })
+}
+
+export function useDeleteBranch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteBranch(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-branches'] }),
   })
 }
 

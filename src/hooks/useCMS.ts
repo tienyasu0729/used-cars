@@ -12,7 +12,11 @@ export function useCMS() {
       try {
         const { api } = await import('@/services/apiClient')
         const res = await api.get<unknown>('/admin/cms')
-        const d = res.data
+        const raw = res.data
+        const d =
+          raw && typeof raw === 'object' && 'data' in raw && (raw as { data?: unknown }).data
+            ? (raw as { data: unknown }).data
+            : raw
         if (d && typeof d === 'object' && 'banners' in d && 'articles' in d) {
           const o = d as { banners?: unknown; articles?: unknown }
           return {

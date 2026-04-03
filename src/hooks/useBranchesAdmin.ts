@@ -1,12 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
 import type { AdminBranch } from '@/types/admin.types'
+import { asApiArray } from '@/utils/asApiArray'
 
-function asList<T>(data: unknown): T[] {
-  if (Array.isArray(data)) return data as T[]
-  if (data && typeof data === 'object' && 'content' in data && Array.isArray((data as { content: unknown }).content)) {
-    return (data as { content: T[] }).content
+function mapBranch(raw: Record<string, unknown>): AdminBranch {
+  const mgr =
+    raw.managerName != null
+      ? String(raw.managerName)
+      : raw.manager != null
+        ? String(raw.manager)
+        : ''
+  return {
+    id: String(raw.id ?? ''),
+    name: String(raw.name ?? ''),
+    managerName: mgr,
+    address: String(raw.address ?? ''),
+    phone: String(raw.phone ?? ''),
+    status: raw.status === 'inactive' ? 'inactive' : 'active',
+    vehicleCount: Number(raw.vehicleCount ?? 0),
+    staffCount: Number(raw.staffCount ?? 0),
+    imageUrl: raw.imageUrl != null ? String(raw.imageUrl) : undefined,
+    workingHours: raw.workingHours != null ? String(raw.workingHours) : undefined,
   }
-  return []
 }
 
 export function useBranchesAdmin() {
@@ -16,7 +30,8 @@ export function useBranchesAdmin() {
       try {
         const { api } = await import('@/services/apiClient')
         const res = await api.get<unknown>('/admin/branches')
-        return asList<AdminBranch>(res.data)
+        const rows = asApiArray<Record<string, unknown>>(res.data)
+        return rows.map(mapBranch)
       } catch {
         return [] as AdminBranch[]
       }

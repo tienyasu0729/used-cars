@@ -57,6 +57,11 @@ export function LoginForm() {
             setEmail(e.target.value)
             clearErrors() // Xóa lỗi khi user bắt đầu nhập lại
           }}
+          // Autofill trình duyệt đôi khi không kích hoạt onChange đúng lúc → state vẫn rỗng, nút submit vẫn disabled.
+          onInput={(e) => {
+            setEmail(e.currentTarget.value)
+            clearErrors()
+          }}
           placeholder="email@example.com"
           error={fieldErrors['email']}
           required
@@ -72,6 +77,10 @@ export function LoginForm() {
             value={password}
             onChange={(e) => {
               setPassword(e.target.value)
+              clearErrors()
+            }}
+            onInput={(e) => {
+              setPassword(e.currentTarget.value)
               clearErrors()
             }}
             placeholder="Nhập mật khẩu"
@@ -109,13 +118,13 @@ export function LoginForm() {
           </div>
         )}
 
-        {/* Nút đăng nhập — disabled khi loading, hiện spinner */}
+        {/* Nút đăng nhập — chỉ disabled khi đang gọi API; rỗng thì browser + handleSubmit xử lý */}
         <Button
           id="login-submit"
           type="submit"
           variant="primary"
           className="w-full"
-          disabled={isLoading || !email.trim() || !password.trim()}
+          disabled={isLoading}
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">

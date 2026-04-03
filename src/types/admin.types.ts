@@ -1,5 +1,7 @@
 /** Kiểu domain Admin UI — không chứa dữ liệu giả; nguồn từ API /admin/*. */
 
+export type AdminUserStatus = 'active' | 'inactive' | 'locked'
+
 export interface AdminUser {
   id: string
   name: string
@@ -8,10 +10,13 @@ export interface AdminUser {
   role: string
   branchId?: string
   branchName?: string
-  status: 'active' | 'inactive'
+  status: AdminUserStatus
   createdAt: string
+  /** Ảnh đại diện từ backend (Cloudinary) — optional */
+  avatarUrl?: string | null
 }
 
+/** Ma trận quyền UI cũ — không dùng cho API role (API dùng permissionIds). */
 export interface RolePermission {
   view: boolean
   create: boolean
@@ -20,18 +25,27 @@ export interface RolePermission {
   approve: boolean
 }
 
+export interface AdminPermissionRow {
+  id: number
+  module: string
+  action: string
+  description?: string | null
+}
+
 export interface AdminRole {
   id: string
   name: string
-  description: string
   userCount: number
-  permissions: Record<string, RolePermission>
+  /** Chuỗi module.action từ backend */
+  permissionKeys: string[]
+  systemRole: boolean
 }
 
 export interface AdminBranch {
   id: string
   name: string
-  manager: string
+  /** Tên quản lý từ API (managerName) */
+  managerName: string
   address: string
   phone: string
   status: 'active' | 'inactive'

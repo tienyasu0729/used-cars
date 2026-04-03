@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { X, Pencil, Trash2, History, ArrowRightLeft, Loader2 } from 'lucide-react'
+import { X, Pencil, Trash2, History, ArrowRightLeft, Loader2, RotateCcw } from 'lucide-react'
 import type { ManagerStaffMember } from '@/types/managerStaff.types'
 import { managerStaffService } from '@/services/managerStaff.service'
 import { branchService } from '@/services/branch.service'
 import { useToastStore } from '@/store/toastStore'
-import { Button, Input, Badge } from '@/components/ui'
+import { useAuthStore } from '@/store/authStore'
+import { Button, Input, Badge, Modal } from '@/components/ui'
 
 interface StaffDetailModalProps {
   staff: ManagerStaffMember | null
   isOpen: boolean
   onClose: () => void
   allowMutations?: boolean
+  /** Cho phép khôi phục nhân viên đã gỡ (quản lý / admin, không đồng cấp). */
+  allowRestore?: boolean
 }
 
 function parseStaffId(id: string): number | null {
@@ -38,18 +41,23 @@ function StaffDetailPanel({
   staff,
   onClose,
   allowMutations = true,
+  allowRestore = false,
 }: {
   staff: ManagerStaffMember
   onClose: () => void
   allowMutations?: boolean
+  allowRestore?: boolean
 }) {
   const queryClient = useQueryClient()
   const addToast = useToastStore((s) => s.addToast)
+  const authUser = useAuthStore((s) => s.user)
 
   const [editOpen, setEditOpen] = useState(false)
   const [editName, setEditName] = useState(staff.name)
   const [editPhone, setEditPhone] = useState(staff.phone === '—' ? '' : staff.phone)
   const [transferOpen, setTransferOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false)
   const [transferBranchId, setTransferBranchId] = useState(
     staff.branchId !== '—' ? staff.branchId : '',
   )
@@ -109,10 +117,31 @@ function StaffDetailPanel({
     },
   })
 
+  const restoreMut = useMutation({
+    mutationFn: () =>
+      managerStaffService.restore(
+        staffNumericId!,
+        authUser?.role === 'Admin' && typeof authUser.branchId === 'number'
+          ? { branchId: authUser.branchId }
+          : undefined,
+      ),
+    onSuccess: () => {
+      addToast('success', 'Đã khôi phục nhân viên vào nhân sự chi nhánh.')
+      setRestoreConfirmOpen(false)
+      invalidateStaff()
+      onClose()
+    },
+    onError: (e: unknown) => {
+      const m = (e as { message?: string })?.message
+      addToast('error', m ?? 'Không khôi phục được nhân viên.')
+    },
+  })
+
   const deleteMut = useMutation({
     mutationFn: () => managerStaffService.delete(staffNumericId!),
     onSuccess: () => {
-      addToast('success', 'Đã xóa nhân viên khỏi hệ thống.')
+      addToast('success', 'Đã gỡ nhân viên. Hồ sơ vẫn nằm trong danh sách với trạng thái đã gỡ.')
+      setDeleteConfirmOpen(false)
       invalidateStaff()
       onClose()
     },
@@ -139,14 +168,17 @@ function StaffDetailPanel({
     },
   })
 
-  const canAct = allowMutations && useApi
+  const canAct = allowMutations && useApi && !staff.accountRemoved
   const busy =
-    updateMut.isPending || statusMut.isPending || deleteMut.isPending || transferMut.isPending
+    updateMut.isPending ||
+    statusMut.isPending ||
+    deleteMut.isPending ||
+    transferMut.isPending ||
+    restoreMut.isPending
 
-  const handleDelete = () => {
+  const handleDeleteClick = () => {
     if (!canAct) return
-    if (!window.confirm(`Xóa nhân viên "${staff.name}"? Hành động không hoàn tác.`)) return
-    deleteMut.mutate()
+    setDeleteConfirmOpen(true)
   }
 
   const handleTransfer = () => {
@@ -180,10 +212,14 @@ function StaffDetailPanel({
               <h3 className="text-lg font-bold text-slate-900">{staff.name}</h3>
               <p className="text-sm text-[#1A3C6E]">{staff.role}</p>
               <p className="mt-1 truncate text-xs text-slate-500">{staff.email}</p>
-              <div className="mt-2">
-                <Badge variant={staff.status === 'active' ? 'available' : 'default'}>
-                  {staff.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
-                </Badge>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {staff.accountRemoved ? (
+                  <Badge variant="danger">Đã gỡ khỏi nhân sự</Badge>
+                ) : (
+                  <Badge variant={staff.status === 'active' ? 'available' : 'default'}>
+                    {staff.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -192,6 +228,14 @@ function StaffDetailPanel({
             <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
               Không có mã nhân viên hợp lệ từ hệ thống — chỉ xem thông tin. Sửa, xóa hoặc phân công cần tải đủ dữ liệu
               nhân viên từ máy chủ.
+            </p>
+          )}
+          {staff.accountRemoved && useApi && (
+            <p className="mt-4 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">
+              Tài khoản đã được gỡ khỏi nhân sự. Bạn vẫn xem được lịch sử phân công.
+              {allowRestore
+                ? ' Bạn có thể khôi phục để họ đăng nhập lại và làm việc tại chi nhánh.'
+                : ' Bạn không thể sửa, điều chuyển hay gỡ lại trong phạm vi quyền hiện tại.'}
             </p>
           )}
         </div>
@@ -372,15 +416,75 @@ function StaffDetailPanel({
               variant="ghost"
               className="flex-1 border border-red-200 text-red-600 hover:bg-red-50"
               disabled={busy}
-              onClick={handleDelete}
+              onClick={handleDeleteClick}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Xóa nhân viên
+              Gỡ khỏi nhân sự
             </Button>
           </div>
         )}
 
-        {!allowMutations && useApi && (
+        {staff.accountRemoved && allowRestore && useApi && (
+          <div className="mt-auto border-t border-slate-100 p-6">
+            <Button
+              type="button"
+              className="w-full bg-[#1A3C6E] text-white"
+              disabled={busy}
+              onClick={() => setRestoreConfirmOpen(true)}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Khôi phục nhân sự
+            </Button>
+          </div>
+        )}
+
+        <Modal
+          isOpen={deleteConfirmOpen}
+          onClose={() => {
+            if (!deleteMut.isPending) setDeleteConfirmOpen(false)
+          }}
+          title="Gỡ nhân viên khỏi danh sách làm việc?"
+          footer={
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button variant="outline" disabled={deleteMut.isPending} onClick={() => setDeleteConfirmOpen(false)}>
+                Hủy
+              </Button>
+              <Button variant="danger" loading={deleteMut.isPending} onClick={() => deleteMut.mutate()}>
+                Đồng ý
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-sm text-slate-600">
+            Nhân viên <strong>{staff.name}</strong> sẽ bị gỡ khỏi nhân sự (không xóa hẳn dữ liệu). Họ vẫn hiển thị trong
+            bảng với trạng thái &quot;Đã gỡ khỏi nhân sự&quot; và không thể đăng nhập. Tiếp tục?
+          </p>
+        </Modal>
+
+        <Modal
+          isOpen={restoreConfirmOpen}
+          onClose={() => {
+            if (!restoreMut.isPending) setRestoreConfirmOpen(false)
+          }}
+          title="Khôi phục nhân viên?"
+          footer={
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button variant="outline" disabled={restoreMut.isPending} onClick={() => setRestoreConfirmOpen(false)}>
+                Hủy
+              </Button>
+              <Button className="bg-[#1A3C6E] text-white" loading={restoreMut.isPending} onClick={() => restoreMut.mutate()}>
+                Đồng ý
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-sm text-slate-600">
+            Khôi phục <strong>{staff.name}</strong> vào nhân sự chi nhánh: tài khoản có thể đăng nhập lại và phân công làm
+            việc được tạo lại nếu cần. Tiếp tục?
+          </p>
+        </Modal>
+
+        {!allowMutations && useApi && !allowRestore && (
           <div className="p-6 text-center text-sm text-slate-500">
             Bạn không thể chỉnh sửa nhân sự cùng vai trò hệ thống với tài khoản của mình.
           </div>
@@ -394,13 +498,20 @@ export function StaffDetailModal({
   isOpen,
   onClose,
   allowMutations = true,
+  allowRestore = false,
 }: StaffDetailModalProps) {
   if (!isOpen || !staff) return null
 
   return (
     <>
       <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose} aria-hidden />
-      <StaffDetailPanel key={staff.id} staff={staff} onClose={onClose} allowMutations={allowMutations} />
+      <StaffDetailPanel
+        key={staff.id}
+        staff={staff}
+        onClose={onClose}
+        allowMutations={allowMutations}
+        allowRestore={allowRestore}
+      />
     </>
   )
 }

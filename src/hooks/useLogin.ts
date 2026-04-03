@@ -32,7 +32,7 @@ interface UseLoginReturn {
  * Map role → đường dẫn redirect mặc định sau login.
  * Customer → /dashboard, Staff → /staff, Manager → /manager, Admin → /admin
  */
-function getRedirectPathByRole(role: UserProfile['role']): string {
+export function getRedirectPathByRole(role: UserProfile['role']): string {
   const roleRedirectMap: Record<UserProfile['role'], string> = {
     Customer: '/dashboard',
     SalesStaff: '/staff',
@@ -74,6 +74,11 @@ export function useLogin(): UseLoginReturn {
         }).catch(() => {
           console.warn('[Tier3.1] Merge guest history thất bại, bỏ qua')
         })
+      }
+
+      if (user.passwordChangeRequired === true) {
+        navigate('/login/set-new-password', { replace: true })
+        return
       }
 
       // Redirect theo role, ưu tiên quay lại trang user muốn vào (nếu hợp lệ)

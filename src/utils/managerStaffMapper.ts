@@ -20,9 +20,21 @@ function dtoRoleToCode(role: string): StaffSystemRoleCode | undefined {
   return undefined
 }
 
+/**
+ * Khôi phục nhân viên đã gỡ — cùng quy tắc đồng cấp như chỉnh sửa (quản lý không khôi phục quản lý khác; admin được).
+ */
+export function canManagerRestoreStaffRow(actor: UserProfile | null, row: ManagerStaffMember): boolean {
+  if (!actor || !row.accountRemoved) return false
+  if (actor.role === 'Admin') return true
+  const code = row.staffRoleCode
+  if (!code) return true
+  return actor.role !== code
+}
+
 /** Admin luôn được; non-admin không được chỉnh nhân sự cùng mã vai trò hệ thống (đồng bộ với backend). */
 export function canManagerMutateStaffRow(actor: UserProfile | null, row: ManagerStaffMember): boolean {
   if (!actor) return false
+  if (row.accountRemoved) return false
   if (actor.role === 'Admin') return true
   const code = row.staffRoleCode
   if (!code) return true
@@ -30,6 +42,7 @@ export function canManagerMutateStaffRow(actor: UserProfile | null, row: Manager
 }
 
 export function staffDtoToTableRow(dto: StaffListItemDto): ManagerStaffMember {
+  const removed = dto.deleted === true
   return {
     id: String(dto.id),
     name: dto.name,
@@ -40,6 +53,7 @@ export function staffDtoToTableRow(dto: StaffListItemDto): ManagerStaffMember {
     branchId: dto.branchId != null ? String(dto.branchId) : '—',
     startDate: toDateOnly(dto.createdAt),
     orderCount: 0,
-    status: dto.status === 'active' ? 'active' : 'inactive',
+    status: removed ? 'inactive' : dto.status === 'active' ? 'active' : 'inactive',
+    accountRemoved: removed,
   }
 }

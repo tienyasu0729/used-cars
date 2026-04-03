@@ -12,6 +12,8 @@ export interface ManagerStaffMember {
   startDate: string
   orderCount: number
   status: 'active' | 'inactive'
+  /** Đã gỡ khỏi nhân sự (soft delete), vẫn hiển thị trong bảng. */
+  accountRemoved: boolean
   avatar?: string
   staffRoleCode?: StaffSystemRoleCode
 }

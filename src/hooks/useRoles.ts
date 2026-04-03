@@ -1,12 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import type { AdminRole } from '@/types/admin.types'
+import { asApiArray } from '@/utils/asApiArray'
 
-function asList<T>(data: unknown): T[] {
-  if (Array.isArray(data)) return data as T[]
-  if (data && typeof data === 'object' && 'content' in data && Array.isArray((data as { content: unknown }).content)) {
-    return (data as { content: T[] }).content
+function mapRole(raw: Record<string, unknown>): AdminRole {
+  const perms = raw.permissions
+  const permissionKeys = Array.isArray(perms) ? (perms as string[]).map(String) : []
+  return {
+    id: String(raw.id ?? ''),
+    name: String(raw.name ?? ''),
+    userCount: Number(raw.userCount ?? 0),
+    permissionKeys,
+    systemRole: Boolean(raw.systemRole),
   }
-  return []
 }
 
 export function useRoles() {
@@ -16,7 +21,8 @@ export function useRoles() {
       try {
         const { api } = await import('@/services/apiClient')
         const res = await api.get<unknown>('/admin/roles')
-        return asList<AdminRole>(res.data)
+        const rows = asApiArray<Record<string, unknown>>(res.data)
+        return rows.map(mapRole)
       } catch {
         return [] as AdminRole[]
       }

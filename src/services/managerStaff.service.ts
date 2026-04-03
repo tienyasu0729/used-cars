@@ -14,6 +14,8 @@ export interface StaffListItemDto {
   branchName: string
   status: string
   createdAt: string
+  /** Soft delete — vẫn trong danh sách chi nhánh, không đăng nhập được. */
+  deleted?: boolean
 }
 
 export interface CreateStaffRequestBody {
@@ -94,6 +96,11 @@ export const managerStaffService = {
 
   async delete(id: number): Promise<void> {
     await axiosInstance.delete<unknown>(`/manager/staff/${id}`)
+  },
+
+  async restore(id: number, body?: { branchId?: number }): Promise<StaffListItemDto> {
+    const res = await axiosInstance.post<unknown>(`/manager/staff/${id}/restore`, body ?? {})
+    return unwrapData<StaffListItemDto>(res)
   },
 
   deleteStaff(id: number) {
