@@ -1,19 +1,12 @@
-/**
- * useCompareVehicles — Hook quản lý so sánh xe (max 3)
- *
- * Kết hợp compareStore (Zustand) + API /vehicles/compare
- * Persist compareList vào sessionStorage
- */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { vehicleService } from '@/services/vehicle.service'
 import { useToastStore } from '@/store/toastStore'
+import { useCompareStore } from '@/store/compareStore'
 import type { Vehicle } from '@/types/vehicle.types'
-
-const SESSION_KEY = 'compare_vehicle_ids'
 
 interface UseCompareVehiclesReturn {
   compareList: number[]
-  addToCompare: (id: number) => void
+  addToCompare: (vehicle: Pick<Vehicle, 'id' | 'title'>) => void
   removeFromCompare: (id: number) => void
   clearCompare: () => void
   fetchComparison: () => Promise<void>
@@ -22,67 +15,61 @@ interface UseCompareVehiclesReturn {
 }
 
 export function useCompareVehicles(): UseCompareVehiclesReturn {
-  const toast = useToastStore()
-  const [compareList, setCompareList] = useState<number[]>(() => {
-    // Khôi phục từ sessionStorage
-    try {
-      const saved = sessionStorage.getItem(SESSION_KEY)
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
-  })
+  const addToast = useToastStore((s) => s.addToast)
+  const entries = useCompareStore((s) => s.entries)
+  const addEntry = useCompareStore((s) => s.addEntry)
+  const removeEntry = useCompareStore((s) => s.removeEntry)
+  const clear = useCompareStore((s) => s.clear)
+
+  const compareList = entries.map((e) => e.id)
   const [comparedData, setComparedData] = useState<Vehicle[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  // Persist vào sessionStorage khi compareList thay đổi
-  useEffect(() => {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(compareList))
-  }, [compareList])
-
   const addToCompare = useCallback(
-    (id: number) => {
-      setCompareList((prev) => {
-        if (prev.includes(id)) return prev
-        if (prev.length >= 3) {
-          toast.addToast('warning', 'Chỉ so sánh tối đa 3 xe')
-          return prev
-        }
-        toast.addToast('success', `Đã thêm vào so sánh (${prev.length + 1}/3)`)
-        return [...prev, id]
-      })
+    (vehicle: Pick<Vehicle, 'id' | 'title'>) => {
+      const r = addEntry({ id: vehicle.id, title: vehicle.title })
+      if (r === 'full') {
+        addToast('warning', 'Chỉ so sánh tối đa 3 xe')
+        return
+      }
+      if (r === 'added') {
+        const n = useCompareStore.getState().entries.length
+        addToast('success', `Đã thêm vào so sánh (${n}/3)`)
+      }
     },
-    [toast]
+    [addEntry, addToast]
   )
 
-  const removeFromCompare = useCallback((id: number) => {
-    setCompareList((prev) => prev.filter((v) => v !== id))
-  }, [])
+  const removeFromCompare = useCallback(
+    (id: number) => {
+      removeEntry(id)
+    },
+    [removeEntry]
+  )
 
   const clearCompare = useCallback(() => {
-    setCompareList([])
+    clear()
     setComparedData([])
-    sessionStorage.removeItem(SESSION_KEY)
-  }, [])
+  }, [clear])
 
-  // Gọi API so sánh khi đủ >= 2 xe
   const fetchComparison = useCallback(async () => {
-    if (compareList.length < 2) {
-      toast.addToast('warning', 'Cần chọn ít nhất 2 xe để so sánh')
+    const ids = useCompareStore.getState().entries.map((e) => e.id)
+    if (ids.length < 2) {
+      addToast('warning', 'Cần chọn ít nhất 2 xe để so sánh')
       return
     }
 
     setIsLoading(true)
     try {
-      const vehicles = await vehicleService.compareVehicles(compareList)
+      const vehicles = await vehicleService.compareVehicles(ids)
       setComparedData(vehicles)
     } catch (err: unknown) {
       console.error('[useCompareVehicles] Lỗi so sánh:', err)
-      toast.addToast('error', 'Lỗi tải dữ liệu so sánh')
+      addToast('error', 'Lỗi tải dữ liệu so sánh')
     } finally {
       setIsLoading(false)
     }
-  }, [compareList, toast])
+  }, [addToast])
 
   return {
     compareList,

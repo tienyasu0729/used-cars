@@ -37,11 +37,12 @@ export function VehicleCard({ vehicle, compact, showNewBadge, showSaveButton = t
 
   const handleCompare = (e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     if (isComparing) {
       removeFromCompare(vehicle.id)
       toast.addToast('info', 'Đã bỏ xe khỏi danh sách so sánh')
     } else {
-      addToCompare(vehicle.id)
+      addToCompare(vehicle)
     }
   }
 
@@ -123,10 +124,15 @@ export function VehicleCard({ vehicle, compact, showNewBadge, showSaveButton = t
             variant="outline"
             size="sm"
             onClick={handleCompare}
-            title="So sánh xe"
-            className={isComparing ? 'border-[#1A3C6E] bg-[#1A3C6E]/10' : ''}
+            title={isComparing ? 'Đang chọn so sánh — nhấn để bỏ' : 'Thêm vào so sánh (2–3 xe)'}
+            aria-pressed={isComparing}
+            className={
+              isComparing
+                ? 'border-2 border-amber-500 bg-amber-100 text-amber-900 shadow-md ring-2 ring-amber-400/60 hover:bg-amber-200'
+                : 'border-[#1A3C6E] hover:bg-blue-50'
+            }
           >
-            <GitCompare className="h-4 w-4" />
+            <GitCompare className={`h-4 w-4 ${isComparing ? 'text-amber-800' : ''}`} />
           </Button>
         </div>
       </div>

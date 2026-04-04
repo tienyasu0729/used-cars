@@ -168,6 +168,9 @@ export function StaffScheduleCalendar({ schedule, onAddAppointment }: StaffSched
                     >
                       <p className="font-medium">{TYPE_LABELS[item.type]}</p>
                       <p className="truncate">{item.customerName} - {item.vehicleName || ''}</p>
+                      {item.customerPhone && (
+                        <p className="truncate text-[10px] opacity-90">{item.customerPhone}</p>
+                      )}
                     </div>
                   ))}
                 </div>

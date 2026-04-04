@@ -12,6 +12,14 @@ import type {
   PaginatedResponse,
 } from '@/types/vehicle.types'
 
+export type VehicleSearchParamsWithManaged = VehicleSearchParams & { managed?: boolean }
+
+function stripManaged(p?: VehicleSearchParamsWithManaged): VehicleSearchParams {
+  if (!p) return {}
+  const { managed: _m, ...rest } = p
+  return rest
+}
+
 interface UseVehiclesReturn {
   vehicles: Vehicle[]
   totalPages: number
@@ -27,13 +35,17 @@ interface UseVehiclesReturn {
 }
 
 export function useVehicles(
-  initialParams?: VehicleSearchParams
+  initialParams?: VehicleSearchParamsWithManaged
 ): UseVehiclesReturn {
+  const managed = initialParams?.managed ?? false
+  const managedRef = useRef(managed)
+  managedRef.current = managed
+
   const [filters, setFiltersState] = useState<VehicleSearchParams>({
     page: 0,
     size: 20,
     sort: 'postingDateDesc',
-    ...initialParams,
+    ...stripManaged(initialParams),
   })
   const [data, setData] = useState<PaginatedResponse<Vehicle> | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -51,7 +63,14 @@ export function useVehicles(
     const initBranch = initialParams.branchId
     const initSize = initialParams.size
     const initSort = initialParams.sort
-    if (initBranch === undefined && initSize === undefined && initSort === undefined) return
+    const initStatus = initialParams.status
+    if (
+      initBranch === undefined &&
+      initSize === undefined &&
+      initSort === undefined &&
+      initStatus === undefined
+    )
+      return
 
     setFiltersState((prev) => {
       const next = { ...prev }
@@ -68,10 +87,14 @@ export function useVehicles(
         next.sort = initSort
         changed = true
       }
+      if (initStatus !== undefined && prev.status !== initStatus) {
+        next.status = initStatus
+        changed = true
+      }
       if (!changed) return prev
       return { ...next, page: 0 }
     })
-  }, [initialParams?.branchId, initialParams?.size, initialParams?.sort])
+  }, [initialParams?.branchId, initialParams?.size, initialParams?.sort, initialParams?.status])
 
   // Fetch xe khi filter thay đổi — dùng requestId để bỏ qua response cũ (race-condition)
   const fetchVehicles = useCallback(async () => {
@@ -79,7 +102,9 @@ export function useVehicles(
     setIsLoading(true)
     setError(null)
     try {
-      const result = await vehicleService.getVehicles(filters)
+      const result = managedRef.current
+        ? await vehicleService.getManagerVehicles(filters)
+        : await vehicleService.getVehicles(filters)
       // Chỉ dùng kết quả nếu đây vẫn là request mới nhất
       if (currentRequestId !== requestIdRef.current) return
       setData(result)

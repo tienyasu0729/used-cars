@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useInventory } from '@/hooks/useInventory'
 import { depositApi } from '@/services/depositApi'
@@ -7,27 +7,31 @@ import { useQueryClient } from '@tanstack/react-query'
 import { formatPrice } from '@/utils/format'
 import { VehicleStatusBadge } from '@/components/ui'
 import { ReserveVehicleModal } from '@/features/staff/components/ReserveVehicleModal'
-import type { Vehicle } from '@/types/vehicle.types'
+import type { Vehicle, VehicleStatus } from '@/types/vehicle.types'
 
 const tabs = ['Tất Cả', 'Còn Hàng', 'Đã Đặt Cọc', 'Đã Bán']
+
+const TAB_API_STATUS: (VehicleStatus | undefined)[] = [undefined, 'Available', 'Reserved', 'Sold']
 
 export function StaffInventoryPage() {
   const [activeTab, setActiveTab] = useState(0)
   const [search, setSearch] = useState('')
   const [reserveVehicle, setReserveVehicle] = useState<Vehicle | null>(null)
-  const { data: inventory } = useInventory()
+  const { data: inventory, setFilters, refetch } = useInventory()
+
+  useEffect(() => {
+    const s = TAB_API_STATUS[activeTab]
+    setFilters(s != null ? { status: s } : { status: undefined })
+  }, [activeTab, setFilters])
 
   const filtered = (inventory ?? []).filter((v) => {
-    const matchTab =
-      activeTab === 0 ||
-      (activeTab === 1 && v.status === 'Available') ||
-      (activeTab === 2 && v.status === 'Reserved') ||
-      (activeTab === 3 && v.status === 'Sold')
+    const q = search.trim().toLowerCase()
     const matchSearch =
-      !search ||
-      (v.brand?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
-      (v.model?.toLowerCase().includes(search.toLowerCase()) ?? false)
-    return matchTab && matchSearch
+      !q ||
+      (v.title?.toLowerCase().includes(q) ?? false) ||
+      (v.brand?.toLowerCase().includes(q) ?? false) ||
+      (v.model?.toLowerCase().includes(q) ?? false)
+    return matchSearch
   })
 
   const customers: { id: string; name: string }[] = []
@@ -45,6 +49,7 @@ export function StaffInventoryPage() {
         notes: data.notes,
       })
       queryClient.invalidateQueries({ queryKey: ['deposits', 'vehicles'] })
+      void refetch()
       toast.addToast('success', 'Đã đặt chỗ xe thành công')
       setReserveVehicle(null)
     } catch {

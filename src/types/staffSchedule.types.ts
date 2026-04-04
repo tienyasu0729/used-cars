@@ -4,6 +4,7 @@ export interface StaffScheduleItem {
   bookingId?: string
   customerId: string
   customerName: string
+  customerPhone?: string
   vehicleId?: string
   vehicleName: string
   branchId?: string

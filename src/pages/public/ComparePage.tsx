@@ -30,12 +30,12 @@ export function ComparePage() {
     isLoading,
   } = useCompareVehicles()
 
-  // Tự động fetch so sánh khi có >= 2 xe
+  const compareIdsKey = compareList.join(',')
+
   useEffect(() => {
-    if (compareList.length >= 2) {
-      fetchComparison()
-    }
-  }, [compareList, fetchComparison])
+    if (compareIdsKey.split(',').filter(Boolean).length < 2) return
+    void fetchComparison()
+  }, [compareIdsKey, fetchComparison])
 
   const vehicles = comparedData
 

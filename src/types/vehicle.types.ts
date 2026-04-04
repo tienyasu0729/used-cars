@@ -94,6 +94,8 @@ export interface VehicleSearchParams {
   transmission?: string
   /** Lọc xe theo chi nhánh (branch.id) */
   branchId?: number
+  /** Trạng thái xe (GET /manager/vehicles?status=) — Available | Reserved | Sold | … */
+  status?: string
   /** postingDateDesc | priceAsc | priceDesc | yearDesc | idDesc */
   sort?: string
   /** NETWORK = toàn hệ thống (read-only cho Transfer) */

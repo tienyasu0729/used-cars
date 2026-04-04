@@ -26,7 +26,9 @@ const TYPE_BADGE: Record<string, string> = {
 
 function bookingToScheduleItem(b: Booking, vehicles: Vehicle[]): StaffScheduleItem {
   const v = vehicles.find((x) => x.id === b.vehicleId)
-  const customerName = customerDisplayLabel(b.customerId)
+  const customerName =
+    (b.customerName && b.customerName.trim()) || customerDisplayLabel(b.customerId)
+  const customerPhone = b.customerPhone?.trim() || undefined
   const statusMap: Record<string, StaffScheduleItem['status']> = {
     Pending: 'pending',
     Confirmed: 'confirmed',
@@ -42,6 +44,7 @@ function bookingToScheduleItem(b: Booking, vehicles: Vehicle[]): StaffScheduleIt
     bookingId: String(b.id),
     customerId: String(b.customerId ?? ''),
     customerName,
+    customerPhone,
     vehicleId: String(b.vehicleId),
     vehicleName: v ? `${v.brand ?? ''} ${v.model ?? ''}`.trim() || b.vehicleTitle : b.vehicleTitle,
     branchId: String(b.branchId),
@@ -136,6 +139,9 @@ export function StaffSchedulePage() {
                   <p className="mt-1.5 text-sm font-medium text-slate-900">
                     {s.type === 'meeting' ? s.customerName : `${s.customerName} - ${s.vehicleName || ''}`}
                   </p>
+                  {s.customerPhone && (
+                    <p className="text-xs text-slate-600">{s.customerPhone}</p>
+                  )}
                   {s.location && <p className="text-xs text-slate-500">{s.location}</p>}
                   {s.type !== 'meeting' && (
                     <div className="mt-2 flex items-center gap-1.5">

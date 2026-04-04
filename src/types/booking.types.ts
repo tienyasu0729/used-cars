@@ -22,6 +22,8 @@ export interface BookingStatusHistoryItem {
 export interface Booking {
   id: number
   customerId?: number
+  customerName?: string | null
+  customerPhone?: string | null
   vehicleId: number
   vehicleTitle: string
   vehicleListingId: string

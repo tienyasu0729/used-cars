@@ -1,8 +1,5 @@
 /**
  * SavedVehicleGrid — Grid hiển thị danh sách xe đã lưu
- *
- * Chuyển sang API Vehicle type (Dev 2)
- * Xóa dependency mock data: mockSavedListingExtras
  */
 import type { Vehicle } from '@/types/vehicle.types'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
@@ -21,7 +18,7 @@ interface SavedVehicleGridProps {
 export function SavedVehicleGrid({ vehicles, isLoading, onRemoveSaved }: SavedVehicleGridProps) {
   if (isLoading) {
     return (
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="h-80 animate-pulse rounded-xl bg-slate-200" />
         ))}
@@ -34,7 +31,7 @@ export function SavedVehicleGrid({ vehicles, isLoading, onRemoveSaved }: SavedVe
       <EmptyState
         icon={Heart}
         title="Bạn chưa lưu xe nào"
-        description="Khám phá và lưu những xe yêu thích của bạn."
+        description="Hãy duyệt xe và lưu mẫu yêu thích!"
         actionButton={
           <Link to="/vehicles">
             <Button variant="accent">Khám Phá Xe</Button>
@@ -45,18 +42,18 @@ export function SavedVehicleGrid({ vehicles, isLoading, onRemoveSaved }: SavedVe
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {vehicles.map((v) => (
         <div key={v.id} className="relative">
           {onRemoveSaved && (
             <button
               type="button"
               onClick={() => onRemoveSaved(v.id)}
-              className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-lg font-bold text-slate-600 shadow-md transition hover:bg-red-50 hover:text-red-600"
+              className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-red-500 shadow-md transition hover:bg-red-50"
               title="Bỏ lưu"
               aria-label="Bỏ lưu xe"
             >
-              ×
+              <Heart className="h-5 w-5 fill-red-500 text-red-500" />
             </button>
           )}
           <VehicleCard vehicle={v} />

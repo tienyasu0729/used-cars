@@ -39,7 +39,8 @@ export function PublicHeader() {
   const [avatarOpen, setAvatarOpen] = useState(false)
   const avatarRef = useRef<HTMLDivElement>(null)
   const { user, logout } = useAuthStore()
-  const { vehicles: compareVehicles } = useCompareStore()
+  const compareEntries = useCompareStore((s) => s.entries)
+  const clearCompare = useCompareStore((s) => s.clear)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -98,14 +99,41 @@ export function PublicHeader() {
           ))}
           <Link
             to="/compare"
-            className="relative flex items-center gap-1.5 text-sm font-medium text-white hover:text-white/90"
+            title={
+              compareEntries.length > 0
+                ? compareEntries.map((e) => e.title).join(' · ')
+                : 'So sánh 2–3 xe'
+            }
+            className={`relative flex max-w-[min(100%,14rem)] items-center gap-1.5 rounded-lg text-sm font-medium text-white transition-colors hover:text-white/90 ${
+              compareEntries.length > 0 ? 'bg-white/15 px-2 py-1 ring-2 ring-amber-300/90' : 'py-1'
+            }`}
           >
-            <GitCompare className="h-4 w-4" />
-            So sánh
-            {compareVehicles.length > 0 && (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#E8612A] px-1.5 text-xs font-bold text-white">
-                {compareVehicles.length}
-              </span>
+            <GitCompare className={`h-4 w-4 shrink-0 ${compareEntries.length > 0 ? 'text-amber-200' : ''}`} />
+            <span className="shrink-0">So sánh</span>
+            {compareEntries.length > 0 && (
+              <>
+                <span className="group relative inline-flex h-5 min-w-[20px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E8612A] px-1.5">
+                  <span className="text-xs font-bold text-white transition-opacity duration-150 group-hover:opacity-0">
+                    {compareEntries.length}
+                  </span>
+                  <button
+                    type="button"
+                    title="Xóa danh sách so sánh"
+                    aria-label="Xóa danh sách so sánh"
+                    className="absolute inset-0 flex items-center justify-center rounded-full bg-[#c94f22] text-white opacity-0 transition-opacity duration-150 hover:bg-[#b8461e] group-hover:opacity-100"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      clearCompare()
+                    }}
+                  >
+                    <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+                  </button>
+                </span>
+                <span className="hidden min-w-0 truncate text-xs font-medium text-white/90 xl:inline">
+                  {compareEntries.map((e) => e.title.split(/\s+/).slice(0, 3).join(' ')).join(' · ')}
+                </span>
+              </>
             )}
           </Link>
         </nav>
@@ -210,12 +238,38 @@ export function PublicHeader() {
             <Link
               to="/compare"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 rounded-lg py-3 text-lg font-medium text-white hover:bg-white/10"
+              className={`flex flex-col gap-1 rounded-lg py-3 text-lg font-medium text-white hover:bg-white/10 ${
+                compareEntries.length > 0 ? 'bg-white/10 px-2 ring-1 ring-amber-300/80' : ''
+              }`}
             >
-              <GitCompare className="h-4 w-4" />
-              So sánh
-              {compareVehicles.length > 0 && (
-                <span className="rounded-full bg-[#E8612A] px-2 py-0.5 text-xs font-bold">{compareVehicles.length}</span>
+              <span className="flex items-center gap-2">
+                <GitCompare className="h-4 w-4" />
+                So sánh
+                {compareEntries.length > 0 && (
+                  <>
+                    <span className="rounded-full bg-[#E8612A] px-2 py-0.5 text-xs font-bold">
+                      {compareEntries.length}
+                    </span>
+                    <button
+                      type="button"
+                      title="Xóa danh sách so sánh"
+                      aria-label="Xóa danh sách so sánh"
+                      className="rounded p-1 text-white/90 hover:bg-white/15 lg:hidden"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        clearCompare()
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+              </span>
+              {compareEntries.length > 0 && (
+                <span className="pl-6 text-xs font-normal text-white/80">
+                  {compareEntries.map((e) => e.title).join(' · ')}
+                </span>
               )}
             </Link>
           </nav>

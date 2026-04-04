@@ -8,6 +8,7 @@ import { useVehicles } from '@/hooks/useVehicles'
 import { useBranches } from '@/hooks/useBranches'
 import { RecentlyViewedWidget } from '@/components/vehicles/RecentlyViewedWidget'
 import { Button } from '@/components/ui'
+import { HeroPriceSelect } from '@/components/home/HeroPriceSelect'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { fetchPublicHomeBanners } from '@/services/homeBanners.service'
 
@@ -84,18 +85,20 @@ export function HomePage() {
 
   return (
     <div>
-      <section className="relative flex h-[500px] items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#1A3C6E]/90 to-[#1A3C6E]/50" />
-        {heroSlides.map((src, i) => (
-          <div
-            key={`${src}-${i}`}
-            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ${
-              i === heroIndex ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{ backgroundImage: `url(${src})` }}
-            aria-hidden={i !== heroIndex}
-          />
-        ))}
+      <section className="relative flex h-[500px] items-center justify-center">
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#1A3C6E]/90 to-[#1A3C6E]/50" />
+          {heroSlides.map((src, i) => (
+            <div
+              key={`${src}-${i}`}
+              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ${
+                i === heroIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+              style={{ backgroundImage: `url(${src})` }}
+              aria-hidden={i !== heroIndex}
+            />
+          ))}
+        </div>
         {heroSlides.length > 1 && (
           <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 gap-2">
             {heroSlides.map((_, i) => (
@@ -136,18 +139,12 @@ export function HomePage() {
                 className="w-full border-none bg-transparent p-0 text-sm focus:outline-none focus:ring-0"
               />
             </div>
-            <div className="flex flex-1 items-center border-b border-slate-200 px-4 py-3 md:border-b-0 md:border-r">
-              <select
-                value={heroPriceIdx}
-                onChange={(e) => setHeroPriceIdx(Number(e.target.value))}
-                className="w-full appearance-none border-none bg-transparent p-0 text-sm focus:outline-none focus:ring-0 outline-none"
-              >
-                {PRICE_OPTIONS.map((opt, i) => (
-                  <option key={i} value={i}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-1 items-stretch border-b border-slate-200 p-2 md:border-b-0 md:border-r md:pr-2">
+              <HeroPriceSelect
+                options={PRICE_OPTIONS}
+                valueIndex={heroPriceIdx}
+                onChangeIndex={setHeroPriceIdx}
+              />
             </div>
             <button
               type="submit"
