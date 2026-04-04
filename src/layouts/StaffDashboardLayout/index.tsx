@@ -15,6 +15,7 @@ const pageTitles: Record<string, string> = {
   '/staff/orders/new': 'Tạo Đơn Mua',
   '/staff/orders': 'Danh Sách Đơn',
   '/staff/deposits/new': 'Tạo Đặt Cọc',
+  '/staff/deposits': 'Danh Sách Cọc',
   '/staff/chat': 'Chat Khách Hàng',
   '/staff/transfer-requests': 'Yêu Cầu Điều Chuyển',
   '/staff/profile': 'Hồ Sơ Cá Nhân',

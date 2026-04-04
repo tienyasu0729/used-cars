@@ -1,5 +1,5 @@
-import { Modal } from '@/components/ui'
-import { Badge } from '@/components/ui'
+import { useEffect, useState } from 'react'
+import { Modal, Badge, ConfirmDialog } from '@/components/ui'
 import type { ManagerAppointment } from '@/types/managerAppointment.types'
 
 interface AppointmentDetailModalProps {
@@ -27,6 +27,12 @@ export function AppointmentDetailModal({
   onCancelBooking,
   actionBookingId,
 }: AppointmentDetailModalProps) {
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) setCancelConfirmOpen(false)
+  }, [isOpen])
+
   if (!appointment) return null
 
   const numericId = Number(appointment.id)
@@ -55,6 +61,7 @@ export function AppointmentDetailModal({
   }
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -75,10 +82,7 @@ export function AppointmentDetailModal({
             <button
               type="button"
               disabled={isBusy}
-              onClick={() => {
-                if (!window.confirm('Hủy lịch hẹn này cho khách?')) return
-                void onCancelBooking(numericId)
-              }}
+              onClick={() => setCancelConfirmOpen(true)}
               className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
               Hủy lịch
@@ -125,5 +129,18 @@ export function AppointmentDetailModal({
         </div>
       </div>
     </Modal>
+    <ConfirmDialog
+      isOpen={cancelConfirmOpen}
+      onClose={() => setCancelConfirmOpen(false)}
+      title="Hủy lịch hẹn"
+      message="Hủy lịch hẹn này cho khách? Thao tác sẽ cập nhật trạng thái theo quy trình."
+      confirmLabel="Hủy lịch"
+      loading={isBusy}
+      onConfirm={async () => {
+        if (onCancelBooking) await onCancelBooking(numericId)
+        setCancelConfirmOpen(false)
+      }}
+    />
+    </>
   )
 }

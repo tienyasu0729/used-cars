@@ -34,12 +34,12 @@ export function RecentlyViewedWidget({ maxItems = 6 }: RecentlyViewedWidgetProps
     <section className="mb-8">
       <h2 className="mb-3 text-lg font-bold text-slate-900">Xe bạn đã xem</h2>
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {recentVehicles.map((v) => {
+        {recentVehicles.map((v, idx) => {
           const img =
             v.images?.[0]?.url ?? 'https://placehold.co/400x240?text=No+Image'
           return (
             <Link
-              key={v.id}
+              key={`rv-${v.id}-${idx}`}
               to={`/vehicles/${v.id}`}
               className="w-48 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
             >

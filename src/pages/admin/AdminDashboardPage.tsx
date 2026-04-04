@@ -170,7 +170,7 @@ export function AdminDashboardPage() {
               <div className="flex flex-wrap gap-2">
                 {topBrands.map((b) => (
                   <span
-                    key={b.categoryId}
+                    key={`${b.categoryId}-${b.brandName}`}
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm"
                   >
                     <span className="font-medium text-slate-800">{b.brandName}</span>
@@ -213,8 +213,8 @@ export function AdminDashboardPage() {
                   </td>
                 </tr>
               ) : (
-                paginated.map((row) => (
-                  <tr key={row.subcategoryId} className="transition-colors hover:bg-gray-50">
+                paginated.map((row, ri) => (
+                  <tr key={`${row.subcategoryId}-${row.modelName}-${ri}`} className="transition-colors hover:bg-gray-50">
                     <td className="px-4 py-3 font-semibold text-slate-900">{row.modelName}</td>
                     <td className="px-4 py-3 text-slate-600">{row.brandName}</td>
                     <td className="px-4 py-3 text-slate-600">{row.soldCount} xe</td>

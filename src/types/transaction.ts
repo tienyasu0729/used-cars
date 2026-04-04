@@ -6,5 +6,5 @@ export interface Transaction {
   description: string
   type: TransactionType
   amount: number
-  status: 'Completed' | 'Pending' | 'Failed'
+  status: 'Completed' | 'Pending' | 'Failed' | 'CompletedRefund'
 }

@@ -3,6 +3,18 @@ import { interactionService } from '@/services/interaction.service'
 import type { ViewedVehicleItem } from '@/types/interaction.types'
 import type { Vehicle, VehicleImage } from '@/types/vehicle.types'
 
+function dedupeViewedByVehicleId(items: ViewedVehicleItem[]): ViewedVehicleItem[] {
+  const seen = new Set<number>()
+  const out: ViewedVehicleItem[] = []
+  for (const x of items) {
+    const id = x.vehicleId
+    if (seen.has(id)) continue
+    seen.add(id)
+    out.push(x)
+  }
+  return out
+}
+
 function viewedToVehicle(v: ViewedVehicleItem): Vehicle {
   const images: VehicleImage[] = v.primaryImageUrl
     ? [{ id: 0, url: v.primaryImageUrl, sortOrder: 0, primaryImage: true }]
@@ -28,7 +40,8 @@ export function useRecentlyViewed(limit = 8) {
     queryKey: ['recently-viewed', limit],
     queryFn: async () => {
       const list = await interactionService.getRecentlyViewed()
-      return list.slice(0, limit).map(viewedToVehicle)
+      const unique = dedupeViewedByVehicleId(list)
+      return unique.slice(0, limit).map(viewedToVehicle)
     },
     staleTime: 60_000,
   })

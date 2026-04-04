@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { Modal } from '@/components/ui'
 import { Input } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 import { depositApi } from '@/services/depositApi'
-import { paymentApi } from '@/services/paymentApi'
+import { paymentApi, paymentInitErrorMessage, setPaymentReturnContext } from '@/services/paymentApi'
+import { notifyInventoryChanged } from '@/utils/inventorySync'
+import { openPaymentGatewayUrl } from '@/utils/openPaymentGatewayUrl'
 import { formatPrice } from '@/utils/format'
 
 const schema = z.object({
@@ -24,10 +27,10 @@ interface DepositWizardModalProps {
   vehicleId: string | number
   vehicleName?: string
   vehiclePrice?: number
-  /** Khi true: không gọi API, chỉ hiển thị UI placeholder */
   uiOnly?: boolean
   orderId?: number
   defaultAmount?: number
+  onDepositSuccess?: () => void
 }
 
 export function DepositWizardModal({
@@ -39,10 +42,14 @@ export function DepositWizardModal({
   uiOnly = true,
   orderId,
   defaultAmount,
+  onDepositSuccess,
 }: DepositWizardModalProps) {
   const [step, setStep] = useState(1)
+  const [redirecting, setRedirecting] = useState(false)
+  const submitLockRef = useRef(false)
   const { user } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
+  const queryClient = useQueryClient()
 
   const {
     register,
@@ -61,7 +68,11 @@ export function DepositWizardModal({
   const amount = watch('amount')
 
   useEffect(() => {
-    if (!isOpen) setStep(1)
+    if (!isOpen) {
+      setStep(1)
+      setRedirecting(false)
+      submitLockRef.current = false
+    }
   }, [isOpen])
 
   useEffect(() => {
@@ -75,44 +86,119 @@ export function DepositWizardModal({
 
   const onSubmit = async (data: FormData) => {
     if (!user?.id) return
+    if (submitLockRef.current || redirecting) return
 
-    // B1: Chế độ UI-only — không gọi API, chỉ hiển thị thông báo
     if (uiOnly) {
       addToast('info', 'Tính năng đặt cọc online đang được phát triển. Vui lòng liên hệ showroom để đặt cọc.')
       onClose()
       return
     }
 
-    if (
-      orderId != null &&
-      (data.paymentMethod === 'vnpay' || data.paymentMethod === 'zalopay')
-    ) {
+    const amount = Math.round(Number(data.amount))
+    if (!Number.isFinite(amount)) {
+      addToast('error', 'Vui lòng nhập số tiền cọc hợp lệ.')
+      return
+    }
+
+    const isGateway = data.paymentMethod === 'vnpay' || data.paymentMethod === 'zalopay'
+
+    if (orderId != null && isGateway) {
+      submitLockRef.current = true
+      setRedirecting(true)
       try {
+        setPaymentReturnContext({ kind: 'order', id: orderId })
         const url =
           data.paymentMethod === 'vnpay'
-            ? await paymentApi.createVnpay(orderId, data.amount)
-            : await paymentApi.createZaloPay(orderId, data.amount)
-        window.location.href = url
-        return
-      } catch {
-        addToast('error', 'Không tạo được liên kết thanh toán.')
-        return
+            ? await paymentApi.createVnpay(orderId, amount)
+            : await paymentApi.createZaloPay(orderId, amount)
+        if (openPaymentGatewayUrl(url)) {
+          submitLockRef.current = false
+          setRedirecting(false)
+          addToast(
+            'info',
+            'Trang thanh toán đã mở ở tab mới. Đóng tab đó khi hủy hoặc xong — bạn vẫn ở lại trang này.',
+          )
+          onClose()
+          return
+        }
+        window.location.assign(url)
+      } catch (e: unknown) {
+        submitLockRef.current = false
+        setRedirecting(false)
+        addToast('error', paymentInitErrorMessage(e))
       }
+      return
+    }
+
+    if (orderId == null && isGateway) {
+      submitLockRef.current = true
+      setRedirecting(true)
+      try {
+        const created = await depositApi.create({
+          vehicleId: Number(vehicleId),
+          amount,
+          paymentMethod: data.paymentMethod,
+        })
+        const url = created.paymentUrl?.trim()
+        if (url) {
+          setPaymentReturnContext({ kind: 'deposit', id: created.id })
+          queryClient.invalidateQueries({ queryKey: ['deposits'] })
+          notifyInventoryChanged()
+          if (openPaymentGatewayUrl(url)) {
+            submitLockRef.current = false
+            setRedirecting(false)
+            addToast(
+              'info',
+              'Trang thanh toán đã mở ở tab mới. Đóng tab đó khi hủy hoặc xong — bạn vẫn ở lại trang này.',
+            )
+            onClose()
+            return
+          }
+          window.location.assign(url)
+          return
+        }
+        try {
+          await depositApi.cancel(created.id, 'Khong nhan duoc link thanh toan (tu dong huy)')
+        } catch {
+          void 0
+        }
+        queryClient.invalidateQueries({ queryKey: ['deposits'] })
+        notifyInventoryChanged()
+        submitLockRef.current = false
+        setRedirecting(false)
+        addToast(
+          'error',
+          'Không nhận được liên kết thanh toán từ máy chủ. Kiểm tra đã bật VNPay/ZaloPay và đủ cấu hình tại /admin/config (Thanh toán).',
+        )
+      } catch (e: unknown) {
+        submitLockRef.current = false
+        setRedirecting(false)
+        const msg =
+          e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
+            ? (e as { message: string }).message
+            : 'Không thể khởi tạo thanh toán. Vui lòng thử lại.'
+        addToast('error', msg)
+      }
+      return
     }
 
     try {
-      const res = await depositApi.createDeposit({
-        vehicleId: String(vehicleId),
-        customerId: String(user.id),
-        amount: data.amount,
+      const created = await depositApi.create({
+        vehicleId: Number(vehicleId),
+        amount,
         paymentMethod: data.paymentMethod,
       })
-      if (res.data.success) {
-        addToast('success', 'Đặt cọc thành công! Xe được giữ trong 7 ngày.')
-        onClose()
-      }
-    } catch {
-      addToast('error', 'Không thể đặt cọc. Vui lòng thử lại.')
+      queryClient.invalidateQueries({ queryKey: ['deposits'] })
+      notifyInventoryChanged()
+      onDepositSuccess?.()
+      addToast('success', `Đặt cọc thành công (mã #${created.id}). Xe chuyển trạng thái giữ chỗ.`)
+      onClose()
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
+          ? (e as { message: string }).message
+          : 'Không thể đặt cọc. Vui lòng thử lại.'
+      addToast('error', msg)
     }
   }
 
@@ -187,8 +273,8 @@ export function DepositWizardModal({
             <Button type="button" variant="outline" onClick={() => setStep(2)}>
               Quay lại
             </Button>
-            <Button type="submit" loading={isSubmitting}>
-              Xác Nhận Đặt Cọc
+            <Button type="submit" loading={isSubmitting || redirecting} disabled={redirecting}>
+              {redirecting ? 'Đang chuyển tới cổng thanh toán…' : 'Xác Nhận Đặt Cọc'}
             </Button>
           </div>
         </form>

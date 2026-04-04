@@ -210,7 +210,7 @@ export function DashboardOverviewPage() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2">
               {recentVehicles.map((v, i) => (
-                <DashboardOverviewCard key={v.id} vehicle={v} showNewBadge={i === 0} />
+                <DashboardOverviewCard key={`dash-recent-${v.id}-${i}`} vehicle={v} showNewBadge={i === 0} />
               ))}
             </div>
           )}

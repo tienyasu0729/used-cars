@@ -1,4 +1,4 @@
-import { Car, Coins, Pencil } from 'lucide-react'
+import { Car, Pencil } from 'lucide-react'
 import { formatPrice, formatPriceNumber } from '@/utils/format'
 import type { Vehicle } from '@/types/vehicle.types'
 
@@ -11,9 +11,10 @@ const PAYMENT_OPTIONS = [
 
 interface CreateOrderStepDetailsProps {
   vehicle: Vehicle | null
-  price: number
-  deposit: number
-  onDepositChange: (v: number) => void
+  totalPrice: number
+  onTotalPriceChange: (v: number) => void
+  depositId: string
+  onDepositIdChange: (v: string) => void
   paymentMethod: string
   onPaymentChange: (v: string) => void
   notes: string
@@ -23,51 +24,51 @@ interface CreateOrderStepDetailsProps {
 
 export function CreateOrderStepDetails({
   vehicle,
-  price,
-  deposit,
-  onDepositChange,
+  totalPrice,
+  onTotalPriceChange,
+  depositId,
+  onDepositIdChange,
   paymentMethod,
   onPaymentChange,
   notes,
   onNotesChange,
   onChangeVehicle,
 }: CreateOrderStepDetailsProps) {
-  const remaining = Math.max(0, price - deposit)
-
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-bold text-slate-900">Chi tiết thanh toán & đơn hàng</h3>
-        <span className="text-xs text-slate-500">MÃ NHẬP: #ORDER-TEMP</span>
+        <h3 className="text-lg font-bold text-slate-900">Chi tiết đơn hàng</h3>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           <div>
             <label className="mb-1 flex items-center gap-2 text-sm font-medium text-slate-700">
               <Car className="h-4 w-4 text-slate-500" />
-              Giá xe niêm yết (VNĐ)
-            </label>
-            <input
-              type="text"
-              readOnly
-              value={formatPriceNumber(price)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 flex items-center gap-2 text-sm font-medium text-slate-700">
-              <Coins className="h-4 w-4 text-slate-500" />
-              Số tiền đặt cọc (VNĐ)
+              Tổng giá đơn (VNĐ)
             </label>
             <input
               type="number"
-              value={deposit || ''}
-              onChange={(e) => onDepositChange(Number(e.target.value) || 0)}
+              min={1}
+              value={totalPrice || ''}
+              onChange={(e) => onTotalPriceChange(Number(e.target.value) || 0)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="0"
             />
+            <p className="mt-1 text-xs text-slate-500">{formatPrice(totalPrice)}</p>
           </div>
-          <p className="text-base font-bold text-[#1A3C6E]">Số tiền còn lại: {formatPrice(remaining)}</p>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">ID phiếu cọc đã xác nhận (tuỳ chọn)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={depositId}
+              onChange={(e) => onDepositIdChange(e.target.value.replace(/\D/g, ''))}
+              placeholder="Để trống nếu không gắn cọc"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Nếu nhập, cọc phải trùng khách &amp; xe; hệ thống tự trừ vào số tiền còn lại.
+            </p>
+          </div>
         </div>
         <div className="space-y-4">
           <div>
@@ -130,6 +131,7 @@ export function CreateOrderStepDetails({
                 {vehicle.trim ? ` - Phiên bản ${vehicle.trim}` : ''}
                 {vehicle.exteriorColor ? ` (${vehicle.exteriorColor})` : ''}
               </p>
+              <p className="text-xs text-slate-500">Niêm yết: {formatPriceNumber(vehicle.price)} ₫</p>
             </div>
           </div>
           <button type="button" onClick={onChangeVehicle} className="flex items-center gap-1 text-sm font-medium text-[#1A3C6E] hover:underline">

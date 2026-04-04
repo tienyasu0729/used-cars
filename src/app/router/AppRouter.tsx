@@ -51,6 +51,7 @@ const StaffInventoryPage = lazy(() => import('@/pages/staff/StaffInventoryPage')
 const StaffCreateOrderPage = lazy(() => import('@/pages/staff/StaffCreateOrderPage').then((m) => ({ default: m.StaffCreateOrderPage })))
 const StaffOrdersPage = lazy(() => import('@/pages/staff/StaffOrdersPage').then((m) => ({ default: m.StaffOrdersPage })))
 const StaffCreateDepositPage = lazy(() => import('@/pages/staff/StaffCreateDepositPage').then((m) => ({ default: m.StaffCreateDepositPage })))
+const StaffDepositsPage = lazy(() => import('@/pages/staff/StaffDepositsPage').then((m) => ({ default: m.StaffDepositsPage })))
 const StaffChatPage = lazy(() => import('@/pages/staff/StaffChatPage').then((m) => ({ default: m.StaffChatPage })))
 const StaffTransferRequestsPage = lazy(() => import('@/pages/staff/StaffTransferRequestsPage').then((m) => ({ default: m.StaffTransferRequestsPage })))
 const StaffNotificationsPage = lazy(() => import('@/pages/staff/StaffNotificationsPage').then((m) => ({ default: m.StaffNotificationsPage })))
@@ -163,6 +164,7 @@ const router = createBrowserRouter([
       { path: 'orders/new', element: <Suspense fallback={<Fallback />}><StaffCreateOrderPage /></Suspense> },
       { path: 'orders', element: <Suspense fallback={<Fallback />}><StaffOrdersPage /></Suspense> },
       { path: 'deposits/new', element: <Suspense fallback={<Fallback />}><StaffCreateDepositPage /></Suspense> },
+      { path: 'deposits', element: <Suspense fallback={<Fallback />}><StaffDepositsPage /></Suspense> },
       { path: 'chat', element: <Suspense fallback={<Fallback />}><StaffChatPage /></Suspense> },
       { path: 'transfer-requests', element: <Suspense fallback={<Fallback />}><StaffTransferRequestsPage /></Suspense> },
       { path: 'notifications', element: <Suspense fallback={<Fallback />}><StaffNotificationsPage /></Suspense> },
@@ -187,6 +189,10 @@ const router = createBrowserRouter([
       { path: 'staff', element: <Suspense fallback={<Fallback />}><ManagerStaffPage /></Suspense> },
       { path: 'staff/new', element: <Suspense fallback={<Fallback />}><ManagerCreateStaffPage /></Suspense> },
       { path: 'appointments', element: <Suspense fallback={<Fallback />}><ManagerAppointmentsPage /></Suspense> },
+      { path: 'orders/new', element: <Suspense fallback={<Fallback />}><StaffCreateOrderPage /></Suspense> },
+      { path: 'orders', element: <Suspense fallback={<Fallback />}><StaffOrdersPage /></Suspense> },
+      { path: 'deposits/new', element: <Suspense fallback={<Fallback />}><StaffCreateDepositPage /></Suspense> },
+      { path: 'deposits', element: <Suspense fallback={<Fallback />}><StaffDepositsPage /></Suspense> },
       { path: 'transfers', element: <Suspense fallback={<Fallback />}><ManagerTransfersPage /></Suspense> },
       { path: 'reports', element: <Suspense fallback={<Fallback />}><ManagerReportsPage /></Suspense> },
       { path: 'settings', element: <Suspense fallback={<Fallback />}><ManagerSettingsPage /></Suspense> },

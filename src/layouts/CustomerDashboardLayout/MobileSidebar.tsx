@@ -38,11 +38,13 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const { user, logout } = useAuthStore()
   const { data: notificationUnread = 0 } = useNotificationUnreadCount()
   const { data: bookings } = useBookings()
-  const { data: deposits } = useDeposits()
+  const { data: depData } = useDeposits({ size: 200 })
+  const deposits = depData?.deposits ?? []
   const { data: conversations } = useConversations()
 
   const bookingPending = bookings?.filter((b) => b.status === 'Pending').length ?? 0
-  const depositActive = deposits?.filter((d) => d.status === 'Confirmed').length ?? 0
+  const depositActive =
+    deposits.filter((d) => ['Confirmed', 'Pending', 'RefundPending'].includes(d.status)).length ?? 0
   const chatUnread = conversations?.reduce((s, c) => s + (c.unreadCount ?? 0), 0) ?? 0
 
   const getBadge = (key: string) => {

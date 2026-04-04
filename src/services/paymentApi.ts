@@ -1,6 +1,28 @@
 import { api } from './apiClient'
 import type { ApiResponse } from '@/types/auth.types'
 
+export const PAYMENT_RETURN_CONTEXT_KEY = 'payment_return_context'
+
+export function setPaymentReturnContext(ctx: { kind: 'order' | 'deposit'; id: number }) {
+  sessionStorage.setItem(
+    PAYMENT_RETURN_CONTEXT_KEY,
+    JSON.stringify({ ...ctx, at: Date.now() }),
+  )
+}
+
+export function paymentInitErrorMessage(err: unknown): string {
+  const ax = err as { response?: { data?: { message?: string } } }
+  const m = ax.response?.data?.message
+  if (typeof m === 'string' && m.trim()) {
+    const t = m.trim()
+    if (/Thiếu cấu hình/i.test(t)) {
+      return `${t} Vui lòng cấu hình tại /admin/config (mục Thanh toán).`
+    }
+    return t
+  }
+  return 'Không tạo được liên kết thanh toán.'
+}
+
 export interface PaymentUrlPayload {
   paymentUrl: string
 }
@@ -16,6 +38,20 @@ export interface OrderPaymentStaffRow {
   vnpLastRefundRequestId: string | null
 }
 
+export interface VnpayClientReturnPayload {
+  success: boolean
+  code: string
+  kind: string
+  orderId: number | null
+  depositId: number | null
+}
+
+export interface ZaloPayStatusPayload {
+  gateway: Record<string, unknown>
+  localStatus: string
+  synced: boolean
+}
+
 function unwrap<T>(raw: unknown): T {
   if (raw && typeof raw === 'object' && 'data' in raw && (raw as ApiResponse<T>).data !== undefined) {
     return (raw as ApiResponse<T>).data
@@ -27,13 +63,19 @@ export const paymentApi = {
   async createVnpay(orderId: number, amount: number): Promise<string> {
     const res = await api.post<ApiResponse<PaymentUrlPayload>>('/payment/vnpay/create', { orderId, amount })
     const data = unwrap<PaymentUrlPayload>(res.data)
-    return data.paymentUrl
+    if (!data.paymentUrl?.trim()) {
+      throw new Error('EMPTY_PAYMENT_URL')
+    }
+    return data.paymentUrl.trim()
   },
 
   async createZaloPay(orderId: number, amount: number): Promise<string> {
     const res = await api.post<ApiResponse<PaymentUrlPayload>>('/payment/zalopay/create', { orderId, amount })
     const data = unwrap<PaymentUrlPayload>(res.data)
-    return data.paymentUrl
+    if (!data.paymentUrl?.trim()) {
+      throw new Error('EMPTY_PAYMENT_URL')
+    }
+    return data.paymentUrl.trim()
   },
 
   async listOrderPayments(orderId: number): Promise<OrderPaymentStaffRow[]> {
@@ -53,5 +95,23 @@ export const paymentApi = {
     }
     const res = await api.post<ApiResponse<unknown>>('/payment/vnpay/refund', body)
     return unwrap<unknown>(res.data)
+  },
+
+  async vnpayReturnClient(params: URLSearchParams): Promise<VnpayClientReturnPayload> {
+    const q: Record<string, string> = { json: '1' }
+    params.forEach((v, k) => {
+      if (k !== 'json') {
+        q[k] = v
+      }
+    })
+    const res = await api.get<ApiResponse<VnpayClientReturnPayload>>('/payment/vnpay/return', { params: q })
+    return unwrap<VnpayClientReturnPayload>(res.data)
+  },
+
+  async zaloPayStatus(target: { orderId: number } | { depositId: number }): Promise<ZaloPayStatusPayload> {
+    const params =
+      'orderId' in target ? { orderId: target.orderId } : { depositId: target.depositId }
+    const res = await api.get<ApiResponse<ZaloPayStatusPayload>>('/payment/zalopay/status', { params })
+    return unwrap<ZaloPayStatusPayload>(res.data)
   },
 }

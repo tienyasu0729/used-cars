@@ -62,13 +62,13 @@ export function TransactionTable({ transactions, isLoading }: TransactionTablePr
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {paginated.map((tx) => {
+            {paginated.map((tx, rowIdx) => {
               const tc = typeConfig[tx.type] ?? typeConfig.Deposit
               const sc = tx.type === 'Refund' && tx.status === 'Completed'
   ? statusConfig.CompletedRefund
   : (statusConfig[tx.status] ?? statusConfig.Pending)
               return (
-                <tr key={tx.id} className="transition-colors hover:bg-slate-50">
+                <tr key={`${tx.id}-${start + rowIdx}`} className="transition-colors hover:bg-slate-50">
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase ${tc.className}`}>
                       <tc.icon className="h-3.5 w-3.5" />

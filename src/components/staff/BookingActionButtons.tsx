@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Booking } from '@/types/booking.types'
+import { ConfirmDialog } from '@/components/ui'
 
 interface BookingActionButtonsProps {
   booking: Booking
@@ -18,6 +19,7 @@ export function BookingActionButtons({
 }: BookingActionButtonsProps) {
   const [busy, setBusy] = useState(false)
   const [showReschedule, setShowReschedule] = useState(false)
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
   const [newDate, setNewDate] = useState(booking.bookingDate)
   const [newTime, setNewTime] = useState(booking.timeSlot)
   const [resNote, setResNote] = useState('')
@@ -84,12 +86,24 @@ export function BookingActionButtons({
         <button
           type="button"
           disabled={busy}
-          onClick={() => window.confirm('Hủy lịch hẹn này?') && run(() => onCancel(booking.id))}
+          onClick={() => setCancelConfirmOpen(true)}
           className="rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
         >
           Hủy
         </button>
       </div>
+
+      <ConfirmDialog
+        isOpen={cancelConfirmOpen}
+        onClose={() => setCancelConfirmOpen(false)}
+        title="Hủy lịch hẹn"
+        message="Bạn có chắc muốn hủy lịch hẹn này?"
+        confirmLabel="Hủy lịch"
+        onConfirm={async () => {
+          await run(() => onCancel(booking.id))
+          setCancelConfirmOpen(false)
+        }}
+      />
 
       {showReschedule && (
         <div className="w-full max-w-md rounded-lg border border-slate-200 bg-slate-50 p-3 text-left">

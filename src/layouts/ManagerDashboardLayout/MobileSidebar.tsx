@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { X, LayoutDashboard, Car, Users, Calendar, ArrowLeftRight, BarChart3, Bell, Settings, User, Lock } from 'lucide-react'
+import { X, LayoutDashboard, Car, Users, Calendar, ArrowLeftRight, BarChart3, Bell, Settings, PlusCircle, ClipboardList, Banknote, ListChecks, User, Lock } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 
@@ -13,6 +13,10 @@ const navItems = [
   { to: '/manager/vehicles', icon: Car, label: 'Quản Lý Xe' },
   { to: '/manager/staff', icon: Users, label: 'Quản Lý Nhân Viên' },
   { to: '/manager/appointments', icon: Calendar, label: 'Lịch Hẹn' },
+  { to: '/manager/orders/new', icon: PlusCircle, label: 'Tạo Đơn Mua' },
+  { to: '/manager/orders', icon: ClipboardList, label: 'Đơn Hàng' },
+  { to: '/manager/deposits/new', icon: Banknote, label: 'Tạo Đặt Cọc' },
+  { to: '/manager/deposits', icon: ListChecks, label: 'Danh Sách Cọc' },
   { to: '/manager/transfers', icon: ArrowLeftRight, label: 'Yêu Cầu Điều Chuyển' },
   { to: '/manager/reports', icon: BarChart3, label: 'Báo Cáo' },
   { to: '/manager/notifications', icon: Bell, label: 'Thông Báo', badgeKey: 'notifications' },

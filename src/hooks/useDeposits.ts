@@ -1,22 +1,34 @@
 import { useQuery } from '@tanstack/react-query'
-import axiosInstance from '@/utils/axiosInstance'
-import type { ApiResponse } from '@/types/auth.types'
+import { depositApi } from '@/services/depositApi'
+import type { DepositListItem } from '@/services/deposit.service'
 import type { Deposit } from '@/types'
 
-async function fetchDeposits(): Promise<Deposit[]> {
-  try {
-    const res = (await axiosInstance.get('/deposits')) as unknown as ApiResponse<Deposit[]>
-    const raw = res.data
-    return Array.isArray(raw) ? raw : []
-  } catch {
-    return []
+function toDeposit(row: DepositListItem): Deposit {
+  return {
+    id: row.id,
+    vehicleId: row.vehicleId,
+    customerId: row.customerId,
+    customerName: row.customerName,
+    vehicleTitle: row.vehicleTitle,
+    amount: row.amount,
+    depositDate: row.depositDate,
+    expiryDate: row.expiryDate,
+    status: row.status as Deposit['status'],
+    orderId: row.orderId,
   }
 }
 
-export function useDeposits() {
+export function useDeposits(params?: { status?: string; page?: number; size?: number }) {
   return useQuery({
-    queryKey: ['deposits'],
-    queryFn: fetchDeposits,
-    staleTime: 1000 * 60 * 2,
+    queryKey: ['deposits', params?.status, params?.page, params?.size],
+    queryFn: async () => {
+      const { items, meta } = await depositApi.list({
+        status: params?.status,
+        page: params?.page ?? 0,
+        size: params?.size ?? 100,
+      })
+      return { deposits: items.map(toDeposit), meta }
+    },
+    staleTime: 1000 * 60,
   })
 }

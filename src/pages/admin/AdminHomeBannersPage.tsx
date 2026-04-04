@@ -8,7 +8,7 @@ import {
   deleteAdminHomeBanner,
   uploadHomeBannerImage,
 } from '@/services/homeBanners.service'
-import { Button } from '@/components/ui'
+import { Button, ConfirmDialog } from '@/components/ui'
 import { useToastStore } from '@/store/toastStore'
 
 export function AdminHomeBannersPage() {
@@ -20,6 +20,7 @@ export function AdminHomeBannersPage() {
     staleTime: 30_000,
   })
   const [uploading, setUploading] = useState(false)
+  const [deleteBannerId, setDeleteBannerId] = useState<number | null>(null)
 
   const createMut = useMutation({
     mutationFn: createAdminHomeBanner,
@@ -95,15 +96,7 @@ export function AdminHomeBannersPage() {
                 <span className="text-xs text-slate-500">#{b.sortOrder}</span>
                 <button
                   type="button"
-                  onClick={async () => {
-                    if (!confirm('Xóa banner này?')) return
-                    try {
-                      await deleteMut.mutateAsync(b.id)
-                      toast.addToast('success', 'Đã xóa.')
-                    } catch {
-                      toast.addToast('error', 'Không xóa được.')
-                    }
-                  }}
+                  onClick={() => setDeleteBannerId(b.id)}
                   className="inline-flex items-center gap-1 text-sm text-red-600 hover:underline"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -117,6 +110,25 @@ export function AdminHomeBannersPage() {
       {!isLoading && banners.length === 0 && (
         <p className="text-center text-sm text-slate-500">Chưa có banner — upload ảnh phía trên.</p>
       )}
+      <ConfirmDialog
+        isOpen={deleteBannerId != null}
+        onClose={() => setDeleteBannerId(null)}
+        title="Xóa banner"
+        message="Xóa banner này khỏi trang chủ? Hành động không hoàn tác."
+        confirmLabel="Xóa"
+        loading={deleteMut.isPending}
+        onConfirm={async () => {
+          if (deleteBannerId == null) return
+          try {
+            await deleteMut.mutateAsync(deleteBannerId)
+            toast.addToast('success', 'Đã xóa.')
+          } catch {
+            toast.addToast('error', 'Không xóa được.')
+          } finally {
+            setDeleteBannerId(null)
+          }
+        }}
+      />
       <Button variant="outline" size="sm" onClick={() => refetch()}>Tải lại danh sách</Button>
     </div>
   )

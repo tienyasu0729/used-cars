@@ -3,6 +3,7 @@ import { Download, Plus, Calendar, List, Target, UserPlus, DollarSign } from 'lu
 import { useAppointments } from '@/hooks/useAppointments'
 import { useManagerBookingMutations } from '@/hooks/useManagerBookingMutations'
 import { AppointmentDetailModal } from '@/features/manager/components'
+import { ConfirmDialog } from '@/components/ui'
 import { formatPrice } from '@/utils/format'
 import { useAuthStore } from '@/store/authStore'
 import type { ManagerAppointment } from '@/types/managerAppointment.types'
@@ -59,6 +60,7 @@ export function ManagerAppointmentsPage() {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [selected, setSelected] = useState<ManagerAppointment | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [pendingCancelId, setPendingCancelId] = useState<number | null>(null)
 
   const openDetail = (a: ManagerAppointment) => {
     setSelected(a)
@@ -282,10 +284,7 @@ export function ManagerAppointmentsPage() {
                         <button
                           type="button"
                           disabled={actionBookingId === Number(a.id)}
-                          onClick={() => {
-                            if (!window.confirm('Hủy lịch hẹn này cho khách?')) return
-                            void handleCancelBooking(Number(a.id))
-                          }}
+                          onClick={() => setPendingCancelId(Number(a.id))}
                           className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
                         >
                           Hủy
@@ -312,6 +311,19 @@ export function ManagerAppointmentsPage() {
         onConfirm={handleConfirm}
         onCancelBooking={handleCancelBooking}
         actionBookingId={actionBookingId}
+      />
+      <ConfirmDialog
+        isOpen={pendingCancelId != null}
+        onClose={() => setPendingCancelId(null)}
+        title="Hủy lịch hẹn"
+        message="Hủy lịch hẹn này cho khách? Thao tác sẽ cập nhật trạng thái theo quy trình."
+        confirmLabel="Hủy lịch"
+        loading={pendingCancelId != null && actionBookingId === pendingCancelId}
+        onConfirm={async () => {
+          if (pendingCancelId == null) return
+          await handleCancelBooking(pendingCancelId)
+          setPendingCancelId(null)
+        }}
       />
     </div>
   )

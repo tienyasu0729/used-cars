@@ -9,15 +9,14 @@ import { Download, Plus, MoreVertical } from 'lucide-react'
 const statusMap: Record<string, { label: string; className: string }> = {
   Completed: { label: 'Hoàn thành', className: 'bg-green-100 text-green-700' },
   Processing: { label: 'Đang xử lý', className: 'bg-amber-100 text-amber-700' },
-  Confirmed: { label: 'Chờ thanh toán', className: 'bg-blue-100 text-blue-700' },
-  Pending: { label: 'Chờ thanh toán', className: 'bg-blue-100 text-blue-700' },
+  Pending: { label: 'Chờ xử lý', className: 'bg-blue-100 text-blue-700' },
   Cancelled: { label: 'Đã hủy', className: 'bg-slate-100 text-slate-700' },
 }
 
 const tabFilters = [
   { key: 'all', label: 'Tất cả' },
+  { key: 'Pending', label: 'Chờ xử lý' },
   { key: 'Processing', label: 'Đang xử lý' },
-  { key: 'Confirmed', label: 'Chờ thanh toán' },
   { key: 'Completed', label: 'Đã hoàn thành' },
   { key: 'Cancelled', label: 'Đã hủy' },
 ]
@@ -27,13 +26,11 @@ const PAGE_SIZE = 4
 export function OrdersPage() {
   const [tab, setTab] = useState('all')
   const [page, setPage] = useState(1)
-  const { data: orders, isLoading } = useOrders()
+  const { data: ordData, isLoading } = useOrders({ size: 200 })
+  const orders = ordData?.orders ?? []
   const { vehicles } = useVehicles()
 
-  const filtered =
-    tab === 'all'
-      ? orders ?? []
-      : (orders ?? []).filter((o) => o.status === tab)
+  const filtered = tab === 'all' ? orders : orders.filter((o) => o.status === tab)
   const total = filtered.length
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const start = (page - 1) * PAGE_SIZE

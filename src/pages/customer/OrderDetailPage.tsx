@@ -24,8 +24,7 @@ import {
 import type { Order, OrderStatus } from '@/types/order'
 
 const statusLabels: Record<string, string> = {
-  Pending: 'Chờ xác nhận',
-  Confirmed: 'Đã xác nhận',
+  Pending: 'Chờ xử lý',
   Processing: 'Đang xử lý',
   Completed: 'Hoàn thành',
   Cancelled: 'Đã hủy',
@@ -47,8 +46,7 @@ function buildOrderTimeline(order: Order): TimelineStep[] {
     ]
   }
   const flow: { title: string; match: OrderStatus }[] = [
-    { title: 'Đặt hàng', match: 'Pending' },
-    { title: 'Xác nhận đơn', match: 'Confirmed' },
+    { title: 'Tạo đơn', match: 'Pending' },
     { title: 'Đang xử lý', match: 'Processing' },
     { title: 'Hoàn tất', match: 'Completed' },
   ]
@@ -87,7 +85,9 @@ export function OrderDetailPage() {
 
   const total = order.price
   const numericOrderId = /^\d+$/.test(order.id) ? Number(order.id) : undefined
-  const canPayOnline = numericOrderId != null && order.status === 'Pending'
+  const remainingPay = order.remaining ?? Math.max(0, order.price - order.deposit)
+  const canPayOnline =
+    numericOrderId != null && remainingPay > 0 && (order.status === 'Pending' || order.status === 'Processing')
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -103,7 +103,7 @@ export function OrderDetailPage() {
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-black leading-tight tracking-tight text-slate-900 md:text-4xl">
-              Đơn hàng #{order.id.replace('ORD-', 'BX-')}
+              Đơn hàng {order.orderNumber ? order.orderNumber : `#${order.id}`}
             </h1>
             <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-blue-700">
               {statusLabels[order.status]}
@@ -266,7 +266,7 @@ export function OrderDetailPage() {
           vehiclePrice={vehicle?.price}
           uiOnly={false}
           orderId={numericOrderId}
-          defaultAmount={order.deposit}
+          defaultAmount={remainingPay}
         />
       )}
     </div>

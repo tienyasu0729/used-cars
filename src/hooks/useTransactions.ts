@@ -1,26 +1,28 @@
 import { useQuery } from '@tanstack/react-query'
+import { transactionApi } from '@/services/transaction.service'
 import type { Transaction } from '@/types'
 
-function asList<T>(data: unknown): T[] {
-  if (Array.isArray(data)) return data as T[]
-  if (data && typeof data === 'object' && 'data' in data) {
-    const inner = (data as { data: unknown }).data
-    if (Array.isArray(inner)) return inner as T[]
-  }
-  return []
-}
-
-export function useTransactions() {
+export function useTransactions(params?: {
+  type?: string
+  fromDate?: string
+  toDate?: string
+  page?: number
+  size?: number
+}) {
   return useQuery({
-    queryKey: ['transactions'],
-    queryFn: async () => {
+    queryKey: ['transactions', params?.type, params?.fromDate, params?.toDate, params?.page, params?.size],
+    queryFn: async (): Promise<Transaction[]> => {
       try {
-        const res = await fetch('/api/transactions')
-        if (!res.ok) return [] as Transaction[]
-        const data: unknown = await res.json()
-        return asList<Transaction>(data)
+        const { items } = await transactionApi.list({
+          type: params?.type,
+          fromDate: params?.fromDate,
+          toDate: params?.toDate,
+          page: params?.page ?? 0,
+          size: params?.size ?? 100,
+        })
+        return items
       } catch {
-        return [] as Transaction[]
+        return []
       }
     },
     staleTime: 1000 * 60 * 2,

@@ -4,21 +4,41 @@ export type CompareEntry = { id: number; title: string }
 
 const SESSION_KEY = 'compare_vehicle_ids'
 
+function dedupeEntries(entries: CompareEntry[]): CompareEntry[] {
+  const seen = new Set<number>()
+  const out: CompareEntry[] = []
+  for (const e of entries) {
+    if (seen.has(e.id)) continue
+    seen.add(e.id)
+    out.push(e)
+  }
+  return out
+}
+
 function normalizeLoaded(raw: unknown): CompareEntry[] {
   if (!Array.isArray(raw)) return []
   if (raw.length === 0) return []
   const first = raw[0] as unknown
   if (typeof first === 'number') {
-    return (raw as number[]).map((id) => ({ id, title: `Xe #${id}` }))
+    const entries = (raw as number[]).map((id) => ({ id, title: `Xe #${id}` }))
+    return dedupeEntries(entries)
   }
-  return (raw as CompareEntry[]).filter((x) => x && typeof x.id === 'number')
+  const filtered = (raw as CompareEntry[]).filter((x) => x && typeof x.id === 'number')
+  return dedupeEntries(filtered)
 }
 
 function loadEntries(): CompareEntry[] {
   try {
     const s = sessionStorage.getItem(SESSION_KEY)
     if (!s) return []
-    return normalizeLoaded(JSON.parse(s))
+    const parsed = JSON.parse(s) as unknown
+    if (!Array.isArray(parsed) || parsed.length === 0) return []
+    const rawLen = parsed.length
+    const entries = normalizeLoaded(parsed)
+    if (entries.length !== rawLen) {
+      persistEntries(entries)
+    }
+    return entries
   } catch {
     return []
   }

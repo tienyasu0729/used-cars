@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
   const backendHost = env.VITE_BACKEND_HOST || '127.0.0.1'
   const backendPort = env.VITE_BACKEND_PORT || '8080'
   const backendOrigin = `http://${backendHost}:${backendPort}`
+  const devPort = Number(env.VITE_DEV_PORT) || 5173
+  const disableHmr =
+    env.VITE_DISABLE_HMR === 'true' || env.VITE_DISABLE_HMR === '1'
 
   return {
     plugins: [react()],
@@ -19,6 +22,15 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      port: devPort,
+      strictPort: false,
+      hmr: disableHmr
+        ? false
+        : {
+            protocol: 'ws',
+            port: devPort,
+            clientPort: devPort,
+          },
       proxy: {
         '/api': {
           target: backendOrigin,

@@ -1,11 +1,19 @@
-export type OrderStatus = 'Pending' | 'Confirmed' | 'Processing' | 'Completed' | 'Cancelled'
+export type OrderStatus = 'Pending' | 'Processing' | 'Completed' | 'Cancelled'
 
 export interface Order {
   id: string
+  orderNumber?: string
   vehicleId: string
   customerId: string
+  customerName?: string
   price: number
   deposit: number
+  remaining?: number
   status: OrderStatus
   createdAt: string
+  paymentMethod?: string
+  notes?: string
+  staffName?: string
+  branchName?: string
+  updatedAt?: string
 }

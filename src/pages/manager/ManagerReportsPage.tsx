@@ -176,8 +176,8 @@ export function ManagerReportsPage() {
                     </td>
                   </tr>
                 )}
-                {(reports?.topModels ?? []).map((v) => (
-                  <tr key={v.subcategoryId} className="hover:bg-slate-50/50">
+                {(reports?.topModels ?? []).map((v, idx) => (
+                  <tr key={`${v.subcategoryId}-${v.modelName}-${idx}`} className="hover:bg-slate-50/50">
                     <td className="px-6 py-4 text-sm font-bold">{v.modelName}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">{v.brandName}</td>
                     <td className="px-6 py-4 text-sm">{v.soldCount} xe</td>

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Eye, Plus, Search, FileDown, Trash2, ArrowRightLeft, RotateCcw, Truck, CheckSquare } from 'lucide-react'
 import { useManagerVehicle, useManagerVehicles } from '@/hooks/useManagerVehicles'
 import { useAuthStore } from '@/store/authStore'
-import { VehicleStatusBadge, Modal, Button } from '@/components/ui'
+import { VehicleStatusBadge, Modal, Button, ConfirmDialog } from '@/components/ui'
 import { VehicleDetailModal } from '@/features/manager/components'
 import { TransferDetailModal } from '@/components/manager/transfers'
 import { transferService } from '@/services/transfer.service'
@@ -208,6 +208,7 @@ export function ManagerVehiclesPage() {
   // Sprint 4 — Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkHideConfirmOpen, setBulkHideConfirmOpen] = useState(false)
 
   const toggleSelect = useCallback((id: number) => {
     setSelectedIds((prev) => {
@@ -247,9 +248,8 @@ export function ManagerVehiclesPage() {
     }
   }
 
-  const handleBulkDelete = async () => {
+  const executeBulkHide = async () => {
     if (selectedIds.size === 0) return
-    if (!window.confirm(`Xác nhận ẩn ${selectedIds.size} xe khỏi trang chủ?`)) return
     setBulkLoading(true)
     try {
       await vehicleService.bulkDeleteVehicles(Array.from(selectedIds))
@@ -579,7 +579,7 @@ export function ManagerVehiclesPage() {
               <button
                 type="button"
                 disabled={bulkLoading}
-                onClick={() => void handleBulkDelete()}
+                onClick={() => selectedIds.size > 0 && setBulkHideConfirmOpen(true)}
                 className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
               >
                 <Trash2 className="mr-1 inline h-3.5 w-3.5" />
@@ -714,6 +714,18 @@ export function ManagerVehiclesPage() {
           </p>
         ) : null}
       </Modal>
+      <ConfirmDialog
+        isOpen={bulkHideConfirmOpen}
+        onClose={() => setBulkHideConfirmOpen(false)}
+        title="Ẩn xe đã chọn"
+        message={`Xác nhận ẩn ${selectedIds.size} xe khỏi trang chủ và tin công khai? Bạn vẫn quản lý được trong kho chi nhánh.`}
+        confirmLabel="Ẩn xe"
+        loading={bulkLoading}
+        onConfirm={async () => {
+          await executeBulkHide()
+          setBulkHideConfirmOpen(false)
+        }}
+      />
     </div>
   )
 }

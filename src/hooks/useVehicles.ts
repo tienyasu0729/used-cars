@@ -6,6 +6,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { vehicleService } from '@/services/vehicle.service'
+import { INVENTORY_CHANGED_EVENT } from '@/utils/inventorySync'
 import type {
   Vehicle,
   VehicleSearchParams,
@@ -124,6 +125,12 @@ export function useVehicles(
     fetchVehicles()
   }, [fetchVehicles])
 
+  useEffect(() => {
+    const onInv = () => fetchVehicles()
+    window.addEventListener(INVENTORY_CHANGED_EVENT, onInv)
+    return () => window.removeEventListener(INVENTORY_CHANGED_EVENT, onInv)
+  }, [fetchVehicles])
+
   // Khi thay đổi filter → reset page về 0
   const setFilters = useCallback((newFilters: Partial<VehicleSearchParams>) => {
     setFiltersState((prev) => ({
@@ -170,12 +177,18 @@ export function useVehicle(id: string | number | undefined) {
       return
     }
 
-    setIsLoading(true)
-    vehicleService
-      .getVehicleById(numericId)
-      .then(setVehicle)
-      .catch(() => setVehicle(null))
-      .finally(() => setIsLoading(false))
+    const load = () => {
+      setIsLoading(true)
+      vehicleService
+        .getVehicleById(numericId)
+        .then(setVehicle)
+        .catch(() => setVehicle(null))
+        .finally(() => setIsLoading(false))
+    }
+    load()
+    const onInv = () => load()
+    window.addEventListener(INVENTORY_CHANGED_EVENT, onInv)
+    return () => window.removeEventListener(INVENTORY_CHANGED_EVENT, onInv)
   }, [id])
 
   return { data: vehicle, isLoading }

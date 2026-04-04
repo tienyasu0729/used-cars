@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Eye } from 'lucide-react'
 import { useStaffOrders } from '@/hooks/useStaffOrders'
+import { useStaffOrManagerBasePath } from '@/hooks/useStaffOrManagerBasePath'
 import { useVehicles } from '@/hooks/useVehicles'
 import { formatPrice } from '@/utils/format'
-import { Badge, Button, Modal } from '@/components/ui'
-import { customerDisplayLabel } from '@/lib/customerDisplay'
+import { Badge, Button, Modal, Input } from '@/components/ui'
 import { StaffOrderPaymentsPanel } from '@/features/staff/components/StaffOrderPaymentsPanel'
 import { useAuthStore } from '@/store/authStore'
+import { useToastStore } from '@/store/toastStore'
+import { orderApi } from '@/services/orderApi'
 import type { Order } from '@/types'
 import type { Vehicle } from '@/types/vehicle.types'
 
@@ -16,51 +19,102 @@ function vehicleThumb(v: Vehicle | null | undefined) {
   return typeof im === 'string' ? im : im?.url
 }
 
-function OrderDetailModal({ order, vehicle, onClose }: { order: Order; vehicle: Vehicle | null; onClose: () => void }) {
+function errMsg(e: unknown): string {
+  if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string') {
+    return (e as { message: string }).message
+  }
+  return 'Thao tác thất bại.'
+}
+
+function OrderDetailModal({
+  order,
+  vehicle,
+  onClose,
+}: {
+  order: Order
+  vehicle: Vehicle | null
+  onClose: () => void
+}) {
   const staffRole = useAuthStore((s) => s.user?.role)
-  const cid = Number(order.customerId)
-  const customerName = customerDisplayLabel(Number.isFinite(cid) ? cid : undefined)
-  const paidAmount = order.deposit
-  const remaining = order.price - order.deposit
+  const toast = useToastStore()
+  const qc = useQueryClient()
+  const [busy, setBusy] = useState(false)
+  const [payAmount, setPayAmount] = useState('')
+  const [payMethod, setPayMethod] = useState('cash')
   const thumb = vehicleThumb(vehicle)
+  const remaining = order.remaining ?? Math.max(0, order.price - order.deposit)
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['orders'] })
+  }
+
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true)
+    try {
+      await fn()
+      toast.addToast('success', 'Đã cập nhật.')
+      invalidate()
+    } catch (e) {
+      toast.addToast('error', errMsg(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onAdvance = () => run(() => orderApi.advanceStatus(order.id))
+  const onSold = () => run(() => orderApi.confirmSold(order.id))
+  const onCancel = () => {
+    const r = window.prompt('Lý do hủy đơn?')
+    if (r == null) return
+    void run(() => orderApi.cancel(order.id, r || undefined))
+  }
+
+  const onAddPay = () => {
+    const n = Number(payAmount.replace(/\s/g, ''))
+    if (!Number.isFinite(n) || n < 1) {
+      toast.addToast('error', 'Số tiền không hợp lệ.')
+      return
+    }
+    void run(() => orderApi.addManualPayment(order.id, { amount: n, paymentMethod: payMethod }))
+  }
 
   return (
     <Modal
       isOpen={true}
-      title={`Chi tiết đơn #${order.id}`}
+      title={`Đơn ${order.orderNumber ?? '#' + order.id}`}
       onClose={onClose}
       footer={
-        <Button variant="primary" className="bg-[#1A3C6E]">
-          Xác nhận bán
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            Đóng
+          </Button>
+        </div>
       }
     >
       <div className="space-y-4">
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Thông tin người mua</h3>
-          <p className="font-semibold text-slate-900">{customerName}</p>
-          <p className="text-sm text-slate-600">Email: chưa có từ API</p>
-          <p className="text-sm text-slate-600">SĐT: chưa có từ API</p>
+          <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Khách</h3>
+          <p className="font-semibold text-slate-900">{order.customerName ?? `ID ${order.customerId}`}</p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Thông tin xe</h3>
+          <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Xe</h3>
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 overflow-hidden rounded bg-slate-200">
               <img src={thumb || ''} alt="" className="h-full w-full object-cover" />
             </div>
-            <p className="font-semibold text-slate-900">{vehicle ? `${vehicle.brand} ${vehicle.model}` : '-'}</p>
+            <p className="font-semibold text-slate-900">{vehicle ? `${vehicle.brand} ${vehicle.model}` : order.vehicleId}</p>
           </div>
         </div>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Thanh toán</h3>
           <div className="space-y-1 text-sm">
             <p className="flex justify-between">
-              <span className="text-slate-600">Tổng giá trị:</span>
+              <span className="text-slate-600">Tổng:</span>
               <span className="font-bold">{formatPrice(order.price)}</span>
             </p>
             <p className="flex justify-between">
-              <span className="text-slate-600">Đã đặt cọc / thanh toán:</span>
-              <span className="font-bold text-[#1A3C6E]">{formatPrice(paidAmount)}</span>
+              <span className="text-slate-600">Đã cọc / thanh toán:</span>
+              <span className="font-bold text-[#1A3C6E]">{formatPrice(order.deposit)}</span>
             </p>
             <p className="flex justify-between">
               <span className="text-slate-600">Còn lại:</span>
@@ -71,41 +125,77 @@ function OrderDetailModal({ order, vehicle, onClose }: { order: Order; vehicle: 
             <StaffOrderPaymentsPanel orderIdRaw={order.id} staffRole={staffRole} />
           </div>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Ngày mua</h3>
-          <p className="font-semibold text-slate-900">
-            {new Date(order.createdAt).toLocaleDateString('vi-VN', {
-              weekday: 'long',
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </p>
+        <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+          {order.status === 'Pending' && (
+            <Button className="bg-[#1A3C6E]" disabled={busy} onClick={onAdvance}>
+              Chuyển sang xử lý
+            </Button>
+          )}
+          {order.status === 'Processing' && (
+            <Button className="bg-emerald-700" disabled={busy} onClick={onSold}>
+              Xác nhận bán
+            </Button>
+          )}
+          {order.status !== 'Completed' && order.status !== 'Cancelled' && (
+            <Button variant="outline" disabled={busy} onClick={onCancel}>
+              Hủy đơn
+            </Button>
+          )}
         </div>
+        {order.status !== 'Completed' && order.status !== 'Cancelled' && (
+          <div className="rounded-lg border border-slate-200 p-4">
+            <p className="mb-2 text-sm font-bold text-slate-800">Thu tiền tay (ghi nhận)</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <Input label="Số tiền (VNĐ)" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} />
+              <select
+                value={payMethod}
+                onChange={(e) => setPayMethod(e.target.value)}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              >
+                <option value="cash">Tiền mặt</option>
+                <option value="bank_transfer">Chuyển khoản</option>
+              </select>
+              <Button type="button" variant="outline" disabled={busy} onClick={onAddPay}>
+                Ghi nhận
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   )
 }
 
 export function StaffOrdersPage() {
+  const { orders: ordersPath } = useStaffOrManagerBasePath()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-  const { data: orders } = useStaffOrders()
+  const { data: orders, refetch } = useStaffOrders()
   const { vehicles } = useVehicles()
+  const toast = useToastStore()
+  const qc = useQueryClient()
 
   const getStatusBadge = (status: string) => {
-    if (status === 'Pending') return <Badge variant="pending">Chờ xác nhận</Badge>
-    if (status === 'Confirmed') return <Badge variant="confirmed">Đã cọc</Badge>
+    if (status === 'Pending') return <Badge variant="pending">Chờ xử lý</Badge>
     if (status === 'Processing') return <Badge variant="confirmed">Đang xử lý</Badge>
     if (status === 'Completed') return <Badge variant="available">Hoàn thành</Badge>
     return <Badge variant="default">Đã hủy</Badge>
   }
 
+  const quickSold = async (o: Order) => {
+    try {
+      await orderApi.confirmSold(o.id)
+      toast.addToast('success', 'Đã xác nhận bán.')
+      qc.invalidateQueries({ queryKey: ['orders'] })
+      refetch()
+    } catch (e) {
+      toast.addToast('error', errMsg(e))
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Link
-        to="/staff/orders/new"
+        to={`${ordersPath}/new`}
         className="inline-flex items-center gap-2 rounded-xl bg-[#1A3C6E] px-5 py-2.5 font-bold text-white shadow-lg hover:bg-[#152d52]"
       >
         Tạo đơn hàng mới
@@ -118,10 +208,10 @@ export function StaffOrdersPage() {
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Mã Đơn</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Khách Hàng</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Xe</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Giá Trị</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">Giá Trị</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Ngày Tạo</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Trạng Thái</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Hành Động</th>
+                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">Hành Động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -130,16 +220,20 @@ export function StaffOrdersPage() {
                 const rowThumb = vehicleThumb(vehicle)
                 return (
                   <tr key={o.id} className="hover:bg-slate-50/50">
-                    <td className="px-6 py-4 font-mono text-xs font-bold text-[#1A3C6E]">#{o.id}</td>
+                    <td className="px-6 py-4 font-mono text-xs font-bold text-[#1A3C6E]">
+                      {o.orderNumber ?? `#${o.id}`}
+                    </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-semibold">Khách #{o.customerId}</span>
+                      <span className="text-sm font-semibold">{o.customerName ?? `Khách #${o.customerId}`}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 overflow-hidden rounded bg-slate-200">
                           <img src={rowThumb || ''} alt="" className="h-full w-full object-cover" />
                         </div>
-                        <span className="text-sm font-medium">{vehicle?.brand} {vehicle?.model}</span>
+                        <span className="text-sm font-medium">
+                          {vehicle?.brand} {vehicle?.model}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right text-sm font-bold">{formatPrice(o.price)}</td>
@@ -153,12 +247,19 @@ export function StaffOrdersPage() {
                           onClick={() => setSelectedOrder(o)}
                           className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#1A3C6E]"
                           title="Xem chi tiết"
+                          type="button"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button className="rounded-lg bg-[#1A3C6E]/10 px-3 py-1 text-xs font-bold text-[#1A3C6E]">
-                          Xác nhận bán
-                        </button>
+                        {o.status === 'Processing' && (
+                          <button
+                            type="button"
+                            onClick={() => void quickSold(o)}
+                            className="rounded-lg bg-[#1A3C6E]/10 px-3 py-1 text-xs font-bold text-[#1A3C6E]"
+                          >
+                            Xác nhận bán
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

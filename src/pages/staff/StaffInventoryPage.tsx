@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useInventory } from '@/hooks/useInventory'
+import { useStaffCustomerOptions } from '@/hooks/useStaffCustomerOptions'
 import { depositApi } from '@/services/depositApi'
 import { useToastStore } from '@/store/toastStore'
 import { useQueryClient } from '@tanstack/react-query'
@@ -18,6 +19,7 @@ export function StaffInventoryPage() {
   const [search, setSearch] = useState('')
   const [reserveVehicle, setReserveVehicle] = useState<Vehicle | null>(null)
   const { data: inventory, setFilters, refetch } = useInventory()
+  const { data: customerRows = [] } = useStaffCustomerOptions()
 
   useEffect(() => {
     const s = TAB_API_STATUS[activeTab]
@@ -34,21 +36,22 @@ export function StaffInventoryPage() {
     return matchSearch
   })
 
-  const customers: { id: string; name: string }[] = []
   const toast = useToastStore()
   const queryClient = useQueryClient()
 
   const handleReserveSubmit = async (data: { customerId: string; notes?: string }) => {
     if (!reserveVehicle) return
     try {
-      await depositApi.createDeposit({
-        vehicleId: String(reserveVehicle.id),
-        customerId: data.customerId,
-        amount: Math.floor(reserveVehicle.price * 0.1),
+      const amt = Math.max(1_000_000, Math.floor(reserveVehicle.price * 0.1))
+      await depositApi.create({
+        vehicleId: Number(reserveVehicle.id),
+        customerId: Number(data.customerId),
+        amount: amt,
         paymentMethod: 'bank_transfer',
-        notes: data.notes,
+        note: data.notes?.trim() || undefined,
       })
-      queryClient.invalidateQueries({ queryKey: ['deposits', 'vehicles'] })
+      queryClient.invalidateQueries({ queryKey: ['deposits'] })
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] })
       void refetch()
       toast.addToast('success', 'Đã đặt chỗ xe thành công')
       setReserveVehicle(null)
@@ -150,7 +153,7 @@ export function StaffInventoryPage() {
         isOpen={!!reserveVehicle}
         onClose={() => setReserveVehicle(null)}
         onSubmit={handleReserveSubmit}
-        customers={customers.map((c) => ({ id: c.id, name: c.name }))}
+        customers={customerRows.map((c) => ({ id: c.id, name: c.name }))}
       />
     </div>
   )

@@ -216,7 +216,7 @@ export function HomePage() {
         ) : (
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featuredVehicles.map((v, i) => (
-              <VehicleCard key={v.id} vehicle={v} showNewBadge={i < 3} />
+              <VehicleCard key={`home-feat-${v.id}-${i}`} vehicle={v} showNewBadge={i < 3} />
             ))}
           </div>
         )}

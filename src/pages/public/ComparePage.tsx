@@ -135,8 +135,8 @@ export function ComparePage() {
                     Đặc tính kỹ thuật
                   </span>
                 </th>
-                {vehicles.map((v) => (
-                  <th key={v.id} className="min-w-[300px] border-r border-slate-200 p-6 text-center">
+                {vehicles.map((v, colIdx) => (
+                  <th key={`cmp-${colIdx}-${v.id}`} className="min-w-[300px] border-r border-slate-200 p-6 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="relative w-full overflow-hidden rounded-lg bg-slate-200" style={{ aspectRatio: '16/10' }}>
                         <img
@@ -189,9 +189,9 @@ export function ComparePage() {
                     <td className={`sticky left-0 z-10 border-r border-slate-200 p-4 pl-6 text-sm font-medium text-slate-500 ${rowBg}`}>
                       {spec.label}
                     </td>
-                    {vehicles.map((v) => (
+                    {vehicles.map((v, colIdx) => (
                       <td
-                        key={v.id}
+                        key={`cmp-${spec.key}-${colIdx}-${v.id}`}
                         className={`border-r border-slate-200 p-4 text-center font-semibold text-slate-700 ${hasDiff ? 'bg-[#FEF9C3]' : ''}`}
                       >
                         {spec.key === 'status' ? (

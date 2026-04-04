@@ -12,6 +12,8 @@ export interface Deposit {
   id: string
   vehicleId: string
   customerId: string
+  customerName?: string
+  vehicleTitle?: string
   amount: number
   depositDate: string
   expiryDate: string

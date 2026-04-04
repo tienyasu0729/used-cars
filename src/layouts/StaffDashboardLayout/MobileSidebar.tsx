@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { X, LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Package, PlusCircle, ClipboardList, Banknote, MessageCircle, ArrowLeftRight, User, Bell } from 'lucide-react'
+import { X, LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Package, PlusCircle, ClipboardList, Banknote, ListChecks, MessageCircle, ArrowLeftRight, User, Bell } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 
 interface MobileSidebarProps {
@@ -16,6 +16,7 @@ const navItems = [
   { to: '/staff/orders/new', icon: PlusCircle, label: 'Tạo Đơn Mua' },
   { to: '/staff/orders', icon: ClipboardList, label: 'Danh Sách Đơn' },
   { to: '/staff/deposits/new', icon: Banknote, label: 'Tạo Đặt Cọc' },
+  { to: '/staff/deposits', icon: ListChecks, label: 'Danh Sách Cọc' },
   { to: '/staff/chat', icon: MessageCircle, label: 'Chat Khách Hàng' },
   { to: '/staff/transfer-requests', icon: ArrowLeftRight, label: 'Yêu Cầu Điều Chuyển' },
   { to: '/staff/notifications', icon: Bell, label: 'Thông Báo' },

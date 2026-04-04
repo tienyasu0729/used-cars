@@ -7,6 +7,7 @@ import { useToastStore } from '@/store/toastStore'
 import { customerDisplayLabel } from '@/lib/customerDisplay'
 import { BookingDetailModal } from '@/features/staff/components/BookingDetailModal'
 import { BookingActionButtons } from '@/components/staff/BookingActionButtons'
+import { ConfirmDialog } from '@/components/ui'
 import type { Booking } from '@/types/booking.types'
 
 const PAGE_SIZE = 4
@@ -28,6 +29,7 @@ export function StaffBookingsPage() {
   const [activeTab, setActiveTab] = useState(0)
   const [page, setPage] = useState(1)
   const [detailBooking, setDetailBooking] = useState<Booking | null>(null)
+  const [cancelDetailConfirmOpen, setCancelDetailConfirmOpen] = useState(false)
   const {
     bookings,
     confirmBooking,
@@ -265,7 +267,21 @@ export function StaffBookingsPage() {
         isOpen={!!detailBooking}
         onClose={() => setDetailBooking(null)}
         onConfirm={() => detailBooking && wrap('Đã xác nhận', () => confirmBooking(detailBooking.id))}
-        onCancel={() => detailBooking && window.confirm('Hủy lịch hẹn?') && wrap('Đã hủy', () => cancelBooking(detailBooking.id))}
+        onCancel={() => {
+          if (detailBooking) setCancelDetailConfirmOpen(true)
+        }}
+      />
+      <ConfirmDialog
+        isOpen={cancelDetailConfirmOpen}
+        onClose={() => setCancelDetailConfirmOpen(false)}
+        title="Hủy lịch hẹn"
+        message="Bạn có chắc muốn hủy lịch hẹn này? Khách hàng sẽ nhận thông báo theo quy trình."
+        confirmLabel="Hủy lịch"
+        onConfirm={async () => {
+          if (!detailBooking) return
+          await wrap('Đã hủy', () => cancelBooking(detailBooking.id))
+          setCancelDetailConfirmOpen(false)
+        }}
       />
     </div>
   )

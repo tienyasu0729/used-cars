@@ -33,7 +33,7 @@ const STAFF_ROLE_HINT: Partial<Record<UserRole, string>> = {
 export function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>()
   const vehicleId = id ? parseInt(id, 10) : undefined
-  const { vehicle, isLoading, error, isSaved, toggleSave } = useVehicleDetail(vehicleId)
+  const { vehicle, isLoading, error, isSaved, toggleSave, refetchVehicle } = useVehicleDetail(vehicleId)
   const { isAuthenticated, user } = useAuthStore()
   const isCustomer = Boolean(user && isCustomerRole(user.role))
   /** Đặt cọc / lái thử theo nghiệp vụ chỉ cho tài khoản khách hàng — không phải “chưa đăng nhập”. */
@@ -45,9 +45,17 @@ export function VehicleDetailPage() {
 
   // Lấy xe tương tự (cùng category)
   const { vehicles: allVehicles } = useVehicles({ size: 20 })
-  const similarVehicles = allVehicles
-    .filter((v) => v.category_id === vehicle?.category_id && v.id !== vehicle?.id)
-    .slice(0, 4)
+  const similarVehicles = (() => {
+    const seen = new Set<number>()
+    return allVehicles
+      .filter((v) => {
+        if (v.category_id !== vehicle?.category_id || v.id === vehicle?.id) return false
+        if (seen.has(v.id)) return false
+        seen.add(v.id)
+        return true
+      })
+      .slice(0, 4)
+  })()
 
   const [activeTab, setActiveTab] = useState('specs')
   const [depositOpen, setDepositOpen] = useState(false)
@@ -141,6 +149,12 @@ export function VehicleDetailPage() {
               >
                 {isSaved ? '❤️ Đã lưu' : '🤍 Lưu xe'}
               </button>
+
+              {vehicle.status === 'Reserved' && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-sm text-amber-900">
+                  Xe đang được giữ chỗ. Vui lòng chọn xe khác hoặc liên hệ showroom.
+                </div>
+              )}
 
               {/* Nút Đặt Cọc Ngay — chỉ hiển khi xe Available */}
               {vehicle.status === 'Available' && (
@@ -248,7 +262,8 @@ export function VehicleDetailPage() {
         vehicleId={vehicle.id}
         vehicleName={vehicle.title}
         vehiclePrice={vehicle.price}
-        uiOnly
+        uiOnly={false}
+        onDepositSuccess={() => refetchVehicle()}
       />
     </div>
   )

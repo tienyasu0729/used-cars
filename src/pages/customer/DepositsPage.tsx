@@ -1,9 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDeposits } from '@/hooks/useDeposits'
 import { useVehicles } from '@/hooks/useVehicles'
+import { depositApi } from '@/services/depositApi'
+import { notifyInventoryChanged } from '@/utils/inventorySync'
 import { formatPrice, formatDate } from '@/utils/format'
 import { Plus, Building2, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui'
+import { useToastStore } from '@/store/toastStore'
 
 const ACTIVE_STATUSES = ['Confirmed', 'Pending', 'RefundPending']
 const HISTORY_STATUSES = [
@@ -40,14 +46,62 @@ function getStatusDisplay(status: string, expiryDate: string) {
 
 export function DepositsPage() {
   const [tab, setTab] = useState<'active' | 'history'>('active')
-  const { data: deposits, isLoading } = useDeposits()
+  const [cancelDepositId, setCancelDepositId] = useState<string | null>(null)
+  const [cancelConfirmedId, setCancelConfirmedId] = useState<string | null>(null)
+  const [cancelConfirmedReason, setCancelConfirmedReason] = useState('')
+  const qc = useQueryClient()
+  const addToast = useToastStore((s) => s.addToast)
+  const { data: depData, isLoading } = useDeposits({ size: 200 })
+  const deposits = depData?.deposits ?? []
   const { vehicles } = useVehicles()
 
-  const activeDeposits = (deposits ?? []).filter((d) => ACTIVE_STATUSES.includes(d.status))
-  const historyDeposits = (deposits ?? []).filter((d) => HISTORY_STATUSES.includes(d.status))
+  const cancelMut = useMutation({
+    mutationFn: (id: string) => depositApi.cancel(id, 'Khách hàng hủy trên web'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deposits'] })
+      notifyInventoryChanged()
+      setCancelDepositId(null)
+      addToast('success', 'Đã hủy khoản đặt cọc.')
+    },
+    onError: (e: unknown) => {
+      const msg =
+        e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
+          ? (e as { message: string }).message
+          : 'Không thể hủy cọc. Vui lòng thử lại.'
+      addToast('error', msg)
+    },
+  })
+
+  const cancelConfirmedMut = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => depositApi.cancelConfirmed(id, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deposits'] })
+      notifyInventoryChanged()
+      setCancelConfirmedId(null)
+      setCancelConfirmedReason('')
+      addToast(
+        'success',
+        'Đã hủy đặt cọc. Vui lòng liên hệ showroom để được hoàn tiền nếu có.',
+      )
+    },
+    onError: (e: unknown) => {
+      const msg =
+        e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
+          ? (e as { message: string }).message
+          : 'Không thể gửi yêu cầu hủy. Vui lòng thử lại.'
+      addToast('error', msg)
+    },
+  })
+
+  useEffect(() => {
+    if (cancelConfirmedId == null) setCancelConfirmedReason('')
+  }, [cancelConfirmedId])
+
+  const activeDeposits = deposits.filter((d) => ACTIVE_STATUSES.includes(d.status))
+  const historyDeposits = deposits.filter((d) => HISTORY_STATUSES.includes(d.status))
   const displayed = tab === 'active' ? activeDeposits : historyDeposits
   const totalAmount = activeDeposits.reduce((s, d) => s + d.amount, 0)
-  const successCount = (deposits ?? []).filter((d) => d.status === 'ConvertedToOrder' || d.status === 'Refunded').length
+  const successCount = deposits.filter((d) => d.status === 'ConvertedToOrder' || d.status === 'Refunded').length
 
   if (isLoading) {
     return (
@@ -121,6 +175,10 @@ export function DepositsPage() {
                 const vehicle = vehicles.find((v) => String(v.id) === String(d.vehicleId))
                 const status = getStatusDisplay(d.status, d.expiryDate)
                 const txId = d.id.startsWith('DEP-') ? d.id : `DEP-${d.id}`
+                const titleFromApi = d.vehicleTitle?.trim()
+                const titleFromVehicle = vehicle
+                  ? `${vehicle.brand} ${vehicle.model} ${vehicle.trim || ''} ${vehicle.year}`.trim()
+                  : ''
                 return (
                   <tr key={d.id} className="transition-colors hover:bg-slate-50/50">
                     <td className="px-6 py-5">
@@ -131,7 +189,7 @@ export function DepositsPage() {
                         />
                         <div>
                           <p className="font-bold text-slate-900">
-                            {vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.trim || ''} ${vehicle.year}`.trim() : 'Xe'}
+                            {titleFromApi || titleFromVehicle || 'Xe'}
                           </p>
                           <p className="text-xs text-slate-500">Mã giao dịch: {txId}</p>
                         </div>
@@ -150,15 +208,37 @@ export function DepositsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-5">
-                      {d.orderId ? (
-                        <Link to={`/dashboard/orders/${d.orderId}`} className="text-sm font-semibold text-[#1A3C6E] hover:underline">
-                          Chi tiết
-                        </Link>
-                      ) : (
-                        <Link to={`/vehicles/${d.vehicleId}`} className="text-sm font-semibold text-[#1A3C6E] hover:underline">
-                          Chi tiết
-                        </Link>
-                      )}
+                      <div className="flex flex-wrap items-center gap-3">
+                        {d.orderId ? (
+                          <Link to={`/dashboard/orders/${d.orderId}`} className="text-sm font-semibold text-[#1A3C6E] hover:underline">
+                            Chi tiết
+                          </Link>
+                        ) : (
+                          <Link to={`/vehicles/${d.vehicleId}`} className="text-sm font-semibold text-[#1A3C6E] hover:underline">
+                            Chi tiết
+                          </Link>
+                        )}
+                        {d.status === 'Pending' && (
+                          <button
+                            type="button"
+                            disabled={cancelMut.isPending}
+                            onClick={() => setCancelDepositId(d.id)}
+                            className="text-sm font-semibold text-red-600 hover:underline disabled:opacity-50"
+                          >
+                            Hủy đặt cọc
+                          </button>
+                        )}
+                        {d.status === 'Confirmed' && (
+                          <button
+                            type="button"
+                            disabled={cancelConfirmedMut.isPending}
+                            onClick={() => setCancelConfirmedId(d.id)}
+                            className="text-sm font-semibold text-amber-700 hover:underline disabled:opacity-50"
+                          >
+                            Yêu cầu hủy cọc
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -180,6 +260,80 @@ export function DepositsPage() {
           Chưa có khoản đặt cọc nào
         </div>
       )}
+
+      <Modal
+        isOpen={cancelDepositId != null}
+        onClose={() => {
+          if (!cancelMut.isPending) setCancelDepositId(null)
+        }}
+        title="Hủy đặt cọc"
+        footer={
+          <>
+            <Button type="button" variant="outline" disabled={cancelMut.isPending} onClick={() => setCancelDepositId(null)}>
+              Đóng
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              disabled={cancelMut.isPending}
+              loading={cancelMut.isPending}
+              onClick={() => {
+                if (cancelDepositId) cancelMut.mutate(cancelDepositId)
+              }}
+            >
+              Xác nhận hủy
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          Bạn có chắc muốn hủy khoản đặt cọc này? Xe sẽ được mở lại cho khách khác nếu chưa thanh toán xong.
+        </p>
+      </Modal>
+
+      <Modal
+        isOpen={cancelConfirmedId != null}
+        onClose={() => {
+          if (!cancelConfirmedMut.isPending) setCancelConfirmedId(null)
+        }}
+        title="Yêu cầu hủy cọc đã xác nhận"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={cancelConfirmedMut.isPending}
+              onClick={() => setCancelConfirmedId(null)}
+            >
+              Đóng
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              disabled={cancelConfirmedMut.isPending || !cancelConfirmedReason.trim()}
+              loading={cancelConfirmedMut.isPending}
+              onClick={() => {
+                if (cancelConfirmedId && cancelConfirmedReason.trim()) {
+                  cancelConfirmedMut.mutate({ id: cancelConfirmedId, reason: cancelConfirmedReason.trim() })
+                }
+              }}
+            >
+              Gửi yêu cầu hủy
+            </Button>
+          </>
+        }
+      >
+        <p className="mb-3 text-sm text-slate-600">
+          Cọc đã được xác nhận thanh toán. Vui lòng nhập lý do hủy (bắt buộc). Sau khi hủy, liên hệ showroom để xử lý hoàn tiền nếu có.
+        </p>
+        <textarea
+          value={cancelConfirmedReason}
+          onChange={(e) => setCancelConfirmedReason(e.target.value)}
+          rows={4}
+          placeholder="Ví dụ: Khách đổi ý, không mua xe nữa…"
+          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1A3C6E] focus:outline-none focus:ring-1 focus:ring-[#1A3C6E]"
+        />
+      </Modal>
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

@@ -10,6 +10,7 @@ import { vehicleService } from '@/services/vehicle.service'
 import { interactionService } from '@/services/interaction.service'
 import { useAuthStore } from '@/store/authStore'
 import type { Vehicle } from '@/types/vehicle.types'
+import { INVENTORY_CHANGED_EVENT } from '@/utils/inventorySync'
 
 interface UseVehicleDetailReturn {
   vehicle: Vehicle | null
@@ -17,6 +18,7 @@ interface UseVehicleDetailReturn {
   error: string | null
   isSaved: boolean
   toggleSave: () => Promise<void>
+  refetchVehicle: () => void
 }
 
 export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetailReturn {
@@ -28,17 +30,14 @@ export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetai
   const [error, setError] = useState<string | null>(null)
   const [isSaved, setIsSaved] = useState(false)
 
-  // Fetch chi tiết xe
-  useEffect(() => {
+  const refetchVehicle = useCallback(() => {
     if (!vehicleId || isNaN(vehicleId)) {
       setIsLoading(false)
       setError('ID xe không hợp lệ')
       return
     }
-
     setIsLoading(true)
     setError(null)
-
     vehicleService
       .getVehicleById(vehicleId)
       .then((v) => {
@@ -56,6 +55,16 @@ export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetai
       })
       .finally(() => setIsLoading(false))
   }, [vehicleId])
+
+  useEffect(() => {
+    refetchVehicle()
+  }, [refetchVehicle])
+
+  useEffect(() => {
+    const onInv = () => refetchVehicle()
+    window.addEventListener(INVENTORY_CHANGED_EVENT, onInv)
+    return () => window.removeEventListener(INVENTORY_CHANGED_EVENT, onInv)
+  }, [refetchVehicle])
 
   // Kiểm tra xe đã lưu chưa (chỉ khi đã đăng nhập)
   useEffect(() => {
@@ -104,5 +113,5 @@ export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetai
     }
   }, [vehicleId, isSaved, isAuthenticated, navigate])
 
-  return { vehicle, isLoading, error, isSaved, toggleSave }
+  return { vehicle, isLoading, error, isSaved, toggleSave, refetchVehicle }
 }

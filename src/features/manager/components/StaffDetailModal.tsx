@@ -6,7 +6,7 @@ import { managerStaffService } from '@/services/managerStaff.service'
 import { branchService } from '@/services/branch.service'
 import { useToastStore } from '@/store/toastStore'
 import { useAuthStore } from '@/store/authStore'
-import { Button, Input, Badge, Modal } from '@/components/ui'
+import { Button, Input, Badge, Modal, ConfirmDialog } from '@/components/ui'
 
 interface StaffDetailModalProps {
   staff: ManagerStaffMember | null
@@ -58,6 +58,7 @@ function StaffDetailPanel({
   const [transferOpen, setTransferOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false)
+  const [lockInactiveConfirmOpen, setLockInactiveConfirmOpen] = useState(false)
   const [transferBranchId, setTransferBranchId] = useState(
     staff.branchId !== '—' ? staff.branchId : '',
   )
@@ -292,11 +293,7 @@ function StaffDetailPanel({
                   variant="ghost"
                   className="border border-slate-200"
                   disabled={busy}
-                  onClick={() => {
-                    if (window.confirm('Đặt trạng thái tài khoản là không hoạt động?')) {
-                      statusMut.mutate('inactive')
-                    }
-                  }}
+                  onClick={() => setLockInactiveConfirmOpen(true)}
                 >
                   Khóa (inactive)
                 </Button>
@@ -437,6 +434,22 @@ function StaffDetailPanel({
             </Button>
           </div>
         )}
+
+        <ConfirmDialog
+          isOpen={lockInactiveConfirmOpen}
+          onClose={() => setLockInactiveConfirmOpen(false)}
+          title="Khóa tài khoản?"
+          message="Đặt trạng thái tài khoản là không hoạt động? Nhân viên sẽ không đăng nhập được cho đến khi được kích hoạt lại."
+          confirmLabel="Khóa tài khoản"
+          loading={statusMut.isPending}
+          onConfirm={async () => {
+            try {
+              await statusMut.mutateAsync('inactive')
+            } finally {
+              setLockInactiveConfirmOpen(false)
+            }
+          }}
+        />
 
         <Modal
           isOpen={deleteConfirmOpen}

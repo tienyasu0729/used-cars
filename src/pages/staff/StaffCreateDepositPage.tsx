@@ -4,9 +4,12 @@ import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { Calendar, UserPlus, FileText, Info, AlertCircle } from 'lucide-react'
 import { useInventory } from '@/hooks/useInventory'
+import { useStaffOrManagerBasePath } from '@/hooks/useStaffOrManagerBasePath'
+import { useStaffCustomerOptions } from '@/hooks/useStaffCustomerOptions'
 import { depositApi } from '@/services/depositApi'
 import { useToastStore } from '@/store/toastStore'
 import { useQueryClient } from '@tanstack/react-query'
+import { notifyInventoryChanged } from '@/utils/inventorySync'
 import { Button } from '@/components/ui'
 import { CustomerSearchSelect } from '@/features/staff/components/CustomerSearchSelect'
 import { VehicleSearchSelect } from '@/features/staff/components/VehicleSearchSelect'
@@ -14,7 +17,7 @@ import { VehicleSearchSelect } from '@/features/staff/components/VehicleSearchSe
 const schema = z.object({
   vehicleId: z.string().min(1, 'Chọn xe'),
   customerId: z.string().min(1, 'Chọn khách hàng'),
-  amount: z.number().min(10000000, 'Tối thiểu 10.000.000 VND'),
+  amount: z.number().min(1000000, 'Tối thiểu 1.000.000 VND'),
   paymentMethod: z.string().min(1, 'Chọn phương thức'),
   depositDate: z.string().min(1, 'Chọn ngày đặt cọc'),
   expiryDate: z.string().min(1, 'Chọn hạn hết cọc'),
@@ -23,7 +26,6 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-const customers: { id: string; name: string }[] = []
 const PAYMENT_METHODS = [
   { value: 'bank_transfer', label: 'Chuyển khoản ngân hàng' },
   { value: 'cash', label: 'Tiền mặt' },
@@ -34,10 +36,12 @@ function toDateStr(d: Date) {
 }
 
 export function StaffCreateDepositPage() {
+  const { dashboard, orders } = useStaffOrManagerBasePath()
   const navigate = useNavigate()
   const toast = useToastStore()
   const queryClient = useQueryClient()
   const { data: inventory, available } = useInventory()
+  const { data: customerRows = [] } = useStaffCustomerOptions()
   const branchVehicles = (available?.length ? available : inventory) ?? []
 
   const today = toDateStr(new Date())
@@ -57,23 +61,24 @@ export function StaffCreateDepositPage() {
   })
 
   const filteredVehicles = branchVehicles
-  const filteredCustomers = customers
+  const filteredCustomers = customerRows
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {
-      const res = await depositApi.createDeposit({
-        vehicleId: data.vehicleId,
-        customerId: data.customerId,
+      const res = await depositApi.create({
+        vehicleId: Number(data.vehicleId),
+        customerId: Number(data.customerId),
         amount: data.amount,
         paymentMethod: data.paymentMethod,
         depositDate: data.depositDate,
         expiryDate: data.expiryDate,
-        notes: data.notes,
+        note: data.notes?.trim() ? data.notes.trim() : undefined,
       })
       queryClient.invalidateQueries({ queryKey: ['deposits'] })
       queryClient.invalidateQueries({ queryKey: ['vehicles'] })
-      toast.addToast('success', `Đặt cọc ${res.data.id} đã tạo thành công`)
-      navigate('/staff/dashboard')
+      notifyInventoryChanged()
+      toast.addToast('success', `Đặt cọc #${res.id} đã tạo thành công`)
+      navigate(dashboard)
     } catch {
       toast.addToast('error', 'Không thể tạo đặt cọc')
     }
@@ -82,9 +87,9 @@ export function StaffCreateDepositPage() {
   return (
     <div className="space-y-6">
       <nav className="text-sm text-slate-500">
-        <Link to="/staff/dashboard" className="hover:text-[#1A3C6E]">Dashboard</Link>
+        <Link to={dashboard} className="hover:text-[#1A3C6E]">Dashboard</Link>
         <span className="mx-2">/</span>
-        <Link to="/staff/orders" className="hover:text-[#1A3C6E]">Hợp đồng</Link>
+        <Link to={orders} className="hover:text-[#1A3C6E]">Hợp đồng</Link>
         <span className="mx-2">/</span>
         <span className="text-slate-900">Tạo Đặt Cọc</span>
       </nav>
@@ -198,7 +203,7 @@ export function StaffCreateDepositPage() {
           </div>
         </div>
         <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-6">
-          <button type="button" onClick={() => navigate('/staff/orders')} className="text-sm text-slate-500 hover:text-slate-700">
+          <button type="button" onClick={() => navigate(orders)} className="text-sm text-slate-500 hover:text-slate-700">
             Hủy bỏ
           </button>
           <Button type="submit">
@@ -212,7 +217,7 @@ export function StaffCreateDepositPage() {
           <Info className="h-5 w-5 shrink-0 text-[#1A3C6E]" />
           <div>
             <p className="text-sm font-semibold text-slate-900">Quy định đặt cọc</p>
-            <p className="text-xs text-slate-600">Số tiền tối thiểu là 10,000,000 VND cho mỗi xe.</p>
+            <p className="text-xs text-slate-600">Số tiền tối thiểu là 1,000,000 VND cho mỗi xe.</p>
           </div>
         </div>
         <div className="flex gap-3 rounded-lg bg-amber-50 p-4">
