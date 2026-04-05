@@ -15,6 +15,8 @@ export interface DepositListItem {
   createdAt?: string | null
   status: string
   orderId?: string
+  /** Cột gateway_txn_ref (cùng nguồn với admin) */
+  gatewayTxnRef?: string | null
 }
 
 export interface CreateDepositPayload {
@@ -59,6 +61,10 @@ function mapListItem(r: Record<string, unknown>): DepositListItem {
     createdAt: r.createdAt != null && r.createdAt !== '' ? String(r.createdAt) : undefined,
     status: String(r.status ?? ''),
     orderId: r.orderId != null && r.orderId !== '' ? String(r.orderId) : undefined,
+    gatewayTxnRef:
+      r.gatewayTxnRef != null && String(r.gatewayTxnRef).trim() !== ''
+        ? String(r.gatewayTxnRef).trim()
+        : undefined,
   }
 }
 

@@ -78,6 +78,9 @@ const AdminTransfersPage = lazy(() => import('@/pages/admin').then((m) => ({ def
 const AdminHomeBannersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminHomeBannersPage })))
 const AdminConfigPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminConfigPage })))
 const AdminReportsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminReportsPage })))
+const AdminTransactionsPage = lazy(() =>
+  import('@/pages/admin').then((m) => ({ default: m.AdminTransactionsPage })),
+)
 const AdminLogsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminLogsPage })))
 const AdminNotificationsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminNotificationsPage })))
 
@@ -195,6 +198,7 @@ const router = createBrowserRouter([
       { path: 'deposits', element: <Suspense fallback={<Fallback />}><StaffDepositsPage /></Suspense> },
       { path: 'transfers', element: <Suspense fallback={<Fallback />}><ManagerTransfersPage /></Suspense> },
       { path: 'reports', element: <Suspense fallback={<Fallback />}><ManagerReportsPage /></Suspense> },
+      { path: 'transactions', element: <Suspense fallback={<Fallback />}><AdminTransactionsPage /></Suspense> },
       { path: 'settings', element: <Suspense fallback={<Fallback />}><ManagerSettingsPage /></Suspense> },
       { path: 'notifications', element: <Suspense fallback={<Fallback />}><ManagerNotificationsPage /></Suspense> },
       { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
@@ -221,6 +225,7 @@ const router = createBrowserRouter([
       { path: 'home-banners', element: <Suspense fallback={<Fallback />}><AdminHomeBannersPage /></Suspense> },
       { path: 'config', element: <Suspense fallback={<Fallback />}><AdminConfigPage /></Suspense> },
       { path: 'reports', element: <Suspense fallback={<Fallback />}><AdminReportsPage /></Suspense> },
+      { path: 'transactions', element: <Suspense fallback={<Fallback />}><AdminTransactionsPage /></Suspense> },
       { path: 'logs', element: <Suspense fallback={<Fallback />}><AdminLogsPage /></Suspense> },
       { path: 'notifications', element: <Suspense fallback={<Fallback />}><AdminNotificationsPage /></Suspense> },
       { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },

@@ -156,7 +156,6 @@ function OrderDetailModal({
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
               >
                 <option value="cash">Tiền mặt</option>
-                <option value="bank_transfer">Chuyển khoản</option>
               </select>
               <Button type="button" variant="outline" disabled={busy} onClick={onAddPay}>
                 Ghi nhận

@@ -49,6 +49,12 @@ export function paymentInitErrorMessage(err: unknown): string {
   return 'Không tạo được liên kết thanh toán.'
 }
 
+export interface PaymentDepositMethods {
+  cash: boolean
+  vnpay: boolean
+  zalopay: boolean
+}
+
 export interface PaymentUrlPayload {
   paymentUrl: string
 }
@@ -88,6 +94,11 @@ function unwrap<T>(raw: unknown): T {
 }
 
 export const paymentApi = {
+  async getDepositMethods(): Promise<PaymentDepositMethods> {
+    const res = await api.get<ApiResponse<PaymentDepositMethods>>('/payment/deposit-methods')
+    return unwrap<PaymentDepositMethods>(res.data)
+  },
+
   async createVnpay(orderId: number, amount: number): Promise<string> {
     const res = await api.post<ApiResponse<PaymentUrlPayload>>('/payment/vnpay/create', { orderId, amount })
     const data = unwrap<PaymentUrlPayload>(res.data)

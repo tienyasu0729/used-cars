@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,6 +12,7 @@ import { depositApi } from '@/services/depositApi'
 import { paymentApi, paymentInitErrorMessage, setPaymentReturnContext } from '@/services/paymentApi'
 import { notifyInventoryChanged } from '@/utils/inventorySync'
 import { formatPrice } from '@/utils/format'
+import { usePaymentDepositMethods } from '@/hooks/usePaymentDepositMethods'
 
 const schema = z.object({
   amount: z.number().min(1000000, 'Tối thiểu 1.000.000 ₫'),
@@ -60,11 +61,21 @@ export function DepositWizardModal({
     resolver: zodResolver(schema),
     defaultValues: {
       amount: defaultAmount ?? 10000000,
-      paymentMethod: 'bank_transfer',
+      paymentMethod: 'vnpay',
     },
   })
 
   const amount = watch('amount')
+  const { data: pmCfg, isLoading: pmLoading } = usePaymentDepositMethods(isOpen && !!user?.id)
+
+  /** Đặt cọc qua website: chỉ VNPay / ZaloPay theo cấu hình (không tiền mặt). */
+  const onlineMethodOptions = useMemo(() => {
+    if (!pmCfg) return [] as { value: string; label: string }[]
+    const o: { value: string; label: string }[] = []
+    if (pmCfg.vnpay) o.push({ value: 'vnpay', label: 'VNPay' })
+    if (pmCfg.zalopay) o.push({ value: 'zalopay', label: 'ZaloPay' })
+    return o
+  }, [pmCfg])
 
   useEffect(() => {
     if (!isOpen) {
@@ -75,13 +86,13 @@ export function DepositWizardModal({
   }, [isOpen])
 
   useEffect(() => {
-    if (isOpen) {
-      reset({
-        amount: defaultAmount ?? 10000000,
-        paymentMethod: 'bank_transfer',
-      })
-    }
-  }, [isOpen, defaultAmount, reset])
+    if (!isOpen) return
+    const first = onlineMethodOptions[0]?.value ?? 'vnpay'
+    reset({
+      amount: defaultAmount ?? 10000000,
+      paymentMethod: first,
+    })
+  }, [isOpen, defaultAmount, reset, onlineMethodOptions])
 
   const onSubmit = async (data: FormData) => {
     if (!user?.id) return
@@ -230,29 +241,34 @@ export function DepositWizardModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="mb-2 block text-sm font-medium">Phương thức thanh toán</label>
-            <div className="space-y-2">
-              {[
-                { value: 'bank_transfer', label: 'Chuyển khoản ngân hàng' },
-                { value: 'vnpay', label: 'VNPay' },
-                { value: 'zalopay', label: 'ZaloPay' },
-              ].map((opt) => (
-                <label key={opt.value} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    value={opt.value}
-                    {...register('paymentMethod')}
-                  />
-                  <span className="text-sm">{opt.label}</span>
-                </label>
-              ))}
-            </div>
+            {pmLoading && <p className="text-sm text-slate-500">Đang tải cấu hình…</p>}
+            {!pmLoading && onlineMethodOptions.length === 0 && (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Chưa bật VNPay hoặc ZaloPay trong cấu hình hệ thống. Vui lòng liên hệ quản trị viên (mục Thanh toán tại{' '}
+                <span className="font-mono">/admin/config</span>).
+              </p>
+            )}
+            {!pmLoading && onlineMethodOptions.length > 0 && (
+              <div className="space-y-2">
+                {onlineMethodOptions.map((opt) => (
+                  <label key={opt.value} className="flex items-center gap-2">
+                    <input type="radio" value={opt.value} {...register('paymentMethod')} />
+                    <span className="text-sm">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
           <p className="text-sm font-medium">Số tiền: {amount ? formatPrice(amount) : '-'}</p>
           <div className="flex gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setStep(2)}>
               Quay lại
             </Button>
-            <Button type="submit" loading={isSubmitting || redirecting} disabled={redirecting}>
+            <Button
+              type="submit"
+              loading={isSubmitting || redirecting}
+              disabled={redirecting || pmLoading || onlineMethodOptions.length === 0}
+            >
               {redirecting ? 'Đang chuyển tới cổng thanh toán…' : 'Xác Nhận Đặt Cọc'}
             </Button>
           </div>

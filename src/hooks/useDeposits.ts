@@ -17,6 +17,7 @@ function toDeposit(row: DepositListItem): Deposit {
     createdAt: row.createdAt,
     status: row.status as Deposit['status'],
     orderId: row.orderId,
+    gatewayTxnRef: row.gatewayTxnRef,
   }
 }
 

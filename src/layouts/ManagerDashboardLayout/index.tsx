@@ -19,6 +19,7 @@ const pageTitles: Record<string, string> = {
   '/manager/deposits': 'Danh Sách Cọc',
   '/manager/transfers': 'Yêu Cầu Điều Chuyển',
   '/manager/reports': 'Báo Cáo Chi Nhánh',
+  '/manager/transactions': 'Lịch Sử Giao Dịch',
   '/manager/notifications': 'Thông Báo',
   '/manager/settings': 'Cài Đặt Chi Nhánh',
   '/manager/profile': 'Hồ Sơ Cá Nhân',

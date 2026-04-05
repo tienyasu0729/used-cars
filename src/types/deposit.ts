@@ -21,4 +21,6 @@ export interface Deposit {
   createdAt?: string | null
   status: DepositStatus
   orderId?: string
+  /** Cột gateway_txn_ref — trùng với admin / cổng thanh toán */
+  gatewayTxnRef?: string | null
 }

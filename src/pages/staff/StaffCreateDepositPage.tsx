@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import { useEffect, useMemo } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
@@ -13,6 +14,7 @@ import { notifyInventoryChanged } from '@/utils/inventorySync'
 import { Button } from '@/components/ui'
 import { CustomerSearchSelect } from '@/features/staff/components/CustomerSearchSelect'
 import { VehicleSearchSelect } from '@/features/staff/components/VehicleSearchSelect'
+import { usePaymentDepositMethods } from '@/hooks/usePaymentDepositMethods'
 
 const schema = z.object({
   vehicleId: z.string().min(1, 'Chọn xe'),
@@ -26,11 +28,6 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-const PAYMENT_METHODS = [
-  { value: 'bank_transfer', label: 'Chuyển khoản ngân hàng' },
-  { value: 'cash', label: 'Tiền mặt' },
-]
-
 function toDateStr(d: Date) {
   return d.toISOString().slice(0, 10)
 }
@@ -42,7 +39,19 @@ export function StaffCreateDepositPage() {
   const queryClient = useQueryClient()
   const { data: inventory, available } = useInventory()
   const { data: customerRows = [] } = useStaffCustomerOptions()
-  const branchVehicles = (available?.length ? available : inventory) ?? []
+  const branchVehicles = ((available?.length ? available : inventory) ?? []).filter(
+    (v) => !v.deleted,
+  )
+  const { data: pmCfg } = usePaymentDepositMethods(true)
+
+  const methodOptions = useMemo(() => {
+    if (!pmCfg) return [] as { value: string; label: string }[]
+    const o: { value: string; label: string }[] = []
+    if (pmCfg.cash) o.push({ value: 'cash', label: 'Tiền mặt' })
+    if (pmCfg.vnpay) o.push({ value: 'vnpay', label: 'VNPay' })
+    if (pmCfg.zalopay) o.push({ value: 'zalopay', label: 'ZaloPay' })
+    return o
+  }, [pmCfg])
 
   const today = toDateStr(new Date())
   const defaultExpiry = toDateStr(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
@@ -53,12 +62,20 @@ export function StaffCreateDepositPage() {
       vehicleId: '',
       customerId: '',
       amount: 10000000,
-      paymentMethod: 'bank_transfer',
+      paymentMethod: 'cash',
       depositDate: today,
       expiryDate: defaultExpiry,
       notes: '',
     },
   })
+
+  useEffect(() => {
+    if (methodOptions.length === 0) return
+    const cur = form.getValues('paymentMethod')
+    if (!methodOptions.some((m) => m.value === cur)) {
+      form.setValue('paymentMethod', methodOptions[0].value)
+    }
+  }, [methodOptions, form])
 
   const filteredVehicles = branchVehicles
   const filteredCustomers = customerRows
@@ -79,8 +96,13 @@ export function StaffCreateDepositPage() {
       notifyInventoryChanged()
       toast.addToast('success', `Đặt cọc #${res.id} đã tạo thành công`)
       navigate(dashboard)
-    } catch {
-      toast.addToast('error', 'Không thể tạo đặt cọc')
+    } catch (err: unknown) {
+      const apiErr = err as { message?: string; errorCode?: string }
+      const detail = apiErr?.message?.trim()
+        ? apiErr.message
+        : 'Không thể tạo đặt cọc. Vui lòng thử lại.'
+      console.error('[CreateDeposit] API error:', err)
+      toast.addToast('error', detail)
     }
   })
 
@@ -179,11 +201,17 @@ export function StaffCreateDepositPage() {
               <select
                 {...form.register('paymentMethod')}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                disabled={methodOptions.length === 0}
               >
-                {PAYMENT_METHODS.map((pm) => (
-                  <option key={pm.value} value={pm.value}>{pm.label}</option>
+                {methodOptions.map((pm) => (
+                  <option key={pm.value} value={pm.value}>
+                    {pm.label}
+                  </option>
                 ))}
               </select>
+              {methodOptions.length === 0 && (
+                <p className="mt-1 text-xs text-amber-700">Chưa có phương thức nào được bật trong cấu hình thanh toán.</p>
+              )}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Hạn hết cọc <span className="text-red-500">*</span></label>

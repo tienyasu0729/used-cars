@@ -1,13 +1,8 @@
+import { useEffect, useMemo } from 'react'
 import { Car, Pencil } from 'lucide-react'
 import { formatPrice, formatPriceNumber } from '@/utils/format'
 import type { Vehicle } from '@/types/vehicle.types'
-
-const PAYMENT_OPTIONS = [
-  { value: 'cash', label: 'Tiền mặt', sub: 'Tại cửa hàng' },
-  { value: 'bank_transfer', label: 'Chuyển khoản', sub: 'Bank Transfer' },
-  { value: 'vnpay', label: 'VNPay', sub: 'QR Code' },
-  { value: 'zalopay', label: 'ZaloPay', sub: 'Ví / QR' },
-]
+import { usePaymentDepositMethods } from '@/hooks/usePaymentDepositMethods'
 
 interface CreateOrderStepDetailsProps {
   vehicle: Vehicle | null
@@ -34,6 +29,24 @@ export function CreateOrderStepDetails({
   onNotesChange,
   onChangeVehicle,
 }: CreateOrderStepDetailsProps) {
+  const { data: pmCfg } = usePaymentDepositMethods(true)
+  const paymentOptions = useMemo(() => {
+    if (!pmCfg) {
+      return [{ value: 'cash', label: 'Tiền mặt', sub: 'Tại cửa hàng' }]
+    }
+    const o: { value: string; label: string; sub: string }[] = []
+    if (pmCfg.cash) o.push({ value: 'cash', label: 'Tiền mặt', sub: 'Tại cửa hàng' })
+    if (pmCfg.vnpay) o.push({ value: 'vnpay', label: 'VNPay', sub: 'QR / cổng thanh toán' })
+    if (pmCfg.zalopay) o.push({ value: 'zalopay', label: 'ZaloPay', sub: 'Ví / QR' })
+    return o.length > 0 ? o : [{ value: 'cash', label: 'Tiền mặt', sub: 'Tại cửa hàng' }]
+  }, [pmCfg])
+
+  useEffect(() => {
+    if (!paymentOptions.some((opt) => opt.value === paymentMethod)) {
+      onPaymentChange(paymentOptions[0]?.value ?? 'cash')
+    }
+  }, [paymentOptions, paymentMethod, onPaymentChange])
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-6 flex items-center justify-between">
@@ -74,7 +87,7 @@ export function CreateOrderStepDetails({
           <div>
             <label className="mb-3 block text-sm font-medium text-slate-700">Phương thức thanh toán</label>
             <div className="space-y-2">
-              {PAYMENT_OPTIONS.map((opt) => (
+              {paymentOptions.map((opt) => (
                 <label
                   key={opt.value}
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-colors ${

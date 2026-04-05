@@ -6,7 +6,7 @@ import { depositApi } from '@/services/depositApi'
 import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import { notifyInventoryChanged } from '@/utils/inventorySync'
 import { formatPrice, formatDateVNCalendar, formatDateTimeVN } from '@/utils/format'
-import { Plus, Building2, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Plus, Building2, CheckCircle, AlertTriangle, Copy } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui'
 import { useToastStore } from '@/store/toastStore'
@@ -19,6 +19,22 @@ const HISTORY_STATUSES = [
   'Cancelled',
   'RefundFailed',
 ]
+
+/** Giống cột MÃ GD trên trang lịch sử giao dịch admin (rút gọn, hover xem đủ). */
+function shortenReferenceDisplay(s: string, len = 16): string {
+  if (!s) return '—'
+  if (s.length <= len) return s
+  return `${s.slice(0, len)}…`
+}
+
+async function copyReferenceCode(text: string, onDone: (msg: 'ok' | 'err') => void) {
+  try {
+    await navigator.clipboard.writeText(text)
+    onDone('ok')
+  } catch {
+    onDone('err')
+  }
+}
 
 function isExpiringSoon(expiryDate: string, withinDays = 3): boolean {
   const expiry = new Date(expiryDate)
@@ -174,7 +190,7 @@ export function DepositsPage() {
             <tbody className="divide-y divide-slate-100">
               {displayed.map((d) => {
                 const status = getStatusDisplay(d.status, d.expiryDate)
-                const txId = d.id.startsWith('DEP-') ? d.id : `DEP-${d.id}`
+                const txRef = d.gatewayTxnRef?.trim() ?? ''
                 const title = d.vehicleTitle?.trim() || 'Xe'
                 const rawImg = d.vehicleImageUrl?.trim()
                 const imgSrc = rawImg ? externalImageDisplayUrl(rawImg) : ''
@@ -200,9 +216,34 @@ export function DepositsPage() {
                             style={{ backgroundImage: 'url(https://placehold.co/64x48)' }}
                           />
                         )}
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-bold text-slate-900">{title}</p>
-                          <p className="text-xs text-slate-500">Mã giao dịch: {txId}</p>
+                          <div className="mt-0.5 flex max-w-full flex-wrap items-center gap-1.5">
+                            <span className="shrink-0 text-xs text-slate-500">Mã giao dịch:</span>
+                            <span
+                              className="min-w-0 max-w-[200px] truncate font-mono text-xs text-slate-600 sm:max-w-[260px]"
+                              title={txRef || undefined}
+                            >
+                              {txRef ? shortenReferenceDisplay(txRef, 16) : '—'}
+                            </span>
+                            {txRef ? (
+                              <button
+                                type="button"
+                                className="inline-flex shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#1A3C6E]"
+                                aria-label="Sao chép mã giao dịch"
+                                title="Sao chép"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  void copyReferenceCode(txRef, (r) => {
+                                    if (r === 'ok') addToast('success', 'Đã sao chép mã giao dịch.')
+                                    else addToast('error', 'Không sao chép được. Thử chọn và copy thủ công.')
+                                  })
+                                }}
+                              >
+                                <Copy className="h-3.5 w-3.5" strokeWidth={2} />
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                     </td>

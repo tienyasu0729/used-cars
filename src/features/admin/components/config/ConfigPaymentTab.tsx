@@ -6,6 +6,7 @@ import { useToastStore } from '@/store/toastStore'
 const K = {
   vnpayOn: 'vnpay_enabled',
   zaloOn: 'zalopay_enabled',
+  cashOn: 'cash_enabled',
   minDep: 'payment_min_deposit',
   resHrs: 'payment_reservation_hours',
 } as const
@@ -20,6 +21,7 @@ export function ConfigPaymentTab() {
   const putCfg = usePutAdminConfig()
   const [vnpayEnabled, setVnpayEnabled] = useState(false)
   const [zaloEnabled, setZaloEnabled] = useState(false)
+  const [cashEnabled, setCashEnabled] = useState(true)
   const [minDeposit, setMinDeposit] = useState('10000000')
   const [reservationHours, setReservationHours] = useState('48')
 
@@ -28,6 +30,11 @@ export function ConfigPaymentTab() {
     const m = configListToMap(data)
     setVnpayEnabled(readBool(m[K.vnpayOn]))
     setZaloEnabled(readBool(m[K.zaloOn]))
+    if (m[K.cashOn] === undefined || m[K.cashOn] === '') {
+      setCashEnabled(true)
+    } else {
+      setCashEnabled(readBool(m[K.cashOn]))
+    }
     setMinDeposit(m[K.minDep] || '10000000')
     setReservationHours(m[K.resHrs] || '48')
   }, [data])
@@ -37,6 +44,7 @@ export function ConfigPaymentTab() {
       await putCfg.mutateAsync([
         { key: K.vnpayOn, value: vnpayEnabled ? 'true' : 'false' },
         { key: K.zaloOn, value: zaloEnabled ? 'true' : 'false' },
+        { key: K.cashOn, value: cashEnabled ? 'true' : 'false' },
         { key: K.minDep, value: minDeposit },
         { key: K.resHrs, value: reservationHours },
       ])
@@ -53,12 +61,22 @@ export function ConfigPaymentTab() {
   return (
     <div className="space-y-8">
       <div className="relative rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-1 text-lg font-semibold text-slate-900">Cổng thanh toán</h3>
+        <h3 className="mb-1 text-lg font-semibold text-slate-900">Hình thức thanh toán</h3>
         <p className="mb-4 text-sm text-slate-500">
-          Bật/tắt VNPay và ZaloPay. TMN, secret, URL và Zalo key cấu hình trên server (
-          <code className="text-xs">app.payment</code> trong <code className="text-xs">application-local.yml</code> hoặc biến môi trường), không lưu trong DB.
+          Tiền mặt / VNPay / ZaloPay: bật tắt tại đây. Khách đặt cọc trên website chỉ thấy VNPay và ZaloPay (nếu bật). Tiền mặt chỉ dùng khi nhân viên hoặc quản lý tạo cọc/đơn trên hệ thống nội bộ.
+          TMN, secret, URL và Zalo key vẫn cấu hình trên server (
+          <code className="text-xs">app.payment</code> trong <code className="text-xs">application-local.yml</code> hoặc biến môi trường).
         </p>
         <div className="space-y-6 rounded-lg border border-slate-100 bg-slate-50/50 p-4">
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={cashEnabled}
+              onChange={(e) => setCashEnabled(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-[#1A3C6E]"
+            />
+            <span className="text-sm text-slate-700">Bật tiền mặt (staff / quản lý)</span>
+          </label>
           <label className="flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"

@@ -14,6 +14,7 @@ import {
   ListChecks,
   User,
   Lock,
+  CreditCard,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
@@ -30,6 +31,7 @@ const navItems = [
   { to: '/manager/deposits', icon: ListChecks, label: 'Danh Sách Cọc' },
   { to: '/manager/transfers', icon: ArrowLeftRight, label: 'Yêu Cầu Điều Chuyển' },
   { to: '/manager/reports', icon: BarChart3, label: 'Báo Cáo' },
+  { to: '/manager/transactions', icon: CreditCard, label: 'Lịch sử giao dịch' },
   { to: '/manager/notifications', icon: Bell, label: 'Thông Báo', badgeKey: 'notifications' },
   { to: '/manager/settings', icon: Settings, label: 'Cài Đặt Chi Nhánh' },
   { to: '/manager/security', icon: Lock, label: 'Bảo Mật' },

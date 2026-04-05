@@ -15,8 +15,13 @@ import type { ApiErrorResponse } from '@/types/auth.types'
 import { useSessionRevokedStore } from '@/store/sessionRevokedStore'
 import { shouldOpenAccountSuspendedModal } from '@/utils/accountSuspendedModalPolicy'
 import { getStoredAuthToken } from '@/utils/authToken'
+import {
+  fixAbsoluteBaseUrlLeadingSlash,
+  normalizeApiBaseUrl,
+  stripDuplicateApiV1Path,
+} from '@/utils/apiBaseUrl'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+const baseURL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL)
 
 const parsedTimeout = Number(import.meta.env.VITE_API_TIMEOUT_MS)
 const requestTimeoutMs =
@@ -26,9 +31,19 @@ const requestTimeoutMs =
       ? 60000
       : 30000
 
+/** Ghép base + path giống combineURLs của axios (sau interceptor url có thể là `deposits` không có `/` đầu). */
+function approxCombinedPath(baseURL: string | undefined, url: string | undefined): string {
+  if (!url) return (baseURL ?? '').split('?')[0]
+  if (!baseURL) return url.split('?')[0]
+  if (/^https?:\/\//i.test(url)) return url.split('?')[0]
+  const b = baseURL.replace(/\/?\/$/, '')
+  const relative = url.split('?')[0].replace(/^\/+/, '')
+  return `${b}/${relative}`
+}
+
 function apiV1PathAfterPrefix(config: InternalAxiosRequestConfig | undefined): string | null {
   if (!config) return null
-  const full = `${config.baseURL ?? ''}${config.url ?? ''}`.split('?')[0]
+  const full = approxCombinedPath(config.baseURL, config.url)
   const marker = '/api/v1/'
   const idx = full.indexOf(marker)
   if (idx < 0) return null
@@ -54,6 +69,8 @@ function isOptionalAuthPublicApi(config: InternalAxiosRequestConfig | undefined)
 
 const axiosInstance = axios.create({
   baseURL,
+  /** Luôn ghép url tương đối với baseURL; tránh bỏ qua base với allowAbsoluteUrls mặc định (axios ≥1.7). */
+  allowAbsoluteUrls: false,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -67,6 +84,12 @@ const axiosInstance = axios.create({
 // Token lấy từ localStorage key "auth_token" (key cố định theo spec).
 axiosInstance.interceptors.request.use(
   (config) => {
+    const fixedDup = stripDuplicateApiV1Path(config.baseURL, config.url)
+    if (fixedDup !== undefined) config.url = fixedDup
+
+    const fixedSlash = fixAbsoluteBaseUrlLeadingSlash(config.baseURL, config.url)
+    if (fixedSlash !== undefined) config.url = fixedSlash
+
     const authToken = getStoredAuthToken()
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`

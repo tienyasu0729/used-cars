@@ -17,6 +17,7 @@ const pageTitles: Record<string, string> = {
   '/admin/home-banners': 'Banner trang chủ',
   '/admin/config': 'Cấu Hình Hệ Thống',
   '/admin/reports': 'Báo Cáo Tổng',
+  '/admin/transactions': 'Lịch Sử Giao Dịch',
   '/admin/logs': 'Nhật Ký Hoạt Động',
   '/admin/notifications': 'Thông Báo',
   '/admin/security': 'Bảo Mật',

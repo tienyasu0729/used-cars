@@ -47,7 +47,7 @@ export function StaffInventoryPage() {
         vehicleId: Number(reserveVehicle.id),
         customerId: Number(data.customerId),
         amount: amt,
-        paymentMethod: 'bank_transfer',
+        paymentMethod: 'cash',
         note: data.notes?.trim() || undefined,
       })
       queryClient.invalidateQueries({ queryKey: ['deposits'] })
