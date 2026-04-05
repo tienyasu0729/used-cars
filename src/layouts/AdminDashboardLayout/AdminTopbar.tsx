@@ -3,6 +3,7 @@ import { Bell, ChevronDown, Menu, LogOut } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { getRoleLabel } from '@/utils/roleLabels'
+import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 
 interface AdminTopbarProps {
   title: string
@@ -13,6 +14,7 @@ export function AdminTopbar({ title, onMenuClick }: AdminTopbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { user, logout } = useAuthStore()
+  const { data: unreadCount = 0 } = useNotificationUnreadCount()
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -45,6 +47,11 @@ export function AdminTopbar({ title, onMenuClick }: AdminTopbarProps) {
           className="relative rounded-full p-2 text-white/80 transition-colors hover:bg-white/10"
         >
           <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E8612A] px-1 text-[10px] font-bold text-white">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </Link>
         <div className="mx-2 h-8 w-px bg-white/20" />
         <div className="relative flex cursor-pointer items-center gap-3" ref={dropdownRef}>

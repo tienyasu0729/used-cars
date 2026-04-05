@@ -27,6 +27,7 @@ export interface BranchPublicDto {
 
 /** Đội ngũ công khai — GET /branches/{id}/team */
 export interface BranchTeamMemberDto {
+  userId: number
   name: string
   role: string
   avatarUrl?: string | null

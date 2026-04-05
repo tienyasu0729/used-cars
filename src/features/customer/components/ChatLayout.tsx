@@ -78,11 +78,11 @@ export function ChatLayout({
               {messages.map((m) => (
                 <div
                   key={m.id}
-                  className={`flex ${m.senderType === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${m.senderType === 'self' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                      m.senderType === 'user'
+                      m.senderType === 'self'
                         ? 'rounded-tr-sm bg-[#1A3C6E] text-white'
                         : 'rounded-tl-sm bg-slate-100 text-slate-900'
                     }`}

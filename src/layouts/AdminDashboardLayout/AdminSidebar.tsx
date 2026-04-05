@@ -14,6 +14,7 @@ import {
   Bell,
   User,
   CreditCard,
+  MessageCircle,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useTransfersAdmin } from '@/hooks/useTransfersAdmin'
@@ -32,6 +33,7 @@ const navItems = [
   { to: '/admin/transactions', icon: CreditCard, label: 'Lịch sử giao dịch' },
   { to: '/admin/logs', icon: ScrollText, label: 'Nhật ký hoạt động' },
   { to: '/admin/notifications', icon: Bell, label: 'Thông báo' },
+  { to: '/admin/consultations', icon: MessageCircle, label: 'Tư vấn' },
 ]
 
 export function AdminSidebar() {

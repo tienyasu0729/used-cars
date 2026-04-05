@@ -180,23 +180,23 @@ export function StaffChatLayout({
                     {group.items.map((m) => (
                       <div
                         key={m.id}
-                        className={`flex ${m.senderType === 'staff' ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${m.senderType === 'self' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className={`flex max-w-[75%] gap-2 ${m.senderType === 'staff' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`flex max-w-[75%] gap-2 ${m.senderType === 'self' ? 'flex-row-reverse' : ''}`}>
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-300 text-xs font-medium text-slate-600">
-                            {m.senderType === 'staff' ? 'NV' : selected?.participantName.slice(0, 2).toUpperCase()}
+                            {m.senderType === 'self' ? 'NV' : selected?.participantName.slice(0, 2).toUpperCase()}
                           </div>
                           <div
                             className={`rounded-2xl px-4 py-2.5 ${
-                              m.senderType === 'staff'
+                              m.senderType === 'self'
                                 ? 'rounded-tr-sm bg-[#1A3C6E] text-white'
                                 : 'rounded-tl-sm bg-slate-200 text-slate-900'
                             }`}
                           >
                             <p className="text-sm leading-relaxed">{m.content}</p>
-                            <p className={`mt-1 text-[10px] ${m.senderType === 'staff' ? 'text-blue-200' : 'text-slate-500'}`}>
+                            <p className={`mt-1 text-[10px] ${m.senderType === 'self' ? 'text-blue-200' : 'text-slate-500'}`}>
                               {new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                              {m.senderType === 'staff' && ' • Đã xem'}
+                              {m.senderType === 'self' && ' • Đã xem'}
                             </p>
                           </div>
                         </div>

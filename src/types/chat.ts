@@ -1,8 +1,8 @@
 export interface ChatMessage {
   id: string
   conversationId: string
-  senderId: string
-  senderType: 'user' | 'staff' | 'ai'
+  /** 'self' = tin của user đang đăng nhập, 'other' = đối phương */
+  senderType: 'self' | 'other'
   content: string
   createdAt: string
 }

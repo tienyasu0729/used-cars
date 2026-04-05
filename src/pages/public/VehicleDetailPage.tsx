@@ -239,6 +239,12 @@ export function VehicleDetailPage() {
           {/* Contact box */}
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="mb-3 font-bold text-slate-900">Liên hệ tư vấn</h3>
+            <Link
+              to={`/contact?vehicleId=${encodeURIComponent(String(vehicle.id))}`}
+              className="mb-3 flex items-center justify-center gap-2 rounded-lg bg-[#1A3C6E] py-3 font-bold text-white hover:bg-[#15325A]"
+            >
+              Gửi phiếu tư vấn xe này
+            </Link>
             <a
               href="tel:19006868"
               className="flex items-center gap-3 rounded-lg bg-[#1A3C6E]/5 p-3 font-bold text-[#1A3C6E] hover:bg-[#1A3C6E]/10"

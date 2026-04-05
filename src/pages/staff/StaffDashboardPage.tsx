@@ -107,9 +107,9 @@ export function StaffDashboardPage() {
     },
     {
       icon: MessageSquare,
-      label: 'Tư Vấn Chờ Xử Lý',
+      label: 'Phiếu tư vấn chờ xử lý',
       value: fmt(dashStats?.pendingConsultations),
-      sub: 'Lịch hẹn đang chờ xác nhận',
+      sub: 'Có xe gắn chi nhánh bạn, trạng thái chờ xử lý',
       color: 'text-[#E8612A]',
       bg: 'bg-orange-100',
     },

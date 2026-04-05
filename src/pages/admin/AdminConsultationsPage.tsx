@@ -9,7 +9,7 @@ import {
 import { useToastStore } from '@/store/toastStore'
 import { Button } from '@/components/ui'
 
-const consultationsKey = ['consultations', 'staff'] as const
+const adminConsultationsKey = ['consultations', 'admin'] as const
 
 function statusLabel(s: string) {
   const x = s.toLowerCase()
@@ -19,24 +19,25 @@ function statusLabel(s: string) {
   return s
 }
 
-function priorityLabel(p: string) {
-  const x = p.toLowerCase()
-  if (x === 'high') return 'Cao'
-  if (x === 'low') return 'Thấp'
-  return 'Trung bình'
-}
-
-export function StaffConsultationsPage() {
+export function AdminConsultationsPage() {
   const qc = useQueryClient()
   const toast = useToastStore()
+  const [scope, setScope] = useState<'orphan' | 'all'>('orphan')
   const [tab, setTab] = useState<'all' | 'pending' | 'processing' | 'resolved'>('all')
   const [page] = useState(0)
 
+  const hasVehicle: boolean | undefined = scope === 'orphan' ? false : undefined
   const statusParam = tab === 'all' ? undefined : tab
 
   const { data, isLoading } = useQuery({
-    queryKey: [...consultationsKey, tab, page],
-    queryFn: async () => listConsultations({ status: statusParam, page, size: 50 }),
+    queryKey: [...adminConsultationsKey, scope, tab, page],
+    queryFn: async () =>
+      listConsultations({
+        status: statusParam,
+        has_vehicle: hasVehicle,
+        page,
+        size: 100,
+      }),
   })
 
   const rows: ConsultationListItem[] = data?.items ?? []
@@ -44,7 +45,7 @@ export function StaffConsultationsPage() {
   const respondMut = useMutation({
     mutationFn: (id: number) => respondToConsultation(id),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: consultationsKey })
+      void qc.invalidateQueries({ queryKey: adminConsultationsKey })
       toast.addToast('success', 'Đã nhận xử lý phiếu.')
     },
     onError: () => toast.addToast('error', 'Thao tác thất bại.'),
@@ -53,13 +54,13 @@ export function StaffConsultationsPage() {
   const resolveMut = useMutation({
     mutationFn: (id: number) => updateConsultationStatus(id, 'resolved'),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: consultationsKey })
+      void qc.invalidateQueries({ queryKey: adminConsultationsKey })
       toast.addToast('success', 'Đã đánh dấu đã xử lý.')
     },
     onError: () => toast.addToast('error', 'Cập nhật thất bại.'),
   })
 
-  const tabs = useMemo(
+  const statusTabs = useMemo(
     () =>
       [
         { key: 'all' as const, label: 'Tất cả' },
@@ -79,19 +80,41 @@ export function StaffConsultationsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 py-6 md:px-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Tư vấn &amp; phiếu liên hệ</h1>
-        <p className="mt-1 text-slate-500">Phiếu có gắn xe thuộc chi nhánh của bạn</p>
+        <h1 className="text-2xl font-bold text-slate-900">Phiếu tư vấn</h1>
+        <p className="mt-1 text-slate-500">
+          Phiếu không gắn xe do khách hỏi chung — admin điều phối. Có thể xem toàn bộ hệ thống.
+        </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
+        <button
+          type="button"
+          onClick={() => setScope('orphan')}
+          className={`rounded-lg px-4 py-2 text-sm font-medium ${
+            scope === 'orphan' ? 'bg-[#1A3C6E] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          Phiếu chung (không xe)
+        </button>
+        <button
+          type="button"
+          onClick={() => setScope('all')}
+          className={`rounded-lg px-4 py-2 text-sm font-medium ${
+            scope === 'all' ? 'bg-[#1A3C6E] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          Tất cả phiếu
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {statusTabs.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
             className={`rounded-lg px-4 py-2 text-sm font-medium ${
-              tab === t.key ? 'bg-[#1A3C6E] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              tab === t.key ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             {t.label}
@@ -107,15 +130,14 @@ export function StaffConsultationsPage() {
               <th className="px-4 py-3">Xe</th>
               <th className="px-4 py-3">Tin nhắn</th>
               <th className="px-4 py-3">Trạng thái</th>
-              <th className="px-4 py-3">Ưu tiên</th>
               <th className="px-4 py-3">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                  Không có phiếu nào.
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                  Không có phiếu.
                 </td>
               </tr>
             ) : (
@@ -126,11 +148,10 @@ export function StaffConsultationsPage() {
                   <td className="max-w-[140px] truncate px-4 py-3 text-slate-600">
                     {r.vehicleTitle ?? '—'}
                   </td>
-                  <td className="max-w-[200px] truncate px-4 py-3 text-slate-600">{r.message}</td>
+                  <td className="max-w-[220px] truncate px-4 py-3 text-slate-600">{r.message}</td>
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">{statusLabel(r.status)}</span>
                   </td>
-                  <td className="px-4 py-3 text-xs">{priorityLabel(r.priority)}</td>
                   <td className="space-x-2 px-4 py-3 whitespace-nowrap">
                     {r.status.toLowerCase() === 'pending' && (
                       <Button

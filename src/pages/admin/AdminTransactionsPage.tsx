@@ -427,7 +427,10 @@ export function AdminTransactionsPage() {
                           >
                             <td className="whitespace-nowrap px-4 py-3 text-slate-700">{formatDateTime(row.createdAt)}</td>
                             <td className="px-4 py-3">
-                              <Badge className={row.source === 'DEPOSIT' ? 'bg-sky-100 text-sky-800' : 'bg-orange-100 text-orange-800'}>
+                              <Badge
+                                variant="default"
+                                className={row.source === 'DEPOSIT' ? 'border-sky-200 bg-sky-100 text-sky-800' : 'border-orange-200 bg-orange-100 text-orange-800'}
+                              >
                                 {row.type}
                               </Badge>
                             </td>
@@ -442,10 +445,14 @@ export function AdminTransactionsPage() {
                             <td className="px-4 py-3 text-slate-700">{row.branchName ?? '—'}</td>
                             <td className="px-4 py-3 text-right font-bold text-slate-900">{formatVnd(row.amount)}</td>
                             <td className="hidden px-4 py-3 lg:table-cell">
-                              <Badge className={gatewayBadgeClass(row.paymentGateway)}>{gatewayLabel(row.paymentGateway)}</Badge>
+                              <Badge variant="default" className={gatewayBadgeClass(row.paymentGateway)}>
+                                {gatewayLabel(row.paymentGateway)}
+                              </Badge>
                             </td>
                             <td className="px-4 py-3">
-                              <Badge className={statusBadgeClass(b)}>{row.statusLabel}</Badge>
+                              <Badge variant="default" className={statusBadgeClass(b)}>
+                                {row.statusLabel}
+                              </Badge>
                             </td>
                             <td
                               className="hidden max-w-[120px] truncate font-mono text-xs text-slate-600 lg:table-cell"
@@ -586,8 +593,15 @@ function DetailBody(props: { data: import('@/services/adminTransactions.service'
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge className={row.source === 'DEPOSIT' ? 'bg-sky-100 text-sky-800' : 'bg-orange-100 text-orange-800'}>{row.type}</Badge>
-        <Badge className={statusBadgeClass(bucket)}>{row.statusLabel}</Badge>
+        <Badge
+          variant="default"
+          className={row.source === 'DEPOSIT' ? 'border-sky-200 bg-sky-100 text-sky-800' : 'border-orange-200 bg-orange-100 text-orange-800'}
+        >
+          {row.type}
+        </Badge>
+        <Badge variant="default" className={statusBadgeClass(bucket)}>
+          {row.statusLabel}
+        </Badge>
       </div>
 
       <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">

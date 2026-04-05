@@ -1,35 +1,28 @@
 import { useState } from 'react'
 import { StaffChatLayout } from '@/features/staff/components/StaffChatLayout'
-import { useStaffConversations } from '@/hooks/useChats'
-import { useChatMessages } from '@/hooks/useChats'
-import type { ChatMessage } from '@/types'
+import { useStaffConversations, useChatMessages, useInvalidateChatConversations } from '@/hooks/useChats'
+import { sendChatMessage } from '@/services/chat.service'
+import { useToastStore } from '@/store/toastStore'
 
 export function StaffChatPage() {
   const [selectedId, setSelectedId] = useState<string | undefined>()
-  const [localMessages, setLocalMessages] = useState<Record<string, ChatMessage[]>>({})
-  const { data: conversations, isLoading } = useStaffConversations()
-  const { data: messages = [] } = useChatMessages(selectedId)
+  const { data: conversations = [], isLoading, refetch } = useStaffConversations()
+  const { data: messages = [], refetchMessages } = useChatMessages(selectedId, 5000)
+  const invalidateConv = useInvalidateChatConversations()
+  const toast = useToastStore()
 
-  const mergedMessages = selectedId
-    ? [...messages, ...(localMessages[selectedId] ?? [])].sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      )
-    : []
-
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     if (!selectedId) return
-    const newMsg: ChatMessage = {
-      id: `m_${Date.now()}`,
-      conversationId: selectedId,
-      senderId: 'staff',
-      senderType: 'staff',
-      content,
-      createdAt: new Date().toISOString(),
+    const cid = parseInt(selectedId, 10)
+    if (!Number.isFinite(cid)) return
+    try {
+      await sendChatMessage(cid, content)
+      await refetchMessages()
+      await invalidateConv()
+      await refetch()
+    } catch {
+      toast.addToast('error', 'Không gửi được tin nhắn.')
     }
-    setLocalMessages((prev) => ({
-      ...prev,
-      [selectedId]: [...(prev[selectedId] ?? []), newMsg],
-    }))
   }
 
   if (isLoading) {
@@ -43,8 +36,8 @@ export function StaffChatPage() {
   return (
     <div className="h-full">
       <StaffChatLayout
-        conversations={conversations ?? []}
-        messages={mergedMessages}
+        conversations={conversations}
+        messages={messages}
         selectedId={selectedId}
         onSelectConversation={setSelectedId}
         onSendMessage={handleSendMessage}

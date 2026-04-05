@@ -54,6 +54,7 @@ function isOptionalAuthPublicApi(config: InternalAxiosRequestConfig | undefined)
   const path = apiV1PathAfterPrefix(config)
   if (!path || !config) return false
   const m = (config.method ?? 'get').toLowerCase()
+  if (m === 'post' && path === 'consultations') return true
   if (m === 'post' && /^vehicles\/\d+\/view$/.test(path)) return true
   if (m !== 'get') return false
   if (path === 'vehicles') return true

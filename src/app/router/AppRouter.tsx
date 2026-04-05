@@ -83,6 +83,7 @@ const AdminTransactionsPage = lazy(() =>
 )
 const AdminLogsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminLogsPage })))
 const AdminNotificationsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminNotificationsPage })))
+const AdminConsultationsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminConsultationsPage })))
 
 const Fallback = () => (
   <div className="flex min-h-[400px] items-center justify-center">
@@ -228,6 +229,7 @@ const router = createBrowserRouter([
       { path: 'transactions', element: <Suspense fallback={<Fallback />}><AdminTransactionsPage /></Suspense> },
       { path: 'logs', element: <Suspense fallback={<Fallback />}><AdminLogsPage /></Suspense> },
       { path: 'notifications', element: <Suspense fallback={<Fallback />}><AdminNotificationsPage /></Suspense> },
+      { path: 'consultations', element: <Suspense fallback={<Fallback />}><AdminConsultationsPage /></Suspense> },
       { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
       { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
     ],
