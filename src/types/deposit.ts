@@ -14,9 +14,11 @@ export interface Deposit {
   customerId: string
   customerName?: string
   vehicleTitle?: string
+  vehicleImageUrl?: string | null
   amount: number
   depositDate: string
   expiryDate: string
+  createdAt?: string | null
   status: DepositStatus
   orderId?: string
 }

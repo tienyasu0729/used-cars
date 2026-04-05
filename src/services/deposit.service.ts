@@ -8,9 +8,11 @@ export interface DepositListItem {
   customerId: string
   customerName?: string
   vehicleTitle?: string
+  vehicleImageUrl?: string | null
   amount: number
   depositDate: string
   expiryDate: string
+  createdAt?: string | null
   status: string
   orderId?: string
 }
@@ -47,9 +49,14 @@ function mapListItem(r: Record<string, unknown>): DepositListItem {
     customerId: String(r.customerId ?? ''),
     customerName: r.customerName != null ? String(r.customerName) : undefined,
     vehicleTitle: r.vehicleTitle != null ? String(r.vehicleTitle) : undefined,
+    vehicleImageUrl:
+      r.vehicleImageUrl != null && String(r.vehicleImageUrl).trim() !== ''
+        ? String(r.vehicleImageUrl)
+        : undefined,
     amount: Number(r.amount ?? 0),
     depositDate: String(r.depositDate ?? ''),
     expiryDate: String(r.expiryDate ?? ''),
+    createdAt: r.createdAt != null && r.createdAt !== '' ? String(r.createdAt) : undefined,
     status: String(r.status ?? ''),
     orderId: r.orderId != null && r.orderId !== '' ? String(r.orderId) : undefined,
   }

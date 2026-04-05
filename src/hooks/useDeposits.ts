@@ -10,9 +10,11 @@ function toDeposit(row: DepositListItem): Deposit {
     customerId: row.customerId,
     customerName: row.customerName,
     vehicleTitle: row.vehicleTitle,
+    vehicleImageUrl: row.vehicleImageUrl,
     amount: row.amount,
     depositDate: row.depositDate,
     expiryDate: row.expiryDate,
+    createdAt: row.createdAt,
     status: row.status as Deposit['status'],
     orderId: row.orderId,
   }

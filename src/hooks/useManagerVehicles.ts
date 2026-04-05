@@ -7,6 +7,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { vehicleService } from '@/services/vehicle.service'
 import { useToastStore } from '@/store/toastStore'
+import { notifyInventoryChanged } from '@/utils/inventorySync'
 import type { Vehicle, CreateVehicleRequest, UpdateVehicleRequest } from '@/types/vehicle.types'
 
 // Map error code sang message thân thiện
@@ -55,6 +56,7 @@ export function useManagerVehicle(): UseManagerVehicleReturn {
       try {
         const vehicle = await vehicleService.createVehicle(data)
         toast.addToast('success', 'Thêm xe thành công')
+        notifyInventoryChanged()
         return vehicle
       } catch (err) {
         handleError(err, 'Lỗi tạo xe mới')
@@ -73,6 +75,7 @@ export function useManagerVehicle(): UseManagerVehicleReturn {
       try {
         const vehicle = await vehicleService.updateVehicle(id, data)
         toast.addToast('success', 'Cập nhật thành công')
+        notifyInventoryChanged()
         return vehicle
       } catch (err) {
         handleError(err, 'Lỗi cập nhật xe')
@@ -91,6 +94,7 @@ export function useManagerVehicle(): UseManagerVehicleReturn {
       try {
         await vehicleService.deleteVehicle(id)
         toast.addToast('success', 'Đã ẩn xe khỏi trang công khai')
+        notifyInventoryChanged()
         return true
       } catch (err) {
         handleError(err, 'Lỗi ẩn xe')
@@ -109,6 +113,7 @@ export function useManagerVehicle(): UseManagerVehicleReturn {
       try {
         await vehicleService.restoreVehicleVisibility(id)
         toast.addToast('success', 'Đã hiển thị lại tin đăng')
+        notifyInventoryChanged()
         return true
       } catch (err) {
         handleError(err, 'Lỗi hiển thị lại xe')

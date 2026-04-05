@@ -98,6 +98,11 @@ function vehicleInventoryTableRow(v: Vehicle, ctx: RowCtx) {
       <td className="p-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex flex-col gap-1">
           <VehicleStatusBadge status={v.status} />
+          {v.listing_hold_active ? (
+            <span className="w-fit rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+              Có cọc / thanh toán đang xử lý
+            </span>
+          ) : null}
           {v.deleted ? (
             <span className="w-fit rounded-md bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
               Ẩn khỏi trang chủ

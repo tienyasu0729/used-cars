@@ -60,6 +60,7 @@ export function VehicleDetailPage() {
   const [activeTab, setActiveTab] = useState('specs')
   const [depositOpen, setDepositOpen] = useState(false)
 
+
   // Loading state
   if (isLoading) {
     return (
@@ -84,6 +85,9 @@ export function VehicleDetailPage() {
       </div>
     )
   }
+
+  const listingHold = Boolean(vehicle.listing_hold_active)
+  const depositAndBookingOpen = vehicle.status === 'Available' && !listingHold
 
   const similarContent = (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -150,14 +154,16 @@ export function VehicleDetailPage() {
                 {isSaved ? '❤️ Đã lưu' : '🤍 Lưu xe'}
               </button>
 
-              {vehicle.status === 'Reserved' && (
+              {/* Banner: xe có cọc bởi người khác */}
+              {(vehicle.status === 'Reserved' || (listingHold && vehicle.my_pending_deposit_id == null)) && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-sm text-amber-900">
-                  Xe đang được giữ chỗ. Vui lòng chọn xe khác hoặc liên hệ showroom.
+                  {vehicle.status === 'Reserved'
+                    ? 'Xe đang được giữ chỗ. Vui lòng chọn xe khác hoặc liên hệ showroom.'
+                    : 'Xe đang có cọc / thanh toán đang xử lý. Vui lòng chọn xe khác hoặc liên hệ showroom.'}
                 </div>
               )}
 
-              {/* Nút Đặt Cọc Ngay — chỉ hiển khi xe Available */}
-              {vehicle.status === 'Available' && (
+              {depositAndBookingOpen && (
                 <>
                   {canUseCustomerActions ? (
                     <button
@@ -197,7 +203,7 @@ export function VehicleDetailPage() {
                 </>
               )}
 
-              {vehicle.status === 'Available' && (
+              {depositAndBookingOpen && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-4">
                   <p className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-900">
                     <Calendar className="h-4 w-4 text-[#1A3C6E]" />

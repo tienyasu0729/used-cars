@@ -36,6 +36,10 @@ export interface Vehicle {
   fuel: string // "Xăng" | "Dầu" | "Điện" | "Hybrid"
   transmission: string // "Số tự động" | "Số sàn"
   status: VehicleStatus
+  /** Có cọc Pending / Confirmed / AwaitingPayment — trùng điều kiện chặn đặt cọc mới */
+  listing_hold_active?: boolean
+  /** ID cọc AwaitingPayment của user hiện tại cho xe này (null nếu không có hoặc chưa login) */
+  my_pending_deposit_id?: number | null
   /** true = đã ẩn khỏi tin đăng công khai (xóa mềm), vẫn xem trong quản lý chi nhánh */
   deleted?: boolean
   category_id: number

@@ -11,7 +11,6 @@ import { useToastStore } from '@/store/toastStore'
 import { depositApi } from '@/services/depositApi'
 import { paymentApi, paymentInitErrorMessage, setPaymentReturnContext } from '@/services/paymentApi'
 import { notifyInventoryChanged } from '@/utils/inventorySync'
-import { openPaymentGatewayUrl } from '@/utils/openPaymentGatewayUrl'
 import { formatPrice } from '@/utils/format'
 
 const schema = z.object({
@@ -111,16 +110,6 @@ export function DepositWizardModal({
           data.paymentMethod === 'vnpay'
             ? await paymentApi.createVnpay(orderId, amount)
             : await paymentApi.createZaloPay(orderId, amount)
-        if (openPaymentGatewayUrl(url)) {
-          submitLockRef.current = false
-          setRedirecting(false)
-          addToast(
-            'info',
-            'Trang thanh toán đã mở ở tab mới. Đóng tab đó khi hủy hoặc xong — bạn vẫn ở lại trang này.',
-          )
-          onClose()
-          return
-        }
         window.location.assign(url)
       } catch (e: unknown) {
         submitLockRef.current = false
@@ -141,19 +130,9 @@ export function DepositWizardModal({
         })
         const url = created.paymentUrl?.trim()
         if (url) {
-          setPaymentReturnContext({ kind: 'deposit', id: created.id })
+          setPaymentReturnContext({ kind: 'deposit', id: created.id, vehicleId: Number(vehicleId) })
           queryClient.invalidateQueries({ queryKey: ['deposits'] })
           notifyInventoryChanged()
-          if (openPaymentGatewayUrl(url)) {
-            submitLockRef.current = false
-            setRedirecting(false)
-            addToast(
-              'info',
-              'Trang thanh toán đã mở ở tab mới. Đóng tab đó khi hủy hoặc xong — bạn vẫn ở lại trang này.',
-            )
-            onClose()
-            return
-          }
           window.location.assign(url)
           return
         }

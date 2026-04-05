@@ -16,8 +16,15 @@ import { useSessionRevokedStore } from '@/store/sessionRevokedStore'
 import { shouldOpenAccountSuspendedModal } from '@/utils/accountSuspendedModalPolicy'
 import { getStoredAuthToken } from '@/utils/authToken'
 
-// Đọc base URL từ biến môi trường Vite, fallback qua proxy khi dev
 const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+
+const parsedTimeout = Number(import.meta.env.VITE_API_TIMEOUT_MS)
+const requestTimeoutMs =
+  Number.isFinite(parsedTimeout) && parsedTimeout > 0
+    ? parsedTimeout
+    : import.meta.env.DEV
+      ? 60000
+      : 30000
 
 function apiV1PathAfterPrefix(config: InternalAxiosRequestConfig | undefined): string | null {
   if (!config) return null
@@ -50,7 +57,7 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // 15 giây timeout tránh treo request
+  timeout: requestTimeoutMs,
 })
 
 // ============================================================
@@ -88,12 +95,16 @@ axiosInstance.interceptors.response.use(
     return response.data
   },
   (error) => {
-    // Nếu không có response (network error, timeout)
     if (!error.response) {
-      console.error('[axiosInstance] Lỗi kết nối mạng:', error.message)
+      const msg = String(error.message ?? '')
+      const isTimeout =
+        error.code === 'ECONNABORTED' || /timeout/i.test(msg)
+      console.error('[axiosInstance] Lỗi kết nối mạng:', msg, error.code ?? '')
       return Promise.reject({
-        errorCode: 'NETWORK_ERROR',
-        message: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.',
+        errorCode: isTimeout ? 'NETWORK_TIMEOUT' : 'NETWORK_ERROR',
+        message: isTimeout
+          ? `Hết thời gian chờ máy chủ (${requestTimeoutMs / 1000}s). Kiểm tra backend đang chạy, proxy/ngrok và thử lại.`
+          : 'Không thể kết nối đến máy chủ. Kiểm tra kết nối mạng và địa chỉ API.',
         status: 0,
       } as Partial<ApiErrorResponse>)
     }

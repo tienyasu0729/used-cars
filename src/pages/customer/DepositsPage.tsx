@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDeposits } from '@/hooks/useDeposits'
-import { useVehicles } from '@/hooks/useVehicles'
 import { depositApi } from '@/services/depositApi'
+import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import { notifyInventoryChanged } from '@/utils/inventorySync'
-import { formatPrice, formatDate } from '@/utils/format'
+import { formatPrice, formatDateVNCalendar, formatDateTimeVN } from '@/utils/format'
 import { Plus, Building2, CheckCircle, AlertTriangle } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui'
@@ -53,7 +53,6 @@ export function DepositsPage() {
   const addToast = useToastStore((s) => s.addToast)
   const { data: depData, isLoading } = useDeposits({ size: 200 })
   const deposits = depData?.deposits ?? []
-  const { vehicles } = useVehicles()
 
   const cancelMut = useMutation({
     mutationFn: (id: string) => depositApi.cancel(id, 'Khách hàng hủy trên web'),
@@ -164,7 +163,9 @@ export function DepositsPage() {
               <tr className="bg-slate-50">
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Phương tiện</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Số tiền</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Ngày đặt</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Ngày đặt / tạo lúc (GMT+7)
+                </th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Ngày hết hạn</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Trạng thái</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Thao tác</th>
@@ -172,25 +173,35 @@ export function DepositsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {displayed.map((d) => {
-                const vehicle = vehicles.find((v) => String(v.id) === String(d.vehicleId))
                 const status = getStatusDisplay(d.status, d.expiryDate)
                 const txId = d.id.startsWith('DEP-') ? d.id : `DEP-${d.id}`
-                const titleFromApi = d.vehicleTitle?.trim()
-                const titleFromVehicle = vehicle
-                  ? `${vehicle.brand} ${vehicle.model} ${vehicle.trim || ''} ${vehicle.year}`.trim()
-                  : ''
+                const title = d.vehicleTitle?.trim() || 'Xe'
+                const rawImg = d.vehicleImageUrl?.trim()
+                const imgSrc = rawImg ? externalImageDisplayUrl(rawImg) : ''
+                const createdLine =
+                  d.createdAt?.trim()
+                    ? formatDateTimeVN(d.createdAt)
+                    : d.depositDate?.trim()
+                      ? `${formatDateVNCalendar(d.depositDate)} · 00:00:00`
+                      : '—'
                 return (
                   <tr key={d.id} className="transition-colors hover:bg-slate-50/50">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-4">
-                        <div
-                          className="h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-200 bg-cover bg-center"
-                          style={{ backgroundImage: `url(${vehicle?.images?.[0] || 'https://placehold.co/64x48'})` }}
-                        />
+                        {imgSrc ? (
+                          <img
+                            src={imgSrc}
+                            alt=""
+                            className="h-12 w-16 shrink-0 rounded-lg object-cover bg-slate-200"
+                          />
+                        ) : (
+                          <div
+                            className="h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-200 bg-cover bg-center"
+                            style={{ backgroundImage: 'url(https://placehold.co/64x48)' }}
+                          />
+                        )}
                         <div>
-                          <p className="font-bold text-slate-900">
-                            {titleFromApi || titleFromVehicle || 'Xe'}
-                          </p>
+                          <p className="font-bold text-slate-900">{title}</p>
                           <p className="text-xs text-slate-500">Mã giao dịch: {txId}</p>
                         </div>
                       </div>
@@ -200,8 +211,11 @@ export function DepositsPage() {
                         {formatPrice(d.amount).replace(' VNĐ', ' ₫')}
                       </p>
                     </td>
-                    <td className="px-6 py-5 text-sm text-slate-600">{formatDate(d.depositDate)}</td>
-                    <td className="px-6 py-5 text-sm text-slate-600">{formatDate(d.expiryDate)}</td>
+                    <td className="px-6 py-5 text-sm text-slate-600">
+                      <p className="font-medium text-slate-800">{formatDateVNCalendar(d.depositDate)}</p>
+                      <p className="mt-0.5 whitespace-nowrap text-xs text-slate-500">{createdLine}</p>
+                    </td>
+                    <td className="px-6 py-5 text-sm text-slate-600">{formatDateVNCalendar(d.expiryDate)}</td>
                     <td className="px-6 py-5">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${status.className}`}>
                         {status.label}

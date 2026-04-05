@@ -11,6 +11,7 @@ import { StaffOrderPaymentsPanel } from '@/features/staff/components/StaffOrderP
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 import { orderApi } from '@/services/orderApi'
+import { notifyInventoryChanged } from '@/utils/inventorySync'
 import type { Order } from '@/types'
 import type { Vehicle } from '@/types/vehicle.types'
 
@@ -46,6 +47,8 @@ function OrderDetailModal({
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['orders'] })
+    qc.invalidateQueries({ queryKey: ['vehicles'] })
+    notifyInventoryChanged()
   }
 
   const run = async (fn: () => Promise<void>) => {
@@ -186,6 +189,8 @@ export function StaffOrdersPage() {
       await orderApi.confirmSold(o.id)
       toast.addToast('success', 'Đã xác nhận bán.')
       qc.invalidateQueries({ queryKey: ['orders'] })
+      qc.invalidateQueries({ queryKey: ['vehicles'] })
+      notifyInventoryChanged()
       refetch()
     } catch (e) {
       toast.addToast('error', errMsg(e))
