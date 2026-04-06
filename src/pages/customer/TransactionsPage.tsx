@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { TransactionTable } from '@/features/customer/components/TransactionTable'
 import { useTransactions } from '@/hooks/useTransactions'
-import { Button } from '@/components/ui'
-import { Wallet, ShoppingCart, RotateCcw, Plus } from 'lucide-react'
+import { Wallet, ShoppingCart, RotateCcw } from 'lucide-react'
 
 const typeFilters = [
   { key: 'all', label: 'Tất cả' },
@@ -22,15 +21,9 @@ export function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900">Lịch sử giao dịch</h1>
-          <p className="mt-1 text-slate-500">Theo dõi và quản lý mọi hoạt động tài chính trên hệ thống</p>
-        </div>
-        <Button variant="primary" className="flex items-center gap-2">
-          <Plus className="h-5 w-5" />
-          Nạp tiền ngay
-        </Button>
+      <div>
+        <h1 className="text-3xl font-black tracking-tight text-slate-900">Lịch sử giao dịch</h1>
+        <p className="mt-1 text-slate-500">Theo dõi và quản lý mọi hoạt động tài chính trên hệ thống</p>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

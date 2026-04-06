@@ -15,6 +15,7 @@ const filters = [
   { key: 'unread', label: 'Chưa Đọc' },
   { key: 'Booking', label: 'Lịch Hẹn' },
   { key: 'Deposit', label: 'Đặt Cọc' },
+  { key: 'Consultation', label: 'Tư Vấn' },
   { key: 'PriceDrop', label: 'Giảm Giá' },
 ]
 
@@ -80,6 +81,7 @@ export function NotificationsPage() {
       <NotificationList
         notifications={filtered}
         onMarkRead={(id) => markOne.mutate(id)}
+        linkBehavior="customer"
       />
     </div>
   )

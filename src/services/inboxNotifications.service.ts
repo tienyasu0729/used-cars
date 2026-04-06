@@ -12,6 +12,7 @@ const NOTIFICATION_TYPES: NotificationType[] = [
   'Order',
   'PriceDrop',
   'System',
+  'Consultation',
   'AppointmentTestDrive',
   'AppointmentConsultation',
   'TransferIncoming',
@@ -19,7 +20,9 @@ const NOTIFICATION_TYPES: NotificationType[] = [
 ]
 
 function mapType(t: string): NotificationType {
-  return NOTIFICATION_TYPES.includes(t as NotificationType) ? (t as NotificationType) : 'System'
+  const key = t.trim()
+  const match = NOTIFICATION_TYPES.find((x) => x.toLowerCase() === key.toLowerCase())
+  return match ?? 'System'
 }
 
 export function mapInboxRowToNotification(r: InboxNotificationRow): Notification {

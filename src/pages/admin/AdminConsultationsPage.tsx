@@ -22,7 +22,7 @@ function statusLabel(s: string) {
 export function AdminConsultationsPage() {
   const qc = useQueryClient()
   const toast = useToastStore()
-  const [scope, setScope] = useState<'orphan' | 'all'>('orphan')
+  const [scope, setScope] = useState<'orphan' | 'all'>('all')
   const [tab, setTab] = useState<'all' | 'pending' | 'processing' | 'resolved'>('all')
   const [page] = useState(0)
 
@@ -84,7 +84,7 @@ export function AdminConsultationsPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Phiếu tư vấn</h1>
         <p className="mt-1 text-slate-500">
-          Phiếu không gắn xe do khách hỏi chung — admin điều phối. Có thể xem toàn bộ hệ thống.
+          Mặc định hiển thị mọi phiếu. Chọn &quot;Phiếu chung (không xe)&quot; nếu chỉ muốn các yêu cầu không gắn xe — admin điều phối nhóm đó.
         </p>
       </div>
       <div className="flex flex-wrap gap-2">

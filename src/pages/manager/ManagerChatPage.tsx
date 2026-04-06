@@ -1,18 +1,15 @@
 import { useState } from 'react'
 import { StaffChatLayout } from '@/features/staff/components/StaffChatLayout'
-import {
-  CHAT_CONVERSATIONS_POLL_MS,
-  useStaffConversations,
-  useChatMessages,
-  useInvalidateChatConversations,
-} from '@/hooks/useChats'
+import { useStaffConversations, useChatMessages, useInvalidateChatConversations } from '@/hooks/useChats'
 import { sendChatMessage } from '@/services/chat.service'
 import { useToastStore } from '@/store/toastStore'
 
-export function StaffChatPage() {
+// Trang chat của Manager — dùng chung API /api/v1/chat/conversations (endpoint không phân tách role)
+// Manager thấy toàn bộ hội thoại thuộc chi nhánh mình thông qua backend filter
+export function ManagerChatPage() {
   const [selectedId, setSelectedId] = useState<string | undefined>()
   const { data: conversations = [], isLoading, refetch } = useStaffConversations()
-  const { data: messages = [], refetchMessages } = useChatMessages(selectedId, CHAT_CONVERSATIONS_POLL_MS)
+  const { data: messages = [], refetchMessages } = useChatMessages(selectedId, 5000)
   const invalidateConv = useInvalidateChatConversations()
   const toast = useToastStore()
 

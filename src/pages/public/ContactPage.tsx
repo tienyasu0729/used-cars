@@ -59,7 +59,7 @@ export function ContactPage() {
       <p className="mt-2 text-gray-500">Gửi yêu cầu tư vấn, chúng tôi sẽ phản hồi trong 24h</p>
       {Number.isFinite(vehicleIdNum) && (
         <p className="mt-2 text-sm text-[#1A3C6E]">
-          Bạn đang gửi tư vấn kèm mã xe (ID: {vehicleIdNum}). Chúng tôi sẽ chuyển phiếu tới đúng chi nhánh.
+          Bạn đang gửi tư vấn từ trang chi tiết xe. Phiếu sẽ kèm thông tin xe đó để showroom tiếp nhận và chuyển tới chi nhánh phù hợp.
         </p>
       )}
 

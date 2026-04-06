@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { Info, Car, Users, MapPin, ArrowRight, MessageCircle, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBranch, useBranchTeam } from '@/hooks/useBranches'
 import { useVehicles } from '@/hooks/useVehicles'
+import { useSavedVehicles } from '@/hooks/useSavedVehicles'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
 import { BRANCH_DAY_LABELS_VI } from '@/types/branch'
@@ -60,6 +61,7 @@ export function BranchDetailPage() {
     sort: 'postingDateDesc',
     branchId: branchIdFilter,
   })
+  const { savedIds } = useSavedVehicles()
 
   if (branchLoading) {
     return (
@@ -219,7 +221,7 @@ export function BranchDetailPage() {
               <>
                 <div className="grid gap-6 sm:grid-cols-2">
                   {vehicles.map((v, i) => (
-                    <VehicleCard key={v.id} vehicle={v} showNewBadge={i < 2} />
+                    <VehicleCard key={v.id} vehicle={v} showNewBadge={i < 2} initialSaved={savedIds.has(v.id)} />
                   ))}
                 </div>
                 {totalPages > 1 && (

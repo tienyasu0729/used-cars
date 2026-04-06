@@ -15,9 +15,12 @@ import {
   User,
   Lock,
   CreditCard,
+  MessageSquare,
+  FileText,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
+import { useInternalStaffChatUnreadCount } from '@/hooks/useChats'
 import { BrandLogo } from '@/components/common/BrandLogo'
 
 const navItems = [
@@ -29,6 +32,8 @@ const navItems = [
   { to: '/manager/orders', icon: ClipboardList, label: 'Đơn Hàng' },
   { to: '/manager/deposits/new', icon: Banknote, label: 'Tạo Đặt Cọc' },
   { to: '/manager/deposits', icon: ListChecks, label: 'Danh Sách Cọc' },
+  { to: '/manager/consultations', icon: FileText, label: 'Yêu Cầu Tư Vấn' },
+  { to: '/manager/chat', icon: MessageSquare, label: 'Chat Khách Hàng', badgeKey: 'chat' },
   { to: '/manager/transfers', icon: ArrowLeftRight, label: 'Yêu Cầu Điều Chuyển' },
   { to: '/manager/reports', icon: BarChart3, label: 'Báo Cáo' },
   { to: '/manager/transactions', icon: CreditCard, label: 'Lịch sử giao dịch' },
@@ -40,6 +45,7 @@ const navItems = [
 export function ManagerSidebar() {
   const { user } = useAuthStore()
   const { data: unreadCount = 0 } = useNotificationUnreadCount()
+  const chatUnread = useInternalStaffChatUnreadCount()
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[220px] flex-shrink-0 flex-col bg-[#1A3C6E] lg:flex">
@@ -48,7 +54,8 @@ export function ManagerSidebar() {
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto py-4">
         {navItems.map((item) => {
-          const badge = item.badgeKey === 'notifications' ? unreadCount : 0
+          const badge =
+            item.badgeKey === 'notifications' ? unreadCount : item.badgeKey === 'chat' ? chatUnread : 0
           return (
             <NavLink
               key={item.to}
@@ -62,9 +69,17 @@ export function ManagerSidebar() {
                 }`
               }
             >
-              <item.icon className="h-5 w-5 shrink-0" />
+              <span className="relative shrink-0">
+                <item.icon className="h-5 w-5" />
+                {item.badgeKey === 'chat' && chatUnread > 0 && (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#1A3C6E]"
+                    aria-hidden
+                  />
+                )}
+              </span>
               <span className="flex-1 font-medium">{item.label}</span>
-              {badge > 0 && (
+              {badge > 0 && item.badgeKey !== 'chat' && (
                 <span className="rounded-full bg-[#E8612A] px-2 py-0.5 text-xs font-medium text-white">
                   {badge}
                 </span>

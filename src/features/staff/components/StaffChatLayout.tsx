@@ -1,6 +1,17 @@
-import { useState } from 'react'
-import { Search, Plus, Image, Smile, Send, UserPlus, Star } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Search, Plus, Image, Smile, Send, UserPlus, Star, X } from 'lucide-react'
 import type { ChatConversation, ChatMessage } from '@/types'
+import {
+  TRANSFER_GROUP_OTHER_BRANCH_MANAGER,
+  TRANSFER_GROUP_SAME_BRANCH_SALES,
+  fetchTransferCandidates,
+  transferChatConversation,
+  type ChatTransferCandidate,
+} from '@/services/chat.service'
+import { respondToConsultation } from '@/services/consultation.service'
+import { useAuthStore } from '@/store/authStore'
+import { useToastStore } from '@/store/toastStore'
 
 interface StaffChatLayoutProps {
   conversations: ChatConversation[]
@@ -8,6 +19,8 @@ interface StaffChatLayoutProps {
   selectedId: string | undefined
   onSelectConversation: (id: string) => void
   onSendMessage?: (content: string) => void
+  /** Sau khi chuyển giao thành công — thường bỏ chọn hội thoại vì user hiện tại không còn tham gia. */
+  onTransferSuccess?: () => void
 }
 
 function formatMessageTime(s: string) {
@@ -19,17 +32,84 @@ function formatMessageTime(s: string) {
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
 }
 
+function roleKey(role: string | undefined | null): string {
+  return String(role ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+}
+
 export function StaffChatLayout({
   conversations,
   messages,
   selectedId,
   onSelectConversation,
   onSendMessage,
+  onTransferSuccess,
 }: StaffChatLayoutProps) {
   const [input, setInput] = useState('')
-  const [filter, setFilter] = useState<'all' | 'unread' | 'received'>('all')
+  const [filter, setFilter] = useState<'all' | 'unread'>('all')
   const [search, setSearch] = useState('')
+  const [transferOpen, setTransferOpen] = useState(false)
+  const qc = useQueryClient()
+  const toast = useToastStore()
+  const user = useAuthStore((s) => s.user)
+
   const selected = conversations.find((c) => c.id === selectedId)
+  const convNumeric = selectedId ? parseInt(selectedId, 10) : NaN
+
+  const transferCandidatesQuery = useQuery({
+    queryKey: ['chat', 'transfer-candidates', convNumeric],
+    queryFn: () => fetchTransferCandidates(convNumeric),
+    enabled: transferOpen && Number.isFinite(convNumeric) && roleKey(user?.role) === 'branchmanager',
+  })
+
+  const canClaimConsultation =
+    selected != null &&
+    typeof selected.consultationId === 'number' &&
+    Number.isFinite(selected.consultationId) &&
+    String(selected.consultationStatus ?? '').toLowerCase() === 'pending'
+
+  const claimConsultationMutation = useMutation({
+    mutationFn: async () => {
+      const id = selected?.consultationId
+      if (id == null || !Number.isFinite(id)) throw new Error('Không có phiếu tư vấn để tiếp nhận.')
+      await respondToConsultation(id)
+    },
+    onSuccess: async () => {
+      toast.addToast('success', 'Bạn đã tiếp nhận phiếu tư vấn. Khách hàng sẽ nhận thông báo.')
+      await qc.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+      if (selectedId) {
+        await qc.invalidateQueries({ queryKey: ['chat', 'messages', selectedId] })
+      }
+    },
+    onError: (err: unknown) => {
+      const m =
+        err && typeof err === 'object' && 'message' in err ? String((err as { message: string }).message) : ''
+      toast.addToast(
+        'error',
+        m || 'Không tiếp nhận được (phiếu đã được NV khác lấy hoặc không còn ở trạng thái chờ).',
+      )
+    },
+  })
+
+  const transferMutation = useMutation({
+    mutationFn: (targetUserId: number) => transferChatConversation(convNumeric, targetUserId),
+    onSuccess: async () => {
+      toast.addToast('success', 'Đã chuyển cuộc trò chuyện cho đồng nghiệp.')
+      setTransferOpen(false)
+      // Sau chuyển giao, user hiện tại bị xóa khỏi participant — invalidate messages sẽ gọi GET và nhận 403.
+      const convIdStr = selectedId
+      onTransferSuccess?.()
+      await qc.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+      if (convIdStr) {
+        qc.removeQueries({ queryKey: ['chat', 'messages', convIdStr] })
+      }
+    },
+    onError: () => {
+      toast.addToast('error', 'Không chuyển giao được. Kiểm tra quyền hoặc thử lại.')
+    },
+  })
 
   const filtered = conversations.filter((c) => {
     if (search && !c.participantName.toLowerCase().includes(search.toLowerCase())) return false
@@ -64,8 +144,35 @@ export function StaffChatLayout({
     return acc
   }, [])
 
+  const isManager = roleKey(user?.role) === 'branchmanager'
+  const transferIntro =
+    'Chỉ quản lý chi nhánh chuyển giao được: tới tư vấn viên cùng cửa hàng hoặc tới quản lý một chi nhánh khác (không chuyển từ NV lên QL).'
+
+  const transferLists = useMemo(() => {
+    const data = transferCandidatesQuery.data ?? []
+    const otherManagers = data.filter((c) => c.transferGroup === TRANSFER_GROUP_OTHER_BRANCH_MANAGER)
+    const sameBranchSales = data.filter(
+      (c) => c.transferGroup === TRANSFER_GROUP_SAME_BRANCH_SALES || c.transferGroup == null,
+    )
+    return { sameBranchSales, otherManagers }
+  }, [transferCandidatesQuery.data])
+
+  const renderTransferRow = (c: ChatTransferCandidate) => (
+    <li key={c.userId}>
+      <button
+        type="button"
+        disabled={transferMutation.isPending}
+        onClick={() => transferMutation.mutate(c.userId)}
+        className="flex w-full flex-col items-start rounded-xl border border-slate-100 px-3 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 disabled:opacity-50"
+      >
+        <span className="font-semibold text-slate-900">{c.name}</span>
+        <span className="text-xs text-slate-500">{c.roleLabel}</span>
+      </button>
+    </li>
+  )
+
   return (
-    <div className="flex h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="relative flex h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex w-80 flex-shrink-0 flex-col border-r border-slate-200">
         <div className="border-b border-slate-200 p-4">
           <div className="relative">
@@ -79,7 +186,7 @@ export function StaffChatLayout({
             />
           </div>
           <div className="mt-3 flex gap-1">
-            {(['all', 'unread', 'received'] as const).map((f) => (
+            {(['all', 'unread'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -87,7 +194,7 @@ export function StaffChatLayout({
                   filter === f ? 'bg-[#1A3C6E] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {f === 'all' ? 'Tất cả' : f === 'unread' ? 'Chưa đọc' : 'Tiếp nhận'}
+                {f === 'all' ? 'Tất cả' : 'Chưa đọc'}
               </button>
             ))}
           </div>
@@ -162,14 +269,27 @@ export function StaffChatLayout({
                 </div>
               </div>
               <div className="flex gap-2">
-                <button className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                  <UserPlus className="h-4 w-4" />
-                  Giao cho đồng nghiệp
-                </button>
-                <button className="flex items-center gap-2 rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-medium text-white hover:bg-[#152d52]">
-                  <Star className="h-4 w-4" />
-                  Tiếp nhận ngay
-                </button>
+                {isManager && (
+                  <button
+                    type="button"
+                    onClick={() => setTransferOpen(true)}
+                    className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Giao cho đồng nghiệp
+                  </button>
+                )}
+                {canClaimConsultation && (
+                  <button
+                    type="button"
+                    disabled={claimConsultationMutation.isPending || transferMutation.isPending}
+                    onClick={() => claimConsultationMutation.mutate()}
+                    className="flex items-center gap-2 rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-medium text-white hover:bg-[#152d52] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Star className="h-4 w-4" />
+                    {claimConsultationMutation.isPending ? 'Đang xử lý…' : 'Tiếp nhận ngay'}
+                  </button>
+                )}
               </div>
             </div>
             <div className="flex-1 overflow-y-auto bg-slate-50/50 p-6">
@@ -244,6 +364,79 @@ export function StaffChatLayout({
           </div>
         )}
       </div>
+
+      {transferOpen && isManager && selected && Number.isFinite(convNumeric) && (
+        <div
+          className="absolute inset-0 z-30 flex items-center justify-center p-4"
+          style={{ background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)' }}
+        >
+          <div className="max-h-[min(480px,80vh)] w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <div>
+                <h2 className="text-sm font-bold text-[#1A3C6E]">Chọn người nhận chuyển giao</h2>
+                <p className="mt-0.5 text-[11px] text-slate-500">{transferIntro}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTransferOpen(false)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Đóng"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="max-h-[min(420px,70vh)] overflow-y-auto p-3">
+              {transferCandidatesQuery.isLoading ? (
+                <p className="py-8 text-center text-sm text-slate-500">Đang tải danh sách…</p>
+              ) : transferCandidatesQuery.isError ? (
+                <p className="py-6 text-center text-sm text-red-600">
+                  Không tải được danh sách. Hội thoại có thể không phải khách hàng hoặc bạn không có quyền.
+                </p>
+              ) : (transferCandidatesQuery.data?.length ?? 0) === 0 ? (
+                <p className="py-6 text-center text-sm text-slate-500">Không có đồng nghiệp khả dụng để chuyển.</p>
+              ) : (
+                <div className="space-y-5">
+                  <section>
+                    <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#1A3C6E]">
+                      Tư vấn viên · cùng chi nhánh
+                    </h3>
+                    {transferLists.sameBranchSales.length === 0 ? (
+                      <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                        Không có tư vấn viên khác trong đội.
+                      </p>
+                    ) : (
+                      <ul className="space-y-1">{transferLists.sameBranchSales.map(renderTransferRow)}</ul>
+                    )}
+                  </section>
+                  <section>
+                    <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#1A3C6E]">
+                      Quản lý chi nhánh · cửa hàng khác
+                    </h3>
+                    {transferLists.otherManagers.length === 0 ? (
+                      <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-950/90">
+                        Hiện không có quản lý chi nhánh nào ở <strong>chi nhánh khác</strong> để chọn (cần ít nhất 2
+                        chi nhánh có quản lý active trong hệ thống). Nếu vẫn thiếu sau khi đã tạo chi nhánh thứ hai, hãy
+                        kiểm tra user quản lý đã gắn đúng role và trạng thái hoạt động.
+                      </p>
+                    ) : (
+                      <ul className="space-y-1">{transferLists.otherManagers.map(renderTransferRow)}</ul>
+                    )}
+                  </section>
+                </div>
+              )}
+            </div>
+            <div className="border-t border-slate-100 px-3 py-2">
+              <button
+                type="button"
+                className="w-full rounded-lg py-2 text-sm font-medium text-slate-500 hover:bg-slate-50"
+                onClick={() => setTransferOpen(false)}
+              >
+                Huỷ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

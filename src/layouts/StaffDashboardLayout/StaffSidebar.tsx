@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
+import { useInternalStaffChatUnreadCount } from '@/hooks/useChats'
 import { BrandLogo } from '@/components/common/BrandLogo'
 
 const navItems = [
@@ -36,6 +37,7 @@ const navItems = [
 export function StaffSidebar() {
   const { user } = useAuthStore()
   const { data: unreadCount = 0 } = useNotificationUnreadCount()
+  const chatUnread = useInternalStaffChatUnreadCount()
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-shrink-0 flex-col bg-slate-900 lg:flex">
@@ -44,7 +46,8 @@ export function StaffSidebar() {
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto py-4">
         {navItems.map((item) => {
-          const badge = item.badgeKey === 'notifications' ? unreadCount : 0
+          const badge =
+            item.badgeKey === 'notifications' ? unreadCount : item.badgeKey === 'chat' ? chatUnread : 0
           return (
             <NavLink
               key={item.to}
@@ -58,9 +61,17 @@ export function StaffSidebar() {
                 }`
               }
             >
-              <item.icon className="h-5 w-5 shrink-0" />
+              <span className="relative shrink-0">
+                <item.icon className="h-5 w-5" />
+                {item.badgeKey === 'chat' && chatUnread > 0 && (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-slate-900"
+                    aria-hidden
+                  />
+                )}
+              </span>
               <span className="font-medium">{item.label}</span>
-              {badge > 0 && (
+              {badge > 0 && item.badgeKey !== 'chat' && (
                 <span className="rounded-full bg-[#E8612A] px-2 py-0.5 text-xs font-medium text-white">
                   {badge}
                 </span>

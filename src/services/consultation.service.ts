@@ -75,3 +75,18 @@ export async function respondToConsultation(id: number): Promise<void> {
 export async function updateConsultationStatus(id: number, status: string): Promise<void> {
   await axiosInstance.patch(`/consultations/${id}/status`, { status })
 }
+
+function unwrapData<T>(res: unknown): T | null {
+  const r = res as ApiResponse<T>
+  return r?.data != null ? r.data : null
+}
+
+/** Khách xem phiếu của mình (modal thông báo tư vấn). */
+export async function fetchMyConsultation(id: number): Promise<ConsultationListItem> {
+  const res = await axiosInstance.get<unknown>(`/consultations/${id}/mine`)
+  const data = unwrapData<ConsultationListItem>(res)
+  if (!data || typeof data.id !== 'number') {
+    throw new Error('Invalid consultation detail response')
+  }
+  return data
+}

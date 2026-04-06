@@ -4,6 +4,7 @@ export type NotificationType =
   | 'Order'
   | 'PriceDrop'
   | 'System'
+  | 'Consultation'
   | 'AppointmentTestDrive'
   | 'AppointmentConsultation'
   | 'TransferIncoming'

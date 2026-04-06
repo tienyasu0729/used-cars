@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useVehicleDetail } from '@/hooks/useVehicleDetail'
+import { useSavedVehicles } from '@/hooks/useSavedVehicles'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { VehicleDetailGallery } from '@/features/vehicles/components/VehicleDetailGallery'
@@ -17,12 +18,7 @@ import { Phone, Calendar, Shield } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { BookingForm } from '@/components/booking/BookingForm'
 import type { UserRole } from '@/types/auth.types'
-
-/** Khớp role từ API (Customer / BranchManager …), tránh lệch chữ hoa thường. */
-function isCustomerRole(role: UserRole | string | undefined): boolean {
-  if (role == null || role === '') return false
-  return String(role).toLowerCase() === 'customer'
-}
+import { isCustomerRole } from '@/utils/userRole'
 
 const STAFF_ROLE_HINT: Partial<Record<UserRole, string>> = {
   BranchManager: 'quản lý chi nhánh',
@@ -34,6 +30,7 @@ export function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>()
   const vehicleId = id ? parseInt(id, 10) : undefined
   const { vehicle, isLoading, error, isSaved, toggleSave, refetchVehicle } = useVehicleDetail(vehicleId)
+  const { savedIds } = useSavedVehicles()
   const { isAuthenticated, user } = useAuthStore()
   const isCustomer = Boolean(user && isCustomerRole(user.role))
   /** Đặt cọc / lái thử theo nghiệp vụ chỉ cho tài khoản khách hàng — không phải “chưa đăng nhập”. */
@@ -92,7 +89,13 @@ export function VehicleDetailPage() {
   const similarContent = (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {similarVehicles.map((v, i) => (
-        <VehicleCard key={v.id} vehicle={v} showNewBadge={i === 0} compact />
+        <VehicleCard
+          key={v.id}
+          vehicle={v}
+          showNewBadge={i === 0}
+          compact
+          initialSaved={savedIds.has(v.id)}
+        />
       ))}
       {similarVehicles.length === 0 && (
         <p className="col-span-full text-center text-slate-500">Không có xe tương tự</p>
@@ -262,7 +265,7 @@ export function VehicleDetailPage() {
           <h2 className="mb-8 text-2xl font-black">Xe Tương Tự</h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {similarVehicles.map((v, i) => (
-              <VehicleCard key={v.id} vehicle={v} showNewBadge={i === 0} />
+              <VehicleCard key={v.id} vehicle={v} showNewBadge={i === 0} initialSaved={savedIds.has(v.id)} />
             ))}
           </div>
         </section>

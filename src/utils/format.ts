@@ -83,3 +83,20 @@ export function formatLogInstant(raw: string | null | undefined): string {
   const d = new Date(s)
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('vi-VN')
 }
+
+/** Thời gian hiển thị cạnh tên trong danh sách chat (widget / sidebar). */
+export function formatChatSidebarTime(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const then = new Date(iso)
+  if (Number.isNaN(then.getTime())) return ''
+  const now = new Date()
+  const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const dayDiff = Math.floor((startOf(now) - startOf(then)) / 86400000)
+  if (dayDiff === 0) {
+    return then.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  }
+  if (dayDiff >= 1 && dayDiff < 7) {
+    return then.toLocaleDateString('vi-VN', { weekday: 'short' })
+  }
+  return then.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+}

@@ -5,6 +5,7 @@ import { Car, Handshake, Calendar, Shield, FileText, Building2, Wrench, Search, 
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
 import { BranchCard } from '@/features/branches/components/BranchCard'
 import { useVehicles } from '@/hooks/useVehicles'
+import { useSavedVehicles } from '@/hooks/useSavedVehicles'
 import { useBranches } from '@/hooks/useBranches'
 import { RecentlyViewedWidget } from '@/components/vehicles/RecentlyViewedWidget'
 import { Button } from '@/components/ui'
@@ -43,6 +44,7 @@ export function HomePage() {
     size: 9,
     sort: 'postingDateDesc',
   })
+  const { savedIds } = useSavedVehicles()
   const { data: branches, isLoading: branchesLoading } = useBranches()
   const branchesList = Array.isArray(branches) ? branches : []
 
@@ -87,7 +89,7 @@ export function HomePage() {
     <div>
       <section className="relative flex h-[500px] items-center justify-center">
         <div className="absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#1A3C6E]/90 to-[#1A3C6E]/50" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#1A3C6E]/35 to-[#1A3C6E]/15" />
           {heroSlides.map((src, i) => (
             <div
               key={`${src}-${i}`}
@@ -158,7 +160,7 @@ export function HomePage() {
 
       <section className="relative z-30 mx-auto max-w-7xl px-4 -mt-12 lg:px-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="flex items-center gap-6 rounded-xl border border-slate-100 bg-white p-8 shadow-lg">
+          <div className="flex items-center gap-6 rounded-xl border border-slate-200/90 bg-white p-8 shadow-[0_12px_40px_-8px_rgba(15,23,42,0.18),0_4px_14px_-4px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/[0.06]">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#1A3C6E]/10 text-[#1A3C6E]">
               <Car className="h-8 w-8" />
             </div>
@@ -167,7 +169,7 @@ export function HomePage() {
               <p className="font-medium text-slate-500">Xe đang bán</p>
             </div>
           </div>
-          <div className="flex items-center gap-6 rounded-xl border border-slate-100 bg-white p-8 shadow-lg">
+          <div className="flex items-center gap-6 rounded-xl border border-slate-200/90 bg-white p-8 shadow-[0_12px_40px_-8px_rgba(15,23,42,0.18),0_4px_14px_-4px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/[0.06]">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#1A3C6E]/10 text-[#1A3C6E]">
               <Handshake className="h-8 w-8" />
             </div>
@@ -178,7 +180,7 @@ export function HomePage() {
               <p className="font-medium text-slate-500">Chi nhánh</p>
             </div>
           </div>
-          <div className="flex items-center gap-6 rounded-xl border border-slate-100 bg-white p-8 shadow-lg">
+          <div className="flex items-center gap-6 rounded-xl border border-slate-200/90 bg-white p-8 shadow-[0_12px_40px_-8px_rgba(15,23,42,0.18),0_4px_14px_-4px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/[0.06]">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#1A3C6E]/10 text-[#1A3C6E]">
               <Calendar className="h-8 w-8" />
             </div>
@@ -208,15 +210,20 @@ export function HomePage() {
           </div>
         </div>
         {featuredLoading ? (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 9 }, (_, i) => (
               <div key={i} className="h-80 animate-pulse rounded-xl bg-gray-200" />
             ))}
           </div>
         ) : (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {featuredVehicles.map((v, i) => (
-              <VehicleCard key={`home-feat-${v.id}-${i}`} vehicle={v} showNewBadge={i < 3} />
+              <VehicleCard
+                key={`home-feat-${v.id}-${i}`}
+                vehicle={v}
+                showNewBadge={i < 3}
+                initialSaved={savedIds.has(v.id)}
+              />
             ))}
           </div>
         )}

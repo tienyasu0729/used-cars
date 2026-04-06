@@ -18,4 +18,7 @@ export interface ChatConversation {
   vehicleInfo?: string
   vehiclePrice?: string
   isNewCustomer?: boolean
+  /** Phiếu tư vấn pending gắn khách — dùng cho nút Tiếp nhận ngay */
+  consultationId?: number
+  consultationStatus?: string
 }

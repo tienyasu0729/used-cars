@@ -56,7 +56,7 @@ export function SavedVehicleGrid({ vehicles, isLoading, onRemoveSaved }: SavedVe
               <Heart className="h-5 w-5 fill-red-500 text-red-500" />
             </button>
           )}
-          <VehicleCard vehicle={v} />
+          <VehicleCard vehicle={v} initialSaved showSaveButton={!onRemoveSaved} />
         </div>
       ))}
     </div>

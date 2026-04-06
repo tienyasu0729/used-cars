@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { X, LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Package, PlusCircle, ClipboardList, Banknote, ListChecks, MessageCircle, ArrowLeftRight, User, Bell } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { useInternalStaffChatUnreadCount } from '@/hooks/useChats'
 
 interface MobileSidebarProps {
   isOpen: boolean
@@ -17,13 +18,14 @@ const navItems = [
   { to: '/staff/orders', icon: ClipboardList, label: 'Danh Sách Đơn' },
   { to: '/staff/deposits/new', icon: Banknote, label: 'Tạo Đặt Cọc' },
   { to: '/staff/deposits', icon: ListChecks, label: 'Danh Sách Cọc' },
-  { to: '/staff/chat', icon: MessageCircle, label: 'Chat Khách Hàng' },
+  { to: '/staff/chat', icon: MessageCircle, label: 'Chat Khách Hàng', badgeKey: 'chat' as const },
   { to: '/staff/transfer-requests', icon: ArrowLeftRight, label: 'Yêu Cầu Điều Chuyển' },
   { to: '/staff/notifications', icon: Bell, label: 'Thông Báo' },
 ]
 
 export function StaffMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const { user } = useAuthStore()
+  const chatUnread = useInternalStaffChatUnreadCount()
 
   if (!isOpen) return null
 
@@ -50,7 +52,15 @@ export function StaffMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 }`
               }
             >
-              <item.icon className="h-5 w-5" />
+              <span className="relative shrink-0">
+                <item.icon className="h-5 w-5" />
+                {item.badgeKey === 'chat' && chatUnread > 0 && (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-slate-900"
+                    aria-hidden
+                  />
+                )}
+              </span>
               {item.label}
             </NavLink>
           ))}

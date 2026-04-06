@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
 import { FilterPanel } from '@/features/vehicles/components/FilterPanel'
 import { useVehicles } from '@/hooks/useVehicles'
+import { useSavedVehicles } from '@/hooks/useSavedVehicles'
 import { useVehicleListingFacets } from '@/hooks/useVehicleListingFacets'
 import { SkeletonCard, EmptyState, Button } from '@/components/ui'
 import { Car, LayoutGrid, List, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react'
@@ -20,6 +21,7 @@ export function VehicleListingPage() {
   useDocumentTitle('Danh sách xe')
   const [searchParams] = useSearchParams()
   const { vehicles, totalPages, currentPage, totalElements, isLoading, error, setFilters, setPage } = useVehicles()
+  const { savedIds } = useSavedVehicles()
   const listingFacets = useVehicleListingFacets()
   const [sortUi, setSortUi] = useState('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -217,7 +219,13 @@ export function VehicleListingPage() {
               }`}
             >
               {vehicles.map((v, i) => (
-                <VehicleCard key={v.id} vehicle={v} compact={viewMode === 'list'} showNewBadge={i < 3} />
+                <VehicleCard
+                  key={v.id}
+                  vehicle={v}
+                  compact={viewMode === 'list'}
+                  showNewBadge={i < 3}
+                  initialSaved={savedIds.has(v.id)}
+                />
               ))}
             </div>
           )}

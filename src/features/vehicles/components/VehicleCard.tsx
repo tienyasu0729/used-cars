@@ -20,6 +20,8 @@ interface VehicleCardProps {
   compact?: boolean
   showNewBadge?: boolean
   showSaveButton?: boolean
+  /** Đồng bộ tim đỏ sau F5 — lấy từ GET /users/me/saved-vehicles */
+  initialSaved?: boolean
 }
 
 // Lấy URL ảnh chính hoặc ảnh đầu tiên
@@ -30,7 +32,13 @@ function getPrimaryImage(images?: VehicleImage[]): string {
   return raw ? externalImageDisplayUrl(raw) : 'https://placehold.co/600x400?text=No+Image'
 }
 
-export function VehicleCard({ vehicle, compact, showNewBadge, showSaveButton = true }: VehicleCardProps) {
+export function VehicleCard({
+  vehicle,
+  compact,
+  showNewBadge,
+  showSaveButton = true,
+  initialSaved,
+}: VehicleCardProps) {
   const { addToCompare, removeFromCompare, compareList } = useCompareVehicles()
   const toast = useToastStore()
   const isComparing = compareList.includes(vehicle.id)
@@ -77,7 +85,7 @@ export function VehicleCard({ vehicle, compact, showNewBadge, showSaveButton = t
           {/* Save button */}
           {showSaveButton && (
             <div className="absolute right-3 top-3">
-              <SaveButton vehicleId={vehicle.id} />
+              <SaveButton vehicleId={vehicle.id} initialSaved={initialSaved} />
             </div>
           )}
         </div>

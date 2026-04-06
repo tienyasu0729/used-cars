@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { X, LayoutDashboard, Car, Users, Calendar, ArrowLeftRight, BarChart3, Bell, Settings, PlusCircle, ClipboardList, Banknote, ListChecks, User, Lock, CreditCard } from 'lucide-react'
+import { X, LayoutDashboard, Car, Users, Calendar, ArrowLeftRight, BarChart3, Bell, Settings, PlusCircle, ClipboardList, Banknote, ListChecks, User, Lock, CreditCard, MessageSquare, FileText } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
+import { useInternalStaffChatUnreadCount } from '@/hooks/useChats'
 
 interface MobileSidebarProps {
   isOpen: boolean
@@ -17,6 +18,8 @@ const navItems = [
   { to: '/manager/orders', icon: ClipboardList, label: 'Đơn Hàng' },
   { to: '/manager/deposits/new', icon: Banknote, label: 'Tạo Đặt Cọc' },
   { to: '/manager/deposits', icon: ListChecks, label: 'Danh Sách Cọc' },
+  { to: '/manager/consultations', icon: FileText, label: 'Yêu Cầu Tư Vấn' },
+  { to: '/manager/chat', icon: MessageSquare, label: 'Chat Khách Hàng', badgeKey: 'chat' },
   { to: '/manager/transfers', icon: ArrowLeftRight, label: 'Yêu Cầu Điều Chuyển' },
   { to: '/manager/reports', icon: BarChart3, label: 'Báo Cáo' },
   { to: '/manager/transactions', icon: CreditCard, label: 'Lịch sử giao dịch' },
@@ -28,6 +31,7 @@ const navItems = [
 export function ManagerMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const { user } = useAuthStore()
   const { data: unreadCount = 0 } = useNotificationUnreadCount()
+  const chatUnread = useInternalStaffChatUnreadCount()
 
   if (!isOpen) return null
 
@@ -43,7 +47,8 @@ export function ManagerMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         </div>
         <nav className="flex flex-col gap-1 overflow-y-auto p-4">
           {navItems.map((item) => {
-            const badge = item.badgeKey === 'notifications' ? unreadCount : 0
+            const badge =
+              item.badgeKey === 'notifications' ? unreadCount : item.badgeKey === 'chat' ? chatUnread : 0
             return (
               <NavLink
                 key={item.to}
@@ -56,9 +61,17 @@ export function ManagerMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   }`
                 }
               >
-                <item.icon className="h-5 w-5" />
+                <span className="relative shrink-0">
+                  <item.icon className="h-5 w-5" />
+                  {item.badgeKey === 'chat' && chatUnread > 0 && (
+                    <span
+                      className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#1A3C6E]"
+                      aria-hidden
+                    />
+                  )}
+                </span>
                 <span className="flex-1">{item.label}</span>
-                {badge > 0 && (
+                {badge > 0 && item.badgeKey !== 'chat' && (
                   <span className="rounded-full bg-[#E8612A] px-2 py-0.5 text-xs font-medium text-white">
                     {badge}
                   </span>

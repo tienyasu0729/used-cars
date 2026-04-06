@@ -67,6 +67,7 @@ const ManagerTransfersPage = lazy(() => import('@/pages/manager').then((m) => ({
 const ManagerReportsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerReportsPage })))
 const ManagerSettingsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerSettingsPage })))
 const ManagerNotificationsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerNotificationsPage })))
+const ManagerChatPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerChatPage })))
 
 const AdminDashboardPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminDashboardPage })))
 const AdminUsersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminUsersPage })))
@@ -200,6 +201,8 @@ const router = createBrowserRouter([
       { path: 'transfers', element: <Suspense fallback={<Fallback />}><ManagerTransfersPage /></Suspense> },
       { path: 'reports', element: <Suspense fallback={<Fallback />}><ManagerReportsPage /></Suspense> },
       { path: 'transactions', element: <Suspense fallback={<Fallback />}><AdminTransactionsPage /></Suspense> },
+      { path: 'chat', element: <Suspense fallback={<Fallback />}><ManagerChatPage /></Suspense> },
+      { path: 'consultations', element: <Suspense fallback={<Fallback />}><StaffConsultationsPage /></Suspense> },
       { path: 'settings', element: <Suspense fallback={<Fallback />}><ManagerSettingsPage /></Suspense> },
       { path: 'notifications', element: <Suspense fallback={<Fallback />}><ManagerNotificationsPage /></Suspense> },
       { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
