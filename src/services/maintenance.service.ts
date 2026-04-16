@@ -32,6 +32,19 @@ interface PageResponse<T> {
 
 export const maintenanceService = {
   /**
+   * [PUBLIC] Lấy lịch sử bảo dưỡng công khai — không cần đăng nhập.
+   * GET /vehicles/{vehicleId}/maintenance
+   */
+  getPublicHistory: async (vehicleId: number, page = 0, size = 50): Promise<PageResponse<MaintenanceRecord>> => {
+    const res = await axiosInstance.get<{ data: PageResponse<MaintenanceRecord> }>(
+      `/vehicles/${vehicleId}/maintenance`,
+      { params: { page, size } },
+    )
+    const apiRes = res as unknown as { data: PageResponse<MaintenanceRecord> }
+    return apiRes.data ?? (res as unknown as PageResponse<MaintenanceRecord>)
+  },
+
+  /**
    * [MANAGER/ADMIN] Lấy danh sách bảo dưỡng của xe — phân trang.
    * GET /manager/vehicles/{vehicleId}/maintenance
    */

@@ -10,7 +10,6 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import {
-  FileSpreadsheet,
   FileDown,
   Calendar,
   DollarSign,
@@ -18,6 +17,8 @@ import {
 } from 'lucide-react'
 import { formatPrice } from '@/utils/format'
 import { Link } from 'react-router-dom'
+import { downloadBlob, todayStr } from '@/utils/excelExport'
+import axiosInstance from '@/utils/axiosInstance'
 
 export function ManagerReportsPage() {
   const { user } = useAuthStore()
@@ -59,16 +60,19 @@ export function ManagerReportsPage() {
             >
               Tải lại
             </button>
-            <div className="flex gap-3">
-              <button type="button" className="flex h-10 items-center gap-2 rounded-lg bg-slate-100 px-4 text-sm font-bold text-slate-700">
-                <FileSpreadsheet className="h-5 w-5" />
-                Excel
-              </button>
-              <button type="button" className="flex h-10 items-center gap-2 rounded-lg bg-[#1A3C6E] px-4 text-sm font-bold text-white">
-                <FileDown className="h-5 w-5" />
-                Xuất PDF
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await axiosInstance.get('/manager/reports/export', { responseType: 'blob' })
+                  downloadBlob(res as unknown as Blob, `bao-cao-chi-nhanh-${todayStr()}.xlsx`)
+                } catch { /* lỗi im lặng */ }
+              }}
+              className="flex h-10 items-center gap-2 rounded-lg bg-[#1A3C6E] px-4 text-sm font-bold text-white"
+            >
+              <FileDown className="h-5 w-5" />
+              Xuất Excel
+            </button>
           </div>
         </div>
       </div>

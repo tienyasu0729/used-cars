@@ -186,7 +186,7 @@ export function DashboardOverviewPage() {
         <div className="xl:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-bold text-slate-900">Xe vừa xem gần đây</h2>
-            <Link to="/vehicles" className="text-sm font-semibold text-[#1A3C6E] hover:underline">
+            <Link to="/dashboard/recently-viewed" className="text-sm font-semibold text-[#1A3C6E] hover:underline">
               Xem tất cả
             </Link>
           </div>

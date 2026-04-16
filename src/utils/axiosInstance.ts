@@ -15,6 +15,7 @@ import type { ApiErrorResponse } from '@/types/auth.types'
 import { useSessionRevokedStore } from '@/store/sessionRevokedStore'
 import { shouldOpenAccountSuspendedModal } from '@/utils/accountSuspendedModalPolicy'
 import { getStoredAuthToken } from '@/utils/authToken'
+import { useAuthStore } from '@/store/authStore'
 import {
   fixAbsoluteBaseUrlLeadingSlash,
   normalizeApiBaseUrl,
@@ -65,6 +66,14 @@ function isOptionalAuthPublicApi(config: InternalAxiosRequestConfig | undefined)
   if (path === 'branches') return true
   if (path.startsWith('branches/')) return true
   if (path === 'bookings/available-slots') return true
+  return false
+}
+
+/**
+ * Stub refresh token — khi backend có POST /api/v1/auth/refresh: implement gọi API + setAuth, return true để retry request.
+ * Hiện không đổi flow 401 (luôn clear session).
+ */
+export async function tryRefreshToken(): Promise<boolean> {
   return false
 }
 
@@ -142,15 +151,13 @@ axiosInstance.interceptors.response.use(
     }
 
     // Nếu lỗi 401 (UNAUTHORIZED) → token hết hạn hoặc không hợp lệ
-    // Xóa token và redirect về trang login
+    // Tương lai: if (await tryRefreshToken()) return axiosInstance.request(error.config)
     if (error.response.status === 401 && errorData?.errorCode === 'UNAUTHORIZED') {
       if (isOptionalAuthPublicApi(error.config)) {
         return Promise.reject(errorData)
       }
       console.warn('[axiosInstance] Token hết hạn, xóa session và redirect /login')
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('token')
-      localStorage.removeItem('auth_user')
+      useAuthStore.getState().clearAuth()
 
       // Chỉ redirect nếu đang không ở trang login (tránh loop)
       if (window.location.pathname !== '/login') {

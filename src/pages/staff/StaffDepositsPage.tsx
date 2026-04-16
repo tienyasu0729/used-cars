@@ -6,7 +6,8 @@ import { useStaffOrManagerBasePath } from '@/hooks/useStaffOrManagerBasePath'
 import { depositApi } from '@/services/depositApi'
 import { useToastStore } from '@/store/toastStore'
 import { formatPrice, formatDate } from '@/utils/format'
-import { Button } from '@/components/ui'
+import { Button, Pagination } from '@/components/ui'
+
 
 function errMsg(e: unknown): string {
   if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string') {
@@ -18,10 +19,14 @@ function errMsg(e: unknown): string {
 export function StaffDepositsPage() {
   const { dashboard, deposits } = useStaffOrManagerBasePath()
   const [status, setStatus] = useState<string | undefined>(undefined)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const toast = useToastStore()
   const qc = useQueryClient()
-  const { data, isLoading } = useDeposits({ status, page: 0, size: 100 })
+  const { data, isLoading } = useDeposits({ status, page: 0, size: 200 })
   const rows = data?.deposits ?? []
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
+  const paginated = rows.slice((page - 1) * pageSize, page * pageSize)
 
   const confirmMut = useMutation({
     mutationFn: (id: string) => depositApi.confirm(id),
@@ -62,7 +67,7 @@ export function StaffDepositsPage() {
           <button
             key={t.label}
             type="button"
-            onClick={() => setStatus(t.key)}
+            onClick={() => { setStatus(t.key); setPage(1) }}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
               status === t.key ? 'bg-[#1A3C6E] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
@@ -90,7 +95,7 @@ export function StaffDepositsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {rows.map((d) => (
+                {paginated.map((d) => (
                   <tr key={d.id}>
                     <td className="px-4 py-3 font-mono text-xs">#{d.id}</td>
                     <td className="px-4 py-3">{d.customerName ?? d.customerId}</td>
@@ -119,6 +124,7 @@ export function StaffDepositsPage() {
           {rows.length === 0 && <p className="p-8 text-center text-slate-500">Không có dữ liệu</p>}
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} total={rows.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="khoản cọc" />
     </div>
   )
 }

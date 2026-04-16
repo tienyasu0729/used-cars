@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Building2, Car, Fuel, RefreshCw, Settings2 } from 'lucide-react'
+import { Pagination } from '@/components/ui'
 import {
   useAdminCatalogBrands,
   useAdminCatalogModels,
@@ -33,8 +34,6 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]['key']
 type TypedCatalogKind = 'fuel' | 'trans'
-const PAGE_SIZE = 15
-
 export function AdminCatalogPage() {
   const toast = useToastStore()
   const [tab, setTab] = useState<TabKey>('brands')
@@ -42,6 +41,7 @@ export function AdminCatalogPage() {
   const [pageBrand, setPageBrand] = useState(0)
   const [qModel, setQModel] = useState('')
   const [pageModel, setPageModel] = useState(0)
+  const [pageSize, setPageSize] = useState(12)
   const [filterCat, setFilterCat] = useState<number | undefined>(undefined)
   const [newBrandName, setNewBrandName] = useState('')
   const [newBrandStatus, setNewBrandStatus] = useState<'active' | 'inactive'>('active')
@@ -58,9 +58,9 @@ export function AdminCatalogPage() {
   const [typedDraftName, setTypedDraftName] = useState('')
   const [typedDraftStatus, setTypedDraftStatus] = useState<'active' | 'inactive'>('active')
 
-  const brandsQ = useAdminCatalogBrands(qBrand, pageBrand, PAGE_SIZE)
+  const brandsQ = useAdminCatalogBrands(qBrand, pageBrand, pageSize)
   const brandOptionsQ = useAdminCatalogBrands('', 0, 400)
-  const modelsQ = useAdminCatalogModels(qModel, filterCat, pageModel, PAGE_SIZE)
+  const modelsQ = useAdminCatalogModels(qModel, filterCat, pageModel, pageSize)
   const fuelsQ = useAdminCatalogFuelTypes()
   const transQ = useAdminCatalogTransmissions()
 
@@ -549,33 +549,27 @@ export function AdminCatalogPage() {
         )}
       </div>
 
-      {(tab === 'brands' || tab === 'models') && (
-        <div className="flex items-center justify-center gap-4">
-          <button
-            type="button"
-            disabled={(tab === 'brands' ? pageBrand : pageModel) <= 0}
-            onClick={() => (tab === 'brands' ? setPageBrand((p) => p - 1) : setPageModel((p) => p - 1))}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm disabled:opacity-40"
-          >
-            Trước
-          </button>
-          <span className="text-sm text-slate-600">
-            Trang {((tab === 'brands' ? brandMeta?.page : modelMeta?.page) ?? 0) + 1} /{' '}
-            {Math.max(1, tab === 'brands' ? (brandMeta?.totalPages ?? 1) : (modelMeta?.totalPages ?? 1))}
-          </span>
-          <button
-            type="button"
-            disabled={
-              tab === 'brands'
-                ? pageBrand >= (brandMeta?.totalPages ?? 1) - 1
-                : pageModel >= (modelMeta?.totalPages ?? 1) - 1
-            }
-            onClick={() => (tab === 'brands' ? setPageBrand((p) => p + 1) : setPageModel((p) => p + 1))}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm disabled:opacity-40"
-          >
-            Sau
-          </button>
-        </div>
+      {tab === 'brands' && (
+        <Pagination
+          page={pageBrand + 1}
+          totalPages={Math.max(1, brandMeta?.totalPages ?? 1)}
+          total={(brandMeta?.totalElements as number) ?? brandRows.length}
+          pageSize={pageSize}
+          onPageChange={(p) => setPageBrand(p - 1)}
+          onPageSizeChange={(s) => { setPageSize(s); setPageBrand(0) }}
+          label="hãng xe"
+        />
+      )}
+      {tab === 'models' && (
+        <Pagination
+          page={pageModel + 1}
+          totalPages={Math.max(1, modelMeta?.totalPages ?? 1)}
+          total={(modelMeta?.totalElements as number) ?? modelRows.length}
+          pageSize={pageSize}
+          onPageChange={(p) => setPageModel(p - 1)}
+          onPageSizeChange={(s) => { setPageSize(s); setPageModel(0) }}
+          label="dòng xe"
+        />
       )}
 
       <Modal

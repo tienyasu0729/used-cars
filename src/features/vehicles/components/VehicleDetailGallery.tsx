@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { formatMileage, formatDate } from '@/utils/format'
 import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
+import { MaintenanceHistoryPublic } from './MaintenanceHistoryPublic'
 import type { Vehicle, VehicleImage } from '@/types/vehicle.types'
 
 interface VehicleDetailGalleryProps {
@@ -42,6 +43,7 @@ export function VehicleDetailGallery({
   const tabs = [
     { id: 'specs', label: 'Thông Số Kỹ Thuật' },
     { id: 'desc', label: 'Mô Tả' },
+    { id: 'maintenance', label: 'Lịch Sử Bảo Dưỡng' },
     { id: 'similar', label: 'Xe Tương Tự' },
   ]
 
@@ -147,6 +149,9 @@ export function VehicleDetailGallery({
             ) : (
               <p className="text-slate-500">Chưa có mô tả chi tiết.</p>
             ))}
+          {activeTab === 'maintenance' && (
+            <MaintenanceHistoryPublic vehicleId={vehicle.id} />
+          )}
           {activeTab === 'similar' && similarContent}
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useActivityLogs } from '@/hooks/useActivityLogs'
 import { formatLogInstant } from '@/utils/format'
+import { Pagination } from '@/components/ui'
 
 function dateToStartIso(d: string) {
   const t = d.trim()
@@ -139,29 +140,14 @@ export function AdminLogsPage() {
           <div className="py-12 text-center text-slate-500">Không có nhật ký</div>
         )}
       </div>
-      {meta && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4">
-          <button
-            type="button"
-            disabled={page <= 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm disabled:opacity-40"
-          >
-            Trước
-          </button>
-          <span className="text-sm text-slate-600">
-            Trang {page + 1} / {totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={page >= totalPages - 1}
-            onClick={() => setPage((p) => p + 1)}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm disabled:opacity-40"
-          >
-            Sau
-          </button>
-        </div>
-      )}
+      <Pagination
+        page={page + 1}
+        totalPages={totalPages}
+        total={(meta?.totalElements as number) ?? logs.length}
+        pageSize={logs.length || 20}
+        onPageChange={(p) => setPage(p - 1)}
+        label="nhật ký"
+      />
     </div>
   )
 }

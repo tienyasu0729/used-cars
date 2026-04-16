@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Search, Plus, Image, Smile, Send, UserPlus, Star, X } from 'lucide-react'
+import { Search, Plus, Image, Smile, Send, UserPlus, Star, X, Trash2 } from 'lucide-react'
 import type { ChatConversation, ChatMessage } from '@/types'
 import {
   TRANSFER_GROUP_OTHER_BRANCH_MANAGER,
@@ -10,16 +10,20 @@ import {
   type ChatTransferCandidate,
 } from '@/services/chat.service'
 import { respondToConsultation } from '@/services/consultation.service'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 
 interface StaffChatLayoutProps {
   conversations: ChatConversation[]
   messages: ChatMessage[]
+  messagesLoading?: boolean
+  messagesFetched?: boolean
+  participantFallbackName?: string
   selectedId: string | undefined
   onSelectConversation: (id: string) => void
   onSendMessage?: (content: string) => void
-  /** Sau khi chuyển giao thành công — thường bỏ chọn hội thoại vì user hiện tại không còn tham gia. */
+  onDeleteConversation?: (id: string) => void
   onTransferSuccess?: () => void
 }
 
@@ -42,20 +46,36 @@ function roleKey(role: string | undefined | null): string {
 export function StaffChatLayout({
   conversations,
   messages,
+  messagesLoading = false,
+  messagesFetched = false,
+  participantFallbackName,
   selectedId,
   onSelectConversation,
   onSendMessage,
+  onDeleteConversation,
   onTransferSuccess,
 }: StaffChatLayoutProps) {
   const [input, setInput] = useState('')
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
   const [search, setSearch] = useState('')
   const [transferOpen, setTransferOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
   const qc = useQueryClient()
   const toast = useToastStore()
   const user = useAuthStore((s) => s.user)
 
   const selected = conversations.find((c) => c.id === selectedId)
+  const displayName =
+    participantFallbackName?.trim() ||
+    selected?.participantName?.trim() ||
+    'Khách hàng'
+  const showConversationPanel = Boolean(
+    selectedId &&
+      (selected != null ||
+        messages.length > 0 ||
+        messagesLoading ||
+        messagesFetched),
+  )
   const convNumeric = selectedId ? parseInt(selectedId, 10) : NaN
 
   const transferCandidatesQuery = useQuery({
@@ -201,75 +221,93 @@ export function StaffChatLayout({
         </div>
         <div className="flex-1 overflow-y-auto">
           {filtered.map((c) => (
-            <button
+            <div
               key={c.id}
-              onClick={() => onSelectConversation(c.id)}
-              className={`flex w-full items-start gap-3 border-b border-slate-100 p-4 text-left transition-colors hover:bg-slate-50 ${
+              className={`group/conv relative flex w-full items-start border-b border-slate-100 transition-colors hover:bg-slate-50 ${
                 selectedId === c.id ? 'bg-blue-50' : ''
               }`}
             >
-              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-sm font-semibold text-slate-600">
-                {c.participantAvatar ? (
-                  <img src={c.participantAvatar} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  c.participantName.slice(0, 2).toUpperCase()
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="truncate font-semibold text-slate-900">{c.participantName}</p>
-                  {c.isNewCustomer && (
-                    <span className="shrink-0 rounded bg-[#E8612A]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#E8612A]">
-                      KHÁCH HÀNG MỚI
+              <button
+                type="button"
+                onClick={() => onSelectConversation(c.id)}
+                className="flex min-w-0 flex-1 items-start gap-3 p-4 text-left"
+              >
+                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-sm font-semibold text-slate-600">
+                  {c.participantAvatar ? (
+                    <img src={c.participantAvatar} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    c.participantName.slice(0, 2).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-semibold text-slate-900">{c.participantName}</p>
+                    {c.isNewCustomer && (
+                      <span className="shrink-0 rounded bg-[#E8612A]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#E8612A]">
+                        KHÁCH HÀNG MỚI
+                      </span>
+                    )}
+                  </div>
+                  {c.vehicleInfo && (
+                    <p className="truncate text-xs text-slate-500">{c.vehicleInfo}</p>
+                  )}
+                  <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{c.lastMessage}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="text-xs text-slate-400">{formatMessageTime(c.lastMessageAt)}</span>
+                  {c.unreadCount > 0 && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1A3C6E] text-[10px] font-bold text-white">
+                      {c.unreadCount}
                     </span>
                   )}
                 </div>
-                {c.vehicleInfo && (
-                  <p className="truncate text-xs text-slate-500">{c.vehicleInfo}</p>
-                )}
-                <p className="mt-0.5 line-clamp-2 text-xs text-slate-600">{c.lastMessage}</p>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="text-xs text-slate-400">{formatMessageTime(c.lastMessageAt)}</span>
-                {c.unreadCount > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1A3C6E] text-[10px] font-bold text-white">
-                    {c.unreadCount}
-                  </span>
-                )}
-              </div>
-            </button>
+              </button>
+              {onDeleteConversation && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setDeleteTarget({ id: c.id, name: c.participantName })
+                  }}
+                  title="Xóa hội thoại"
+                  className="mr-2 mt-4 shrink-0 rounded p-1.5 text-slate-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover/conv:opacity-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           ))}
         </div>
       </div>
       <div className="flex flex-1 flex-col">
-        {selected ? (
+        {showConversationPanel ? (
           <>
             <div className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-sm font-semibold text-slate-600">
-                    {selected.participantName.slice(0, 2).toUpperCase()}
+                    {displayName.slice(0, 2).toUpperCase()}
                   </div>
                   <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-slate-900">{selected.participantName}</p>
-                    {selected.isNewCustomer && (
+                    <p className="font-semibold text-slate-900">{displayName}</p>
+                    {selected?.isNewCustomer && (
                       <span className="rounded bg-[#E8612A]/20 px-2 py-0.5 text-xs font-bold text-[#E8612A]">
                         KHÁCH HÀNG MỚI
                       </span>
                     )}
                   </div>
-                  {selected.vehicleInfo && selected.vehiclePrice && (
+                  {selected?.vehicleInfo && selected?.vehiclePrice && (
                     <p className="text-sm text-slate-500">
-                      Đang hỏi về: {selected.vehicleInfo} - {selected.vehiclePrice}
+                      Đang hỏi về: {selected?.vehicleInfo} - {selected?.vehiclePrice}
                     </p>
                   )}
                 </div>
               </div>
               <div className="flex gap-2">
-                {isManager && (
+                {isManager && selected && (
                   <button
                     type="button"
                     onClick={() => setTransferOpen(true)}
@@ -304,7 +342,7 @@ export function StaffChatLayout({
                       >
                         <div className={`flex max-w-[75%] gap-2 ${m.senderType === 'self' ? 'flex-row-reverse' : ''}`}>
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-300 text-xs font-medium text-slate-600">
-                            {m.senderType === 'self' ? 'NV' : selected?.participantName.slice(0, 2).toUpperCase()}
+                            {m.senderType === 'self' ? 'NV' : displayName.slice(0, 2).toUpperCase()}
                           </div>
                           <div
                             className={`rounded-2xl px-4 py-2.5 ${
@@ -357,6 +395,11 @@ export function StaffChatLayout({
               </p>
             </div>
           </>
+        ) : selectedId ? (
+          <div className="flex flex-1 flex-col items-center justify-center bg-slate-50/50 text-slate-500">
+            <div className="h-8 w-8 animate-spin rounded-full border-3 border-[#1A3C6E] border-t-transparent" />
+            <p className="mt-3 font-medium">Đang tải cuộc trò chuyện…</p>
+          </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center bg-slate-50/50 text-slate-500">
             <p className="font-medium">Chọn một hội thoại để xem</p>
@@ -436,6 +479,33 @@ export function StaffChatLayout({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Dialog xác nhận xóa hội thoại */}
+      {onDeleteConversation && (
+        <ConfirmDialog
+          isOpen={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            if (deleteTarget) {
+              onDeleteConversation(deleteTarget.id)
+              setDeleteTarget(null)
+            }
+          }}
+          title="Xóa hội thoại"
+          message={
+            <>
+              Bạn có chắc muốn xóa hội thoại với <strong>{deleteTarget?.name}</strong>?
+              <br />
+              <span className="text-xs text-slate-400">
+                Hội thoại sẽ tự hiện lại nếu đối phương gửi tin nhắn mới.
+              </span>
+            </>
+          }
+          confirmLabel="Xóa"
+          cancelLabel="Hủy"
+          confirmVariant="danger"
+        />
       )}
     </div>
   )

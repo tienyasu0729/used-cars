@@ -18,7 +18,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
 import { useRegister } from '@/hooks/useRegister'
+import { useLogin } from '@/hooks/useLogin'
 import { PasswordStrength } from '@/components/auth/PasswordStrength'
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
 import { Button, Input } from '@/components/ui'
 import type { RegisterRequest } from '@/types/auth.types'
 import {
@@ -50,6 +52,9 @@ export function RegisterForm() {
     successMessage,
     clearErrors,
   } = useRegister()
+
+  // Hook xử lý đăng nhập bằng Google (đăng ký + đăng nhập cùng lúc)
+  const { googleLogin, isLoading: isGoogleLoading, error: googleError } = useLogin()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -240,11 +245,13 @@ export function RegisterForm() {
         <div className="flex-1 border-t border-gray-200" />
       </div>
 
-      {/* Google register — TODO: implement khi backend xong */}
-      <Button variant="outline" className="mt-4 w-full" type="button" disabled>
-        Tiếp tục với Google
-        {/* TODO: implement khi backend xong — POST /auth/google */}
-      </Button>
+      {/* Đăng ký bằng Google — backend tự tạo account nếu chưa có */}
+      <GoogleLoginButton isLoading={isLoading || isGoogleLoading} onGoogleLogin={googleLogin} />
+      {googleError && (
+        <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-3">
+          <p className="text-sm text-red-600">{googleError}</p>
+        </div>
+      )}
 
       {/* Link đăng nhập */}
       <p className="mt-6 text-center text-sm text-gray-500">

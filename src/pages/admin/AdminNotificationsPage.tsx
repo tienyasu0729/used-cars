@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAdminNotifications } from '@/hooks/useAdminNotifications'
-import { Button } from '@/components/ui'
+import { Button, Pagination } from '@/components/ui'
 import { Megaphone, Mail, Trash2, Send, Pencil } from 'lucide-react'
 import { AdminAnnouncementFormModal } from '@/features/admin/components/AdminAnnouncementFormModal'
 import {
@@ -16,6 +16,12 @@ export function AdminNotificationsPage() {
   const qc = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<AdminAnnouncementRow | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
+
+  const allRows = rows ?? []
+  const totalPages = Math.max(1, Math.ceil(allRows.length / pageSize))
+  const paginated = allRows.slice((page - 1) * pageSize, page * pageSize)
 
   const delMut = useMutation({
     mutationFn: (id: number) => deleteAdminAnnouncement(id),
@@ -51,7 +57,7 @@ export function AdminNotificationsPage() {
       </div>
       <div className="space-y-4">
         {isLoading && <p className="text-slate-500">Đang tải…</p>}
-        {(rows ?? []).map((n) => (
+        {paginated.map((n) => (
           <div
             key={n.id}
             className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center"
@@ -95,6 +101,7 @@ export function AdminNotificationsPage() {
           </div>
         ))}
       </div>
+      <Pagination page={page} totalPages={totalPages} total={allRows.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="thông báo" />
       {(!rows || rows.length === 0) && !isLoading && (
         <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-slate-500">
           Chưa có thông báo nào

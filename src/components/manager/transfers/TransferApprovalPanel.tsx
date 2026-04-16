@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui'
+import { useHasPermission } from '@/hooks/usePermissions'
 
 /** Form ghi chú Approve/Reject — note bắt buộc tối thiểu 5 ký tự (theo backend). */
 export function TransferApprovalPanel({
@@ -13,8 +14,11 @@ export function TransferApprovalPanel({
 }) {
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState<'approve' | 'reject' | null>(null)
+  const canApprove = useHasPermission('Transfers', 'approve')
 
   const valid = note.trim().length >= 5
+
+  if (!canApprove) return null
 
   const run = async (kind: 'approve' | 'reject') => {
     if (!valid) return

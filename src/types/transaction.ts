@@ -7,4 +7,7 @@ export interface Transaction {
   type: TransactionType
   amount: number
   status: 'Completed' | 'Pending' | 'Failed' | 'CompletedRefund'
+  paymentGateway?: string
+  referenceType?: string
+  referenceId?: number
 }

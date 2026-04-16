@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import type { Notification } from '@/types'
 import { formatDate } from '@/utils/format'
+import { Pagination } from '@/components/ui'
 import { normalizeCustomerNotificationLink } from '@/utils/notificationNavigation'
 import {
   consultationRefIdFromLink,
@@ -87,6 +88,13 @@ interface NotificationListProps {
 
 export function NotificationList({ notifications, onMarkRead, linkBehavior = 'default' }: NotificationListProps) {
   const [detail, setDetail] = useState<Notification | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
+
+  useEffect(() => { setPage(1) }, [notifications.length])
+
+  const totalPages = Math.max(1, Math.ceil(notifications.length / pageSize))
+  const paginated = notifications.slice((page - 1) * pageSize, page * pageSize)
 
   const consultationRefId =
     detail?.type === 'Consultation' ? consultationRefIdFromLink(detail.link) : null
@@ -112,7 +120,7 @@ export function NotificationList({ notifications, onMarkRead, linkBehavior = 'de
   return (
     <>
       <div className="space-y-2">
-        {notifications.map((n) => {
+        {paginated.map((n) => {
           const Icon = typeIcons[n.type] ?? Bell
           const customerTarget =
             linkBehavior === 'customer' ? normalizeCustomerNotificationLink(n.link) : (n.link ?? null)
@@ -174,6 +182,8 @@ export function NotificationList({ notifications, onMarkRead, linkBehavior = 'de
           )
         })}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} total={notifications.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="thông báo" />
 
       <Modal
         isOpen={detail !== null}

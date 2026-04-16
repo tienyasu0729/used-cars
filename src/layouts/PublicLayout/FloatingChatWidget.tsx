@@ -8,7 +8,7 @@ import { useBranchTeam } from '@/hooks/useBranches'
 import { CHAT_CONVERSATIONS_POLL_MS, useChatMessages, useConversations } from '@/hooks/useChats'
 import { useStaffCustomerOptions } from '@/hooks/useStaffCustomerOptions'
 import { customerExtrasApiEnabled } from '@/config/dataSource'
-import { createChatConversation, listManagerChatContacts, sendChatMessage } from '@/services/chat.service'
+import { createChatConversation, deleteChatConversation, listManagerChatContacts, sendChatMessage } from '@/services/chat.service'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 import { isCustomerRole } from '@/utils/userRole'
@@ -44,7 +44,12 @@ function fullChatDashboardPath(role: string | undefined): string | null {
   return null
 }
 
-export function FloatingChatWidget() {
+interface FloatingChatWidgetProps {
+  onOpenChange?: (isOpen: boolean) => void
+  forceClose?: boolean
+}
+
+export function FloatingChatWidget({ onOpenChange, forceClose }: FloatingChatWidgetProps) {
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | undefined>()
   const [guestInput, setGuestInput] = useState('')
@@ -115,6 +120,16 @@ export function FloatingChatWidget() {
     )
   }, [managerColleagues, staffCustomerSearch])
 
+  // Đóng panel khi forceClose = true (do AI panel mở)
+  useEffect(() => {
+    if (forceClose) setOpen(false)
+  }, [forceClose])
+
+  // Thông báo cho parent khi trạng thái open thay đổi
+  useEffect(() => {
+    onOpenChange?.(open)
+  }, [open, onOpenChange])
+
   // Auto-select first conversation when opening
   useEffect(() => {
     if (!open || !canUseFloatingChat) return
@@ -151,6 +166,18 @@ export function FloatingChatWidget() {
       void refetch()
     } catch {
       toast.addToast('error', 'Không gửi được tin nhắn.')
+    }
+  }
+
+  const handleDeleteConversation = async (id: string) => {
+    const cid = parseInt(id, 10)
+    if (!Number.isFinite(cid)) return
+    try {
+      await deleteChatConversation(cid)
+      if (selectedId === id) setSelectedId(undefined)
+      void refetch()
+    } catch {
+      toast.addToast('error', 'Không xóa được hội thoại.')
     }
   }
 
@@ -300,6 +327,7 @@ export function FloatingChatWidget() {
                 selectedId={selectedId}
                 onSelectConversation={setSelectedId}
                 onSendMessage={handleSendMessage}
+                onDeleteConversation={handleDeleteConversation}
               />
             )
           ) : (

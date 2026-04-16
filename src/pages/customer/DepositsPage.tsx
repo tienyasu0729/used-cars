@@ -8,7 +8,7 @@ import { notifyInventoryChanged } from '@/utils/inventorySync'
 import { formatPrice, formatDateVNCalendar, formatDateTimeVN } from '@/utils/format'
 import { Plus, Building2, CheckCircle, AlertTriangle, Copy } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui'
+import { Button, Pagination } from '@/components/ui'
 import { useToastStore } from '@/store/toastStore'
 
 const ACTIVE_STATUSES = ['Confirmed', 'Pending', 'RefundPending']
@@ -62,6 +62,8 @@ function getStatusDisplay(status: string, expiryDate: string) {
 
 export function DepositsPage() {
   const [tab, setTab] = useState<'active' | 'history'>('active')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const [cancelDepositId, setCancelDepositId] = useState<string | null>(null)
   const [cancelConfirmedId, setCancelConfirmedId] = useState<string | null>(null)
   const [cancelConfirmedReason, setCancelConfirmedReason] = useState('')
@@ -115,6 +117,8 @@ export function DepositsPage() {
   const activeDeposits = deposits.filter((d) => ACTIVE_STATUSES.includes(d.status))
   const historyDeposits = deposits.filter((d) => HISTORY_STATUSES.includes(d.status))
   const displayed = tab === 'active' ? activeDeposits : historyDeposits
+  const totalPages = Math.max(1, Math.ceil(displayed.length / pageSize))
+  const paginated = displayed.slice((page - 1) * pageSize, page * pageSize)
   const totalAmount = activeDeposits.reduce((s, d) => s + d.amount, 0)
   const successCount = deposits.filter((d) => d.status === 'ConvertedToOrder' || d.status === 'Refunded').length
 
@@ -151,7 +155,7 @@ export function DepositsPage() {
 
       <div className="flex border-b border-slate-200">
         <button
-          onClick={() => setTab('active')}
+          onClick={() => { setTab('active'); setPage(1) }}
           className={`px-6 py-3 text-sm font-medium transition-colors ${
             tab === 'active'
               ? 'border-b-2 border-[#1A3C6E] bg-[#1A3C6E]/5 text-[#1A3C6E]'
@@ -161,7 +165,7 @@ export function DepositsPage() {
           Đang hoạt động ({activeDeposits.length})
         </button>
         <button
-          onClick={() => setTab('history')}
+          onClick={() => { setTab('history'); setPage(1) }}
           className={`px-6 py-3 text-sm font-medium transition-colors ${
             tab === 'history'
               ? 'border-b-2 border-[#1A3C6E] bg-[#1A3C6E]/5 text-[#1A3C6E]'
@@ -188,7 +192,7 @@ export function DepositsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {displayed.map((d) => {
+              {paginated.map((d) => {
                 const status = getStatusDisplay(d.status, d.expiryDate)
                 const txRef = d.gatewayTxnRef?.trim() ?? ''
                 const title = d.vehicleTitle?.trim() || 'Xe'
@@ -301,14 +305,17 @@ export function DepositsPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
-          <p className="text-sm text-slate-500">Hiển thị {displayed.length} trên {displayed.length} kết quả</p>
-          <div className="flex gap-2">
-            <button className="rounded border border-slate-200 px-3 py-1 text-sm text-slate-400" disabled>Trước</button>
-            <button className="rounded border border-slate-200 px-3 py-1 text-sm text-slate-900 transition-colors hover:bg-slate-50">Sau</button>
-          </div>
-        </div>
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={displayed.length}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(1) }}
+        label="khoản cọc"
+      />
 
       {displayed.length === 0 && (
         <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-slate-500">

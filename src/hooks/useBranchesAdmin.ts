@@ -20,6 +20,8 @@ function mapBranch(raw: Record<string, unknown>): AdminBranch {
     staffCount: Number(raw.staffCount ?? 0),
     imageUrl: raw.imageUrl != null ? String(raw.imageUrl) : undefined,
     workingHours: raw.workingHours != null ? String(raw.workingHours) : undefined,
+    lat: Number(raw.lat ?? 0),
+    lng: Number(raw.lng ?? 0),
   }
 }
 

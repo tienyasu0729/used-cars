@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Info, Car, Users, MapPin, ArrowRight, MessageCircle, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react'
+import { BranchMap } from '@/components/map/BranchMap'
 import { useBranch, useBranchTeam } from '@/hooks/useBranches'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useSavedVehicles } from '@/hooks/useSavedVehicles'
@@ -312,14 +313,8 @@ export function BranchDetailPage() {
               </h2>
             </div>
             <div className="relative h-64 bg-slate-200">
-              <iframe
-                title="Bản đồ chi nhánh"
-                src={`https://www.google.com/maps?q=${branch.lat},${branch.lng}&output=embed`}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-              />
-              <div className="absolute bottom-4 right-4">
+              <BranchMap branches={[branch]} zoom={15} />
+              <div className="absolute bottom-4 right-4 z-10">
                 <a
                   href={mapUrl}
                   target="_blank"

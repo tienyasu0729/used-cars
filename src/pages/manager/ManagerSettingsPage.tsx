@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Input, Button } from '@/components/ui'
 import { MapPin, Upload, ChevronRight, Clock, Loader2, Plus, ImageIcon, X } from 'lucide-react'
+import { BranchMap } from '@/components/map/BranchMap'
 import { fetchMediaUploadEnabled, uploadManagerImage } from '@/services/managerMedia.service'
 import { useAuthStore } from '@/store/authStore'
 import { useBranches } from '@/hooks/useBranches'
@@ -10,6 +11,7 @@ import { useManagerBookingSlots } from '@/hooks/useManagerBookingSlots'
 import {
   normalizeTimeForInput,
   toLocalTimePayload,
+  geocodeAddress,
   type BookingSlotSettingDto,
   type BranchDayScheduleDto,
   type BranchSettingsDto,
@@ -180,6 +182,9 @@ export function ManagerSettingsPage() {
     phone: '',
     coords: '',
   })
+  const [gpsLat, setGpsLat] = useState<number | null>(null)
+  const [gpsLng, setGpsLng] = useState<number | null>(null)
+  const [isGeocoding, setIsGeocoding] = useState(false)
   const [hours, setHours] = useState(() => emptyHours())
   const [activeTab, setActiveTab] = useState(0)
   const branchInfoRef = useRef<HTMLDivElement>(null)
@@ -201,22 +206,22 @@ export function ManagerSettingsPage() {
 
   const applyServerData = useCallback(() => {
     if (!data) return
+    const hasCoords = data.lat != null && data.lng != null
     setForm({
       branchName: data.name,
       address: data.address,
       phone: data.phone ?? '',
-      coords:
-        branchMeta != null && (branchMeta.lat || branchMeta.lng)
-          ? `${branchMeta.lat}, ${branchMeta.lng}`
-          : '— (chưa có tọa độ)',
+      coords: hasCoords ? `${data.lat}, ${data.lng}` : '— (chưa có tọa độ)',
     })
+    setGpsLat(data.lat ?? null)
+    setGpsLng(data.lng ?? null)
     setHours(hydrateWorkingHoursFromSettings(data))
     const imgs = data.showroomImageUrls?.filter(Boolean) ?? []
     setShowroomRows(
       imgs.length > 0 ? imgs.map((url) => ({ id: crypto.randomUUID(), url })) : [{ id: crypto.randomUUID(), url: '' }],
     )
     setHasHydrated(true)
-  }, [data, branchMeta])
+  }, [data])
 
   useEffect(() => {
     setHasHydrated(false)
@@ -357,6 +362,8 @@ export function ManagerSettingsPage() {
         phone: phoneTrim || null,
         dailySchedules,
         showroomImageUrls,
+        lat: gpsLat,
+        lng: gpsLng,
       })
       pickedShowroom.forEach((p) => URL.revokeObjectURL(p.preview))
       setPickedShowroom([])
@@ -593,28 +600,56 @@ export function ManagerSettingsPage() {
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-slate-900">Vị Trí GPS</h2>
             <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-              <div
-                className="absolute inset-0 bg-cover bg-center opacity-80 grayscale contrast-75"
-                style={{ backgroundImage: "url('https://placehold.co/800x450/94a3b8/white?text=Bản+Đồ+Đà+Nẵng')" }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <MapPin className="h-14 w-14 text-[#1A3C6E]" />
-              </div>
-              <div className="absolute bottom-3 left-3 max-w-[90%] rounded-lg bg-white/95 p-3 text-xs font-medium shadow-sm backdrop-blur">
+              {gpsLat != null && gpsLng != null ? (
+                <BranchMap
+                  key={`${gpsLat}-${gpsLng}`}
+                  branches={[{ ...(branchMeta ?? { id: '0', name: form.branchName, address: form.address, phone: form.phone, openTime: '', closeTime: '', workingDays: '' }), lat: gpsLat, lng: gpsLng }]}
+                  zoom={15}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <MapPin className="h-14 w-14 text-[#1A3C6E]" />
+                </div>
+              )}
+              <div className="pointer-events-none absolute bottom-3 left-3 max-w-[90%] rounded-lg bg-white/95 p-3 text-xs font-medium shadow-sm backdrop-blur">
                 {form.coords}
               </div>
             </div>
-            <p className="text-xs text-slate-500">
-              Bản đồ minh họa theo dữ liệu chi nhánh. Chỉnh tọa độ trực tiếp trên bản đồ sẽ được bổ sung sau.
-            </p>
             <button
               type="button"
-              className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-slate-100 py-2 font-semibold text-slate-500"
-              disabled
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A3C6E] py-2.5 font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isGeocoding || !form.address.trim()}
+              onClick={async () => {
+                setIsGeocoding(true)
+                try {
+                  const coords = await geocodeAddress(form.address)
+                  setGpsLat(coords.lat)
+                  setGpsLng(coords.lng)
+                  setForm((p) => ({ ...p, coords: `${coords.lat}, ${coords.lng}` }))
+                  addToast('success', `Đã lấy tọa độ: ${coords.lat.toFixed(7)}, ${coords.lng.toFixed(7)}. Nhấn "Lưu Thay Đổi" để ghi vào cơ sở dữ liệu.`)
+                } catch (e: unknown) {
+                  const msg = e instanceof Error ? e.message : 'Không lấy được tọa độ.'
+                  addToast('error', msg)
+                } finally {
+                  setIsGeocoding(false)
+                }
+              }}
             >
-              <MapPin className="h-4 w-4" />
-              Cập nhật tọa độ (chưa khả dụng)
+              {isGeocoding ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Đang lấy tọa độ…
+                </>
+              ) : (
+                <>
+                  <MapPin className="h-4 w-4" />
+                  Lấy tọa độ từ địa chỉ
+                </>
+              )}
             </button>
+            <p className="text-xs text-slate-500">
+              Nhập địa chỉ ở ô bên trái, sau đó bấm nút trên để tự động lấy tọa độ GPS. Bản đồ sẽ cập nhật ngay lập tức.
+            </p>
           </div>
         </div>
       </section>

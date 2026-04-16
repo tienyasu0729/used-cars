@@ -1,7 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { ChatConversation, ChatMessage } from '@/types'
 import { formatChatSidebarTime } from '@/utils/format'
-import { Send, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { Send, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 
 const NAVY = '#1A3C6E'
 const ORANGE = '#E8612A'
@@ -12,6 +13,7 @@ interface ChatLayoutProps {
   selectedId: string | undefined
   onSelectConversation: (id: string) => void
   onSendMessage?: (content: string) => void
+  onDeleteConversation?: (id: string) => void
   /** Sidebar + thread gọn (widget nổi) */
   compact?: boolean
   showListFilter?: boolean
@@ -23,6 +25,7 @@ export function ChatLayout({
   selectedId,
   onSelectConversation,
   onSendMessage,
+  onDeleteConversation,
   compact = false,
   showListFilter,
 }: ChatLayoutProps) {
@@ -30,6 +33,7 @@ export function ChatLayout({
   const [search, setSearch] = useState('')
   const [listFilter, setListFilter] = useState<'all' | 'unread'>('all')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   const filterBar = showListFilter ?? compact
   const selected = conversations.find((c) => c.id === selectedId)
@@ -110,73 +114,92 @@ export function ChatLayout({
               filteredConversations.map((c) => {
                 const isSelected = selectedId === c.id
                 return (
-                  <button
+                  <div
                     key={c.id}
-                    type="button"
-                    onClick={() => onSelectConversation(c.id)}
-                    title={sidebarCollapsed ? c.participantName : undefined}
-                    className="flex w-full items-center border-b border-slate-100 text-left transition-colors hover:bg-slate-50"
+                    className="group/conv relative flex w-full items-center border-b border-slate-100 text-left transition-colors hover:bg-slate-50"
                     style={{
-                      gap: sidebarCollapsed ? '0' : compact ? '0.5rem' : '0.75rem',
-                      padding: sidebarCollapsed ? '0.5rem 0' : compact ? '0.625rem' : '1rem',
-                      justifyContent: sidebarCollapsed ? 'center' : undefined,
                       background: isSelected ? 'rgba(26,60,110,0.06)' : undefined,
                     }}
                   >
-                    {/* Avatar */}
-                    <div
-                      className="relative shrink-0 flex items-center justify-center rounded-full font-medium"
+                    <button
+                      type="button"
+                      onClick={() => onSelectConversation(c.id)}
+                      title={sidebarCollapsed ? c.participantName : undefined}
+                      className="flex min-w-0 flex-1 items-center"
                       style={{
-                        width: compact ? '2.25rem' : '2.5rem',
-                        height: compact ? '2.25rem' : '2.5rem',
-                        fontSize: compact ? '0.875rem' : '1rem',
-                        background: isSelected ? NAVY : 'rgba(26,60,110,0.1)',
-                        color: isSelected ? '#fff' : NAVY,
+                        gap: sidebarCollapsed ? '0' : compact ? '0.5rem' : '0.75rem',
+                        padding: sidebarCollapsed ? '0.5rem 0' : compact ? '0.625rem' : '1rem',
+                        justifyContent: sidebarCollapsed ? 'center' : undefined,
                       }}
                     >
-                      {c.participantName[0]?.toUpperCase() ?? '?'}
-                      {/* Unread badge on avatar when collapsed */}
-                      {sidebarCollapsed && c.unreadCount > 0 && (
-                        <span
-                          className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
-                          style={{ background: ORANGE }}
-                        >
-                          {c.unreadCount > 9 ? '9+' : c.unreadCount}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Text info — hidden when collapsed */}
-                    {!sidebarCollapsed && (
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-1">
-                          <p className="truncate text-xs font-semibold text-slate-900">{c.participantName}</p>
-                          {compact && (
-                            <span className="shrink-0 text-[10px] leading-tight text-slate-400">
-                              {formatChatSidebarTime(c.lastMessageAt)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-0.5 flex items-end justify-between gap-1">
-                          <p className="truncate text-[11px] text-slate-500">{c.lastMessage || '—'}</p>
-                          {c.unreadCount > 0 && (
-                            <span
-                              className="shrink-0 rounded-full font-medium text-white"
-                              style={{
-                                background: ORANGE,
-                                fontSize: '10px',
-                                lineHeight: '1rem',
-                                minWidth: '1.125rem',
-                                padding: '0 0.25rem',
-                              }}
-                            >
-                              {c.unreadCount > 99 ? '99+' : c.unreadCount}
-                            </span>
-                          )}
-                        </div>
+                      {/* Avatar */}
+                      <div
+                        className="relative shrink-0 flex items-center justify-center rounded-full font-medium"
+                        style={{
+                          width: compact ? '2.25rem' : '2.5rem',
+                          height: compact ? '2.25rem' : '2.5rem',
+                          fontSize: compact ? '0.875rem' : '1rem',
+                          background: isSelected ? NAVY : 'rgba(26,60,110,0.1)',
+                          color: isSelected ? '#fff' : NAVY,
+                        }}
+                      >
+                        {c.participantName[0]?.toUpperCase() ?? '?'}
+                        {sidebarCollapsed && c.unreadCount > 0 && (
+                          <span
+                            className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                            style={{ background: ORANGE }}
+                          >
+                            {c.unreadCount > 9 ? '9+' : c.unreadCount}
+                          </span>
+                        )}
                       </div>
+
+                      {!sidebarCollapsed && (
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-1">
+                            <p className="truncate text-xs font-semibold text-slate-900">{c.participantName}</p>
+                            {compact && (
+                              <span className="shrink-0 text-[10px] leading-tight text-slate-400">
+                                {formatChatSidebarTime(c.lastMessageAt)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-0.5 flex items-end justify-between gap-1">
+                            <p className="truncate text-[11px] text-slate-500">{c.lastMessage || '—'}</p>
+                            {c.unreadCount > 0 && (
+                              <span
+                                className="shrink-0 rounded-full font-medium text-white"
+                                style={{
+                                  background: ORANGE,
+                                  fontSize: '10px',
+                                  lineHeight: '1rem',
+                                  minWidth: '1.125rem',
+                                  padding: '0 0.25rem',
+                                }}
+                              >
+                                {c.unreadCount > 99 ? '99+' : c.unreadCount}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </button>
+
+                    {/* Nút xóa hội thoại — hiện khi hover */}
+                    {!sidebarCollapsed && onDeleteConversation && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDeleteTarget({ id: c.id, name: c.participantName })
+                        }}
+                        title="Xóa hội thoại"
+                        className="mr-2 shrink-0 rounded p-1 text-slate-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover/conv:opacity-100"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     )}
-                  </button>
+                  </div>
                 )
               })
             )}
@@ -289,6 +312,33 @@ export function ChatLayout({
           </div>
         )}
       </div>
+
+      {/* Dialog xác nhận xóa hội thoại */}
+      {onDeleteConversation && (
+        <ConfirmDialog
+          isOpen={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            if (deleteTarget) {
+              onDeleteConversation(deleteTarget.id)
+              setDeleteTarget(null)
+            }
+          }}
+          title="Xóa hội thoại"
+          message={
+            <>
+              Bạn có chắc muốn xóa hội thoại với <strong>{deleteTarget?.name}</strong>?
+              <br />
+              <span className="text-xs text-slate-400">
+                Hội thoại sẽ tự hiện lại nếu đối phương gửi tin nhắn mới.
+              </span>
+            </>
+          }
+          confirmLabel="Xóa"
+          cancelLabel="Hủy"
+          confirmVariant="danger"
+        />
+      )}
     </div>
   )
 }

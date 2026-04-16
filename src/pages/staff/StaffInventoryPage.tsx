@@ -6,7 +6,7 @@ import { depositApi } from '@/services/depositApi'
 import { useToastStore } from '@/store/toastStore'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatPrice } from '@/utils/format'
-import { VehicleStatusBadge } from '@/components/ui'
+import { VehicleStatusBadge, Pagination } from '@/components/ui'
 import { ReserveVehicleModal } from '@/features/staff/components/ReserveVehicleModal'
 import type { Vehicle, VehicleStatus } from '@/types/vehicle.types'
 
@@ -17,6 +17,8 @@ const TAB_API_STATUS: (VehicleStatus | undefined)[] = [undefined, 'Available', '
 export function StaffInventoryPage() {
   const [activeTab, setActiveTab] = useState(0)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const [reserveVehicle, setReserveVehicle] = useState<Vehicle | null>(null)
   const { data: inventory, setFilters, refetch } = useInventory()
   const { data: customerRows = [] } = useStaffCustomerOptions()
@@ -35,6 +37,11 @@ export function StaffInventoryPage() {
       (v.model?.toLowerCase().includes(q) ?? false)
     return matchSearch
   })
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
+
+  useEffect(() => { setPage(1) }, [activeTab, search])
 
   const toast = useToastStore()
   const queryClient = useQueryClient()
@@ -100,7 +107,7 @@ export function StaffInventoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {filtered.map((v) => {
+              {paginated.map((v) => {
                 const im = v.images?.[0]
                 const thumb = typeof im === 'string' ? im : im?.url
                 return (
@@ -144,10 +151,8 @@ export function StaffInventoryPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
-          <p className="text-xs text-slate-500">Hiển thị 1-{filtered.length} trong số {inventory?.length ?? 0} xe</p>
-        </div>
       </div>
+      <Pagination page={page} totalPages={totalPages} total={filtered.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="xe" />
       <ReserveVehicleModal
         vehicle={reserveVehicle}
         isOpen={!!reserveVehicle}

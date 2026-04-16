@@ -1,11 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
-import { Button, Input } from '@/components/ui'
+import { Button, Input, ConfirmDialog } from '@/components/ui'
 import { Lock } from 'lucide-react'
 import { getProfile, updateProfile, normalizeVNPhoneForApi } from '@/services/user.service'
 import { isoDateToDdMmYyyy, ddMmYyyyToIso, isValidDdMmYyyyOrEmpty } from '@/utils/dateDdMmYyyy'
@@ -105,8 +105,20 @@ export function ProfilePage() {
     })
   }, [user, reset])
 
-  const onSave = handleSubmit(async (data: FormData) => {
-    if (!user) return
+  // State cho popup xác nhận trước khi lưu
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [pendingData, setPendingData] = useState<FormData | null>(null)
+
+  // Khi ấn "Lưu thay đổi" → validate form trước, nếu hợp lệ thì hiện popup xác nhận
+  const onSave = handleSubmit((data: FormData) => {
+    setPendingData(data)
+    setShowConfirm(true)
+  })
+
+  // Khi user xác nhận trong popup → gọi API cập nhật
+  const onConfirmSave = async () => {
+    if (!user || !pendingData) return
+    const data = pendingData
     const phoneNorm = data.phone?.trim() ? normalizeVNPhoneForApi(data.phone) : null
     try {
       const iso = ddMmYyyyToIso(data.dateOfBirth)
@@ -126,8 +138,11 @@ export function ProfilePage() {
       } else {
         addToast('error', api?.message || 'Không lưu được. Vui lòng thử lại.')
       }
+    } finally {
+      setShowConfirm(false)
+      setPendingData(null)
     }
-  })
+  }
 
   const onCancel = () => {
     if (!user) return
@@ -269,6 +284,18 @@ export function ProfilePage() {
           </div>
         </div>
       </section>
+
+      {/* Popup xác nhận trước khi lưu thay đổi hồ sơ */}
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={() => { setShowConfirm(false); setPendingData(null) }}
+        onConfirm={onConfirmSave}
+        title="Xác nhận cập nhật hồ sơ"
+        message="Bạn có chắc chắn muốn lưu thay đổi thông tin cá nhân không?"
+        confirmLabel="Lưu thay đổi"
+        cancelLabel="Hủy bỏ"
+        confirmVariant="primary"
+      />
     </div>
   )
 }

@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bell, Calendar, Car, ArrowRightLeft, CheckCheck, Check } from 'lucide-react'
 import { useManagerNotifications } from '@/hooks/useManagerNotifications'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
-import { Button } from '@/components/ui'
+import { Button, Pagination } from '@/components/ui'
 import type { Notification } from '@/types'
 import { formatDate } from '@/utils/format'
 import {
@@ -70,6 +70,8 @@ function NotificationCard({ n, onMarkRead }: { n: Notification; onMarkRead?: (id
 
 export function ManagerNotificationsPage() {
   const [filter, setFilter] = useState('all')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const qc = useQueryClient()
   const { data: notifications } = useManagerNotifications()
   const { data: unreadFromApi = 0 } = useNotificationUnreadCount()
@@ -96,6 +98,11 @@ export function ManagerNotificationsPage() {
       : filter === 'unread'
         ? (notifications ?? []).filter((n) => !n.read)
         : (notifications ?? []).filter((n) => n.type === filter)
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
+
+  useEffect(() => { setPage(1) }, [filter])
 
   return (
     <div className="space-y-6">
@@ -142,11 +149,12 @@ export function ManagerNotificationsPage() {
             <p className="mt-1 text-sm text-slate-400">Các thông báo mới sẽ hiển thị tại đây</p>
           </div>
         ) : (
-          filtered.map((n) => (
+          paginated.map((n) => (
             <NotificationCard key={n.id} n={n} onMarkRead={(id) => markOne.mutate(id)} />
           ))
         )}
       </div>
+      <Pagination page={page} totalPages={totalPages} total={filtered.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="thông báo" />
     </div>
   )
 }

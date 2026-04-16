@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, ChevronLeft, Check, Info } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useInventory } from '@/hooks/useInventory'
 import { useStaffOrManagerBasePath } from '@/hooks/useStaffOrManagerBasePath'
 import { useStaffCustomerOptions } from '@/hooks/useStaffCustomerOptions'
 import { orderApi } from '@/services/orderApi'
+import { depositApi } from '@/services/deposit.service'
 import { useToastStore } from '@/store/toastStore'
-import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui'
 import { formatPrice } from '@/utils/format'
 import { CreateOrderStepDetails } from '@/features/staff/components/CreateOrderStepDetails'
@@ -24,6 +25,7 @@ export function StaffCreateOrderPage() {
   const [depositId, setDepositId] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [notes, setNotes] = useState('')
+  const [depositTouched, setDepositTouched] = useState(false)
   const navigate = useNavigate()
   const toast = useToastStore()
   const queryClient = useQueryClient()
@@ -35,17 +37,123 @@ export function StaffCreateOrderPage() {
   const vehiclePrice = selectedVehicle?.price ?? 0
   const selectedCustomer = customerRows.find((c) => c.id === customerId)
 
-  useEffect(() => {
-    if (step === 3 && vehiclePrice > 0 && totalPrice <= 0) {
-      setTotalPrice(vehiclePrice)
+  const { data: depositListResult, isLoading: depositsLoading } = useQuery({
+    queryKey: ['deposits', 'order-create', vehicleId, customerId],
+    queryFn: () => depositApi.list({ size: 400 }),
+    enabled: Boolean(vehicleId && customerId && step >= 3),
+  })
+
+  const matchedConfirmedDeposits = useMemo(() => {
+    const items = depositListResult?.items ?? []
+    if (!vehicleId || !customerId) return []
+    return items.filter(
+      (d) =>
+        String(d.vehicleId) === String(vehicleId) &&
+        String(d.customerId) === String(customerId) &&
+        d.status === 'Confirmed' &&
+        !(d.orderId != null && String(d.orderId).trim() !== ''),
+    )
+  }, [depositListResult?.items, vehicleId, customerId])
+
+  const suggestedDeposit = useMemo(() => {
+    if (matchedConfirmedDeposits.length === 0) return undefined
+    return [...matchedConfirmedDeposits].sort(
+      (a, b) => new Date(b.depositDate).getTime() - new Date(a.depositDate).getTime(),
+    )[0]
+  }, [matchedConfirmedDeposits])
+
+  const resolvedDepositAmount = useMemo(() => {
+    const trimmed = depositId.trim()
+    if (!trimmed) return null
+    const dep = depositListResult?.items?.find((d) => d.id === trimmed)
+    if (
+      !dep ||
+      String(dep.vehicleId) !== String(vehicleId) ||
+      String(dep.customerId) !== String(customerId) ||
+      dep.status !== 'Confirmed'
+    ) {
+      return null
     }
-  }, [step, vehiclePrice, totalPrice])
+    return dep.amount
+  }, [depositId, depositListResult?.items, vehicleId, customerId])
+
+  useEffect(() => {
+    setDepositTouched(false)
+  }, [vehicleId, customerId])
+
+  useEffect(() => {
+    if (step < 3 || !vehicleId || !customerId || depositTouched) return
+    const vp = selectedVehicle?.price ?? 0
+    if (suggestedDeposit) {
+      setDepositId(suggestedDeposit.id)
+      setTotalPrice(Math.max(1, vp - suggestedDeposit.amount))
+    } else {
+      setDepositId('')
+      setTotalPrice(vp > 0 ? vp : 0)
+    }
+  }, [step, vehicleId, customerId, suggestedDeposit, selectedVehicle?.price, depositTouched])
+
+  useEffect(() => {
+    if (!depositTouched || step < 3) return
+    const vp = selectedVehicle?.price ?? 0
+    const trimmed = depositId.trim()
+    if (!trimmed) {
+      setTotalPrice(vp > 0 ? vp : 0)
+      return
+    }
+    const dep = depositListResult?.items?.find((d) => d.id === trimmed)
+    if (
+      dep &&
+      String(dep.vehicleId) === String(vehicleId) &&
+      String(dep.customerId) === String(customerId) &&
+      dep.status === 'Confirmed'
+    ) {
+      setTotalPrice(Math.max(1, vp - dep.amount))
+    }
+  }, [
+    depositId,
+    depositTouched,
+    step,
+    vehicleId,
+    customerId,
+    depositListResult?.items,
+    selectedVehicle?.price,
+  ])
+
+  const handleDepositIdChange = (v: string) => {
+    setDepositTouched(true)
+    setDepositId(v)
+  }
+
+  const validateDepositForOrder = (): boolean => {
+    const trimmed = depositId.trim()
+    if (!trimmed) return true
+    const dep = depositListResult?.items?.find((d) => d.id === trimmed)
+    if (!dep) {
+      toast.addToast('error', 'Không tìm thấy phiếu cọc với ID đã nhập.')
+      return false
+    }
+    if (String(dep.vehicleId) !== String(vehicleId) || String(dep.customerId) !== String(customerId)) {
+      toast.addToast('error', 'Phiếu cọc không khớp khách hàng hoặc xe đã chọn.')
+      return false
+    }
+    if (dep.status !== 'Confirmed') {
+      toast.addToast('error', 'Phiếu cọc chưa ở trạng thái đã xác nhận.')
+      return false
+    }
+    if (dep.orderId != null && String(dep.orderId).trim() !== '') {
+      toast.addToast('error', 'Phiếu cọc đã gắn với đơn hàng khác.')
+      return false
+    }
+    return true
+  }
 
   const handleStep4 = async () => {
     if (!customerId || !vehicleId) {
       toast.addToast('error', 'Thiếu khách hoặc xe.')
       return
     }
+    if (!validateDepositForOrder()) return
     const tid = Number(totalPrice)
     if (!Number.isFinite(tid) || tid < 1) {
       toast.addToast('error', 'Tổng giá đơn không hợp lệ.')
@@ -184,10 +292,14 @@ export function StaffCreateOrderPage() {
         >
           <CreateOrderStepDetails
             vehicle={selectedVehicle ?? null}
-            totalPrice={totalPrice || vehiclePrice}
+            vehiclePrice={vehiclePrice}
+            depositAmount={resolvedDepositAmount}
+            depositsLoading={depositsLoading}
+            customerSelected={Boolean(customerId)}
+            totalPrice={totalPrice > 0 ? totalPrice : vehiclePrice}
             onTotalPriceChange={setTotalPrice}
             depositId={depositId}
-            onDepositIdChange={setDepositId}
+            onDepositIdChange={handleDepositIdChange}
             paymentMethod={paymentMethod}
             onPaymentChange={setPaymentMethod}
             notes={notes}
@@ -236,7 +348,7 @@ export function StaffCreateOrderPage() {
                 <span className="text-slate-500">Xe:</span> {selectedVehicle?.brand} {selectedVehicle?.model} {selectedVehicle?.year}
               </p>
               <p>
-                <span className="text-slate-500">Tổng giá đơn:</span> {formatPrice(totalPrice || vehiclePrice)}
+                <span className="text-slate-500">Số tiền còn lại (đơn):</span> {formatPrice(totalPrice > 0 ? totalPrice : vehiclePrice)}
               </p>
               {depositId.trim() !== '' && (
                 <p>

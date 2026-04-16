@@ -14,6 +14,11 @@ export default defineConfig(({ mode }) => {
   const backendHost = (env.VITE_BACKEND_HOST || '127.0.0.1').trim()
   const backendPort = (env.VITE_BACKEND_PORT || '8080').trim()
   const backendOrigin = `http://${backendHost}:${backendPort}`
+
+  const aiChatHost = (env.VITE_AI_CHATBOT_HOST || '127.0.0.1').trim()
+  const aiChatPort = (env.VITE_AI_CHATBOT_PORT || '8000').trim()
+  const aiChatOrigin = `http://${aiChatHost}:${aiChatPort}`
+
   const devPort = Number(env.VITE_DEV_PORT) || 5173
   const disableHmr =
     env.VITE_DISABLE_HMR === 'true' || env.VITE_DISABLE_HMR === '1'
@@ -32,7 +37,16 @@ export default defineConfig(({ mode }) => {
       changeOrigin: true,
       ws: true,
     },
-  } as const
+    '/ai-chat': {
+      target: aiChatOrigin,
+      changeOrigin: true,
+    },
+    '/ai-health': {
+      target: aiChatOrigin,
+      changeOrigin: true,
+      rewrite: (path: string) => path.replace(/^\/ai-health/, '/health'),
+    },
+  }
 
   return {
     plugins: [react()],

@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Search, ChevronDown, User, LayoutDashboard, LogOut, GitCompare } from 'lucide-react'
+import { Menu, X, ChevronDown, User, LayoutDashboard, LogOut, GitCompare } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useCompareStore } from '@/store/compareStore'
 import { BrandLogo } from '@/components/common/BrandLogo'
+import { SearchAutocomplete } from '@/components/common/SearchAutocomplete'
 import type { UserRole } from '@/types'
 
 function getDashboardPath(role: UserRole): string {
@@ -40,6 +41,7 @@ export function PublicHeader() {
   const avatarRef = useRef<HTMLDivElement>(null)
   const { user, logout } = useAuthStore()
   const compareEntries = useCompareStore((s) => s.entries)
+  const removeCompareEntry = useCompareStore((s) => s.removeEntry)
   const clearCompare = useCompareStore((s) => s.clear)
   const navigate = useNavigate()
 
@@ -55,13 +57,18 @@ export function PublicHeader() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate(`/vehicles?q=${encodeURIComponent(searchQuery.trim())}`)
-      setMobileOpen(false)
+    doSearch(searchQuery)
+  }
+
+  const doSearch = useCallback((keyword: string) => {
+    const trimmed = keyword.trim()
+    if (trimmed) {
+      navigate(`/vehicles?q=${encodeURIComponent(trimmed)}`)
     } else {
       navigate('/vehicles')
     }
-  }
+    setMobileOpen(false)
+  }, [navigate])
 
   const handleLogout = () => {
     logout()
@@ -74,18 +81,16 @@ export function PublicHeader() {
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-4 px-4 lg:px-6">
         <BrandLogo variant="dark" logoHeight={32} />
 
-        <form onSubmit={handleSearch} className="mx-6 hidden max-w-md flex-1 lg:block">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm xe theo hãng, đời, giá..."
-              className="w-full rounded-lg border border-white/20 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
-            />
-          </div>
-        </form>
+        <div className="mx-6 hidden max-w-md flex-1 lg:block">
+          <SearchAutocomplete
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSearch={doSearch}
+            variant="dark"
+            iconClassName="text-white/70"
+            inputClassName="w-full rounded-lg border border-white/20 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
+          />
+        </div>
 
         <nav className="hidden items-center gap-6 lg:flex">
           {navLinks.map((link) => (
@@ -97,45 +102,71 @@ export function PublicHeader() {
               {link.label}
             </Link>
           ))}
-          <Link
-            to="/compare"
-            title={
-              compareEntries.length > 0
-                ? compareEntries.map((e) => e.title).join(' · ')
-                : 'So sánh 2–3 xe'
-            }
-            className={`relative flex max-w-[min(100%,14rem)] items-center gap-1.5 rounded-lg text-sm font-medium text-white transition-colors hover:text-white/90 ${
-              compareEntries.length > 0 ? 'bg-white/15 px-2 py-1 ring-2 ring-amber-300/90' : 'py-1'
-            }`}
-          >
-            <GitCompare className={`h-4 w-4 shrink-0 ${compareEntries.length > 0 ? 'text-amber-200' : ''}`} />
-            <span className="shrink-0">So sánh</span>
+          <div className="group/compare relative">
+            <Link
+              to="/compare"
+              className={`relative flex items-center gap-1.5 rounded-lg text-sm font-medium text-white transition-colors hover:text-white/90 ${
+                compareEntries.length > 0 ? 'bg-white/15 px-2 py-1 ring-2 ring-amber-300/90' : 'py-1'
+              }`}
+            >
+              <GitCompare className={`h-4 w-4 shrink-0 ${compareEntries.length > 0 ? 'text-amber-200' : ''}`} />
+              <span className="shrink-0">So sánh</span>
+              {compareEntries.length > 0 && (
+                <span className="inline-flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-[#E8612A] px-1.5 text-xs font-bold text-white">
+                  {compareEntries.length}
+                </span>
+              )}
+            </Link>
             {compareEntries.length > 0 && (
-              <>
-                <span className="group relative inline-flex h-5 min-w-[20px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E8612A] px-1.5">
-                  <span className="text-xs font-bold text-white transition-opacity duration-150 group-hover:opacity-0">
-                    {compareEntries.length}
-                  </span>
-                  <button
-                    type="button"
-                    title="Xóa danh sách so sánh"
-                    aria-label="Xóa danh sách so sánh"
-                    className="absolute inset-0 flex items-center justify-center rounded-full bg-[#c94f22] text-white opacity-0 transition-opacity duration-150 hover:bg-[#b8461e] group-hover:opacity-100"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      clearCompare()
-                    }}
-                  >
-                    <X className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  </button>
-                </span>
-                <span className="hidden min-w-0 truncate text-xs font-medium text-white/90 xl:inline">
-                  {compareEntries.map((e) => e.title.split(/\s+/).slice(0, 3).join(' ')).join(' · ')}
-                </span>
-              </>
+              <div className="pointer-events-none absolute right-0 top-full z-50 pt-2 opacity-0 transition-opacity duration-150 group-hover/compare:pointer-events-auto group-hover/compare:opacity-100">
+                <div className="w-64 rounded-lg border border-white/20 bg-[#1A3C6E] p-2 shadow-xl">
+                  <p className="mb-1.5 px-2 text-[11px] font-bold uppercase tracking-wider text-white/50">
+                    Xe đang so sánh ({compareEntries.length}/3)
+                  </p>
+                  <ul className="space-y-0.5">
+                    {compareEntries.map((entry, i) => (
+                      <li key={entry.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-white/10">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/15 text-[10px] font-bold text-white/70">
+                          {i + 1}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm text-white">{entry.title}</span>
+                        <button
+                          type="button"
+                          title={`Bỏ ${entry.title}`}
+                          className="shrink-0 rounded p-0.5 text-white/40 transition-colors hover:bg-white/15 hover:text-white"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeCompareEntry(entry.id)
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-1.5 flex gap-1.5 border-t border-white/10 pt-1.5">
+                    <Link
+                      to="/compare"
+                      className="flex-1 rounded-md bg-white/10 py-1.5 text-center text-xs font-medium text-white hover:bg-white/20"
+                    >
+                      Xem so sánh
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        clearCompare()
+                      }}
+                      className="rounded-md px-2.5 py-1.5 text-xs font-medium text-white/60 hover:bg-white/10 hover:text-white"
+                    >
+                      Xóa tất cả
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
-          </Link>
+          </div>
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -212,18 +243,16 @@ export function PublicHeader() {
               <X className="h-6 w-6" />
             </button>
           </div>
-          <form onSubmit={handleSearch} className="px-4 pb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm xe theo hãng, đời, giá..."
-                className="w-full rounded-lg border border-white/20 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/60"
-              />
-            </div>
-          </form>
+          <div className="px-4 pb-4">
+            <SearchAutocomplete
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSearch={doSearch}
+              variant="dark"
+              iconClassName="text-white/70"
+              inputClassName="w-full rounded-lg border border-white/20 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/60"
+            />
+          </div>
           <nav className="flex flex-col gap-1 px-4">
             {navLinks.map((link) => (
               <Link
@@ -235,43 +264,49 @@ export function PublicHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              to="/compare"
-              onClick={() => setMobileOpen(false)}
-              className={`flex flex-col gap-1 rounded-lg py-3 text-lg font-medium text-white hover:bg-white/10 ${
-                compareEntries.length > 0 ? 'bg-white/10 px-2 ring-1 ring-amber-300/80' : ''
-              }`}
-            >
-              <span className="flex items-center gap-2">
+            <div className={`rounded-lg py-3 text-lg font-medium text-white ${
+              compareEntries.length > 0 ? 'bg-white/10 px-2 ring-1 ring-amber-300/80' : ''
+            }`}>
+              <Link
+                to="/compare"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2"
+              >
                 <GitCompare className="h-4 w-4" />
                 So sánh
                 {compareEntries.length > 0 && (
-                  <>
-                    <span className="rounded-full bg-[#E8612A] px-2 py-0.5 text-xs font-bold">
-                      {compareEntries.length}
-                    </span>
+                  <span className="rounded-full bg-[#E8612A] px-2 py-0.5 text-xs font-bold">
+                    {compareEntries.length}
+                  </span>
+                )}
+              </Link>
+              {compareEntries.length > 0 && (
+                <ul className="mt-2 space-y-1 pl-6">
+                  {compareEntries.map((entry, i) => (
+                    <li key={entry.id} className="flex items-center gap-2 text-sm font-normal text-white/80">
+                      <span className="shrink-0 text-xs text-white/50">{i + 1}.</span>
+                      <span className="min-w-0 flex-1 truncate">{entry.title}</span>
+                      <button
+                        type="button"
+                        className="shrink-0 rounded p-1 text-white/40 hover:bg-white/15 hover:text-white"
+                        onClick={() => removeCompareEntry(entry.id)}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                  <li>
                     <button
                       type="button"
-                      title="Xóa danh sách so sánh"
-                      aria-label="Xóa danh sách so sánh"
-                      className="rounded p-1 text-white/90 hover:bg-white/15 lg:hidden"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        clearCompare()
-                      }}
+                      onClick={clearCompare}
+                      className="mt-1 text-xs text-white/50 hover:text-white/80"
                     >
-                      <X className="h-4 w-4" />
+                      Xóa tất cả
                     </button>
-                  </>
-                )}
-              </span>
-              {compareEntries.length > 0 && (
-                <span className="pl-6 text-xs font-normal text-white/80">
-                  {compareEntries.map((e) => e.title).join(' · ')}
-                </span>
+                  </li>
+                </ul>
               )}
-            </Link>
+            </div>
           </nav>
           <div className="mt-4 flex gap-2 px-4">
             {user ? (

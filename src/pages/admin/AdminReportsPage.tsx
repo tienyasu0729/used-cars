@@ -8,6 +8,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { FileDown } from 'lucide-react'
+import { downloadBlob, todayStr } from '@/utils/excelExport'
+import axiosInstance from '@/utils/axiosInstance'
 
 export function AdminReportsPage() {
   const { data: reports } = useSystemReports()
@@ -23,9 +26,23 @@ export function AdminReportsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Báo Cáo Tổng Hệ Thống</h2>
-        <p className="mt-1 text-slate-500">Phân tích doanh thu và hiệu suất theo chi nhánh</p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">Báo Cáo Tổng Hệ Thống</h2>
+          <p className="mt-1 text-slate-500">Phân tích doanh thu và hiệu suất theo chi nhánh</p>
+        </div>
+        <button
+          onClick={async () => {
+            try {
+              const res = await axiosInstance.get('/admin/reports/export', { responseType: 'blob' })
+              downloadBlob(res as unknown as Blob, `bao-cao-toan-he-thong-${todayStr()}.xlsx`)
+            } catch { /* lỗi im lặng */ }
+          }}
+          className="flex items-center gap-2 rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90"
+        >
+          <FileDown className="h-5 w-5" />
+          Xuất Excel
+        </button>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

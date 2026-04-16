@@ -24,6 +24,8 @@ export type UpdateAdminBranchBody = {
   address: string
   phone: string | null
   status: string
+  lat?: number | null
+  lng?: number | null
 }
 
 export const adminApi = {

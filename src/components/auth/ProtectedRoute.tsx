@@ -14,6 +14,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { ShieldX } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { useHasPermission } from '@/hooks/usePermissions'
 import type { UserRole } from '@/types/auth.types'
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -21,6 +22,8 @@ interface ProtectedRouteProps {
   allowedRoles?: string[]
   /** Alias cũ để backward compat với router hiện tại */
   roles?: string[]
+  /** Yêu cầu permission cụ thể (VD: { module: 'Vehicles', action: 'create' }) */
+  requiredPermission?: { module: string; action: string }
 }
 
 /**
@@ -40,15 +43,20 @@ function normalizeRole(role: string): string {
   return ROLE_ALIAS_MAP[role.toLowerCase()] || role
 }
 
-export function ProtectedRoute({ children, allowedRoles, roles }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowedRoles, roles, requiredPermission }: ProtectedRouteProps) {
   const { user, isAuthenticated } = useAuthStore()
   const location = useLocation()
+
+  // Hook phải gọi ở top-level (không điều kiện) — nếu không có requiredPermission thì truyền chuỗi rỗng
+  const hasPermission = useHasPermission(
+    requiredPermission?.module ?? '',
+    requiredPermission?.action ?? '',
+  )
 
   // Gộp allowedRoles và roles (backward compat) thành 1 danh sách
   const effectiveRoles = allowedRoles || roles
 
   // Bước 1: Chưa đăng nhập → redirect về /login
-  // Lưu path hiện tại vào state.from để sau login redirect lại
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
@@ -63,24 +71,33 @@ export function ProtectedRoute({ children, allowedRoles, roles }: ProtectedRoute
     const userRoleNormalized = normalizeRole(user.role)
 
     if (!normalizedAllowed.includes(userRoleNormalized)) {
-      return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
-          <ShieldX className="text-red-400" size={80} />
-          <h1 className="mt-6 text-3xl font-bold text-gray-900">403 — Không có quyền truy cập</h1>
-          <p className="mt-3 text-gray-500">
-            Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên.
-          </p>
-          <a
-            href="/"
-            className="mt-6 rounded-lg bg-[#1A3C6E] px-6 py-2 text-white hover:bg-[#1A3C6E]/90 transition-colors"
-          >
-            Về trang chủ
-          </a>
-        </div>
-      )
+      return <Forbidden403 />
     }
   }
 
-  // Bước 3: Mọi thứ OK → render children
+  // Bước 3: Kiểm tra permission cụ thể (nếu có yêu cầu)
+  if (requiredPermission && !hasPermission) {
+    return <Forbidden403 />
+  }
+
+  // Bước 4: Mọi thứ OK → render children
   return <>{children}</>
+}
+
+function Forbidden403() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
+      <ShieldX className="text-red-400" size={80} />
+      <h1 className="mt-6 text-3xl font-bold text-gray-900">403 — Không có quyền truy cập</h1>
+      <p className="mt-3 text-gray-500">
+        Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên.
+      </p>
+      <a
+        href="/"
+        className="mt-6 rounded-lg bg-[#1A3C6E] px-6 py-2 text-white hover:bg-[#1A3C6E]/90 transition-colors"
+      >
+        Về trang chủ
+      </a>
+    </div>
+  )
 }

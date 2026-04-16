@@ -6,6 +6,7 @@ import { branchService } from '@/services/branch.service'
 import { transferService } from '@/services/transfer.service'
 import { useToastStore } from '@/store/toastStore'
 import { useAuthStore } from '@/store/authStore'
+import { useHasPermission } from '@/hooks/usePermissions'
 import { Button } from '@/components/ui'
 import type { ApiErrorResponse } from '@/types/auth.types'
 
@@ -23,6 +24,7 @@ interface TransferRequestFormProps {
 export function TransferRequestForm({ onCreated }: TransferRequestFormProps) {
   const toast = useToastStore()
   const { user } = useAuthStore()
+  const canCreateTransfer = useHasPermission('Transfers', 'create')
   const myBranchId = user?.branchId
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -170,11 +172,13 @@ export function TransferRequestForm({ onCreated }: TransferRequestFormProps) {
           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
         />
       </div>
+      {canCreateTransfer && (
       <div className="flex justify-end">
         <Button type="submit" disabled={submitting || !vehicleId}>
           {submitting ? 'Đang gửi…' : 'Gửi yêu cầu điều chuyển'}
         </Button>
       </div>
+      )}
     </form>
   )
 }

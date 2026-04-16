@@ -5,7 +5,7 @@ import { BookingDetailModal } from '@/features/customer/components/BookingDetail
 import { useMyBookings } from '@/hooks/useMyBookings'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useBranches } from '@/hooks/useBranches'
-import { EmptyState } from '@/components/ui'
+import { EmptyState, Pagination } from '@/components/ui'
 import { Calendar } from 'lucide-react'
 import { Button } from '@/components/ui'
 import type { Booking } from '@/types/booking.types'
@@ -19,6 +19,8 @@ const tabs = [
 
 export function BookingsPage() {
   const [activeTab, setActiveTab] = useState('all')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const { bookings: allBookings, isLoading, isError, cancelBooking } = useMyBookings()
   const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
@@ -54,6 +56,10 @@ export function BookingsPage() {
           return true
         })
 
+  const total = filtered.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
+
   const tabCounts = useMemo(() => {
     const pending = allBookings.filter((b) => b.status === 'Pending' || b.status === 'Rescheduled').length
     const confirmed = allBookings.filter((b) => b.status === 'Confirmed' || b.status === 'Completed').length
@@ -88,7 +94,7 @@ export function BookingsPage() {
             <button
               key={t.key}
               type="button"
-              onClick={() => setActiveTab(t.key)}
+              onClick={() => { setActiveTab(t.key); setPage(1) }}
               className={`inline-flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === t.key
                   ? 'border-[#1A3C6E] text-[#1A3C6E]'
@@ -133,24 +139,35 @@ export function BookingsPage() {
           }
         />
       ) : (
-        <div className="space-y-3">
-          {filtered.map((b) => {
-            const vehicle = vehicles.find((v) => v.id === b.vehicleId)
-            const branch = branches?.find((br) => Number(br.id) === b.branchId)
-            return (
-              <BookingCard
-                key={b.id}
-                booking={b}
-                vehicle={vehicle}
-                branch={branch}
-                onViewDetail={setSelectedBooking}
-              />
-            )
-          })}
-        </div>
+        <>
+          <div className="space-y-3">
+            {paginated.map((b) => {
+              const vehicle = vehicles.find((v) => v.id === b.vehicleId)
+              const branch = branches?.find((br) => Number(br.id) === b.branchId)
+              return (
+                <BookingCard
+                  key={b.id}
+                  booking={b}
+                  vehicle={vehicle}
+                  branch={branch}
+                  onViewDetail={setSelectedBooking}
+                />
+              )
+            })}
+          </div>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(s) => { setPageSize(s); setPage(1) }}
+            label="lịch hẹn"
+          />
+        </>
       )}
 
-      {/* Booking Detail Modal */}
       <BookingDetailModal
         booking={selectedBooking}
         vehicle={selectedVehicle}

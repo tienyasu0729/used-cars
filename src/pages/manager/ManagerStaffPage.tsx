@@ -1,20 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil, RotateCcw, Trash2, UserPlus, Search } from 'lucide-react'
 import { useBranchStaff } from '@/hooks/useBranchStaff'
-import { Badge, Button, Modal } from '@/components/ui'
+import { Badge, Button, Modal, Pagination } from '@/components/ui'
 import { StaffDetailModal } from '@/features/manager/components'
 import type { ManagerStaffMember } from '@/types/managerStaff.types'
 import { useAuthStore } from '@/store/authStore'
+import { useHasPermission } from '@/hooks/usePermissions'
 import { useToastStore } from '@/store/toastStore'
 import { managerStaffService } from '@/services/managerStaff.service'
 import { canManagerMutateStaffRow, canManagerRestoreStaffRow } from '@/utils/managerStaffMapper'
 
 const ROLES = ['', 'Nhân viên bán hàng', 'Quản lý chi nhánh']
-
 export function ManagerStaffPage() {
   const { user } = useAuthStore()
+  const canCreateUser = useHasPermission('Users', 'create')
+  const canDeleteUser = useHasPermission('Users', 'delete')
   const queryClient = useQueryClient()
   const addToast = useToastStore((s) => s.addToast)
   const { data: staff, isLoading } = useBranchStaff()
@@ -50,6 +52,8 @@ export function ManagerStaffPage() {
   })
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const [selectedStaff, setSelectedStaff] = useState<ManagerStaffMember | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState<ManagerStaffMember | null>(null)
@@ -64,6 +68,11 @@ export function ManagerStaffPage() {
     const matchRole = !roleFilter || s.role === roleFilter
     return matchSearch && matchRole
   })
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
+
+  useEffect(() => { setPage(1) }, [search, roleFilter])
 
   const openDetail = (s: ManagerStaffMember) => {
     setSelectedStaff(s)
@@ -89,13 +98,15 @@ export function ManagerStaffPage() {
             Quản lý và giám sát đội ngũ nhân sự của showroom tại Đà Nẵng
           </p>
         </div>
-        <Link
-          to="/manager/staff/new"
-          className="flex items-center gap-2 rounded-lg bg-[#1A3C6E] px-5 py-2.5 font-bold text-white transition-opacity hover:opacity-90"
-        >
-          <UserPlus className="h-5 w-5" />
-          Thêm Nhân Viên
-        </Link>
+        {canCreateUser && (
+          <Link
+            to="/manager/staff/new"
+            className="flex items-center gap-2 rounded-lg bg-[#1A3C6E] px-5 py-2.5 font-bold text-white transition-opacity hover:opacity-90"
+          >
+            <UserPlus className="h-5 w-5" />
+            Thêm Nhân Viên
+          </Link>
+        )}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4">
         <div className="relative w-full md:w-96">
@@ -145,7 +156,7 @@ export function ManagerStaffPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {filtered.map((s) => {
+              {paginated.map((s) => {
                 const canMutate = canManagerMutateStaffRow(user, s)
                 const canRestore = canManagerRestoreStaffRow(user, s)
                 return (
@@ -224,6 +235,7 @@ export function ManagerStaffPage() {
                       >
                         <Pencil className="h-5 w-5" />
                       </button>
+                      {canDeleteUser && (
                       <button
                         type="button"
                         title={
@@ -252,6 +264,7 @@ export function ManagerStaffPage() {
                       >
                         <Trash2 className="h-5 w-5" />
                       </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -261,6 +274,7 @@ export function ManagerStaffPage() {
           </table>
         </div>
       </div>
+      <Pagination page={page} totalPages={totalPages} total={filtered.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="nhân viên" />
       <StaffDetailModal
         staff={selectedStaff}
         isOpen={detailOpen}

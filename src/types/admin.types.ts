@@ -54,6 +54,8 @@ export interface AdminBranch {
   staffCount: number
   workingHours?: string
   imageUrl?: string
+  lat: number
+  lng: number
 }
 
 export interface CatalogBrand {

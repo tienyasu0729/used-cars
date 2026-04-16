@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
-import { Car, Handshake, Calendar, Shield, FileText, Building2, Wrench, Search, Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useCallback } from 'react'
+import { Car, Handshake, Calendar, Shield, FileText, Building2, Wrench, Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
 import { BranchCard } from '@/features/branches/components/BranchCard'
 import { useVehicles } from '@/hooks/useVehicles'
@@ -10,7 +11,9 @@ import { useBranches } from '@/hooks/useBranches'
 import { RecentlyViewedWidget } from '@/components/vehicles/RecentlyViewedWidget'
 import { Button } from '@/components/ui'
 import { HeroPriceSelect } from '@/components/home/HeroPriceSelect'
+import { SearchAutocomplete } from '@/components/common/SearchAutocomplete'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { BranchMap } from '@/components/map/BranchMap'
 import { fetchPublicHomeBanners } from '@/services/homeBanners.service'
 
 const DEFAULT_HERO_BG = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1920'
@@ -38,6 +41,17 @@ export function HomePage() {
     const qs = params.toString()
     navigate(qs ? `/vehicles?${qs}` : '/vehicles')
   }
+
+  const handleSuggestionSearch = useCallback((keyword: string) => {
+    setHeroKeyword(keyword)
+    const params = new URLSearchParams()
+    if (keyword.trim()) params.set('q', keyword.trim())
+    const opt = PRICE_OPTIONS[heroPriceIdx]
+    if (opt.minPrice) params.set('minPrice', opt.minPrice)
+    if (opt.maxPrice) params.set('maxPrice', opt.maxPrice)
+    const qs = params.toString()
+    navigate(qs ? `/vehicles?${qs}` : '/vehicles')
+  }, [heroPriceIdx, navigate])
 
   const { vehicles: featuredVehicles, isLoading: featuredLoading } = useVehicles({
     page: 0,
@@ -131,14 +145,15 @@ export function HomePage() {
               handleHeroSearch()
             }}
           >
-            <div className="flex flex-1 items-center border-b border-slate-200 px-4 py-3 md:border-b-0 md:border-r">
-              <Search className="mr-2 h-5 w-5 shrink-0 text-slate-400" />
-              <input
-                type="text"
+            <div className="flex flex-1 items-center border-b border-slate-200 md:border-b-0 md:border-r">
+              <SearchAutocomplete
                 value={heroKeyword}
-                onChange={(e) => setHeroKeyword(e.target.value)}
+                onChange={setHeroKeyword}
+                onSearch={handleSuggestionSearch}
                 placeholder="Hãng xe, từ khóa..."
-                className="w-full border-none bg-transparent p-0 text-sm focus:outline-none focus:ring-0"
+                variant="light"
+                iconClassName="text-slate-400"
+                inputClassName="w-full border-none bg-transparent py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-0"
               />
             </div>
             <div className="flex flex-1 items-stretch border-b border-slate-200 p-2 md:border-b-0 md:border-r md:pr-2">
@@ -293,17 +308,7 @@ export function HomePage() {
             )}
           </div>
           <div className="relative h-[450px] overflow-hidden rounded-2xl shadow-2xl">
-            <iframe
-              title="Map"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3833.9242408000003!2d108.2022!3d16.0544!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTbCsDAzJzE1LjgiTiAxMDjCsDEyJzA3LjkiRQ!5e0!3m2!1svi!2s!4v1234567890"
-              width="100%"
-              height="100%"
-              className="h-full w-full object-cover"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-[#1A3C6E]/10" />
+            <BranchMap branches={branchesList} />
           </div>
         </div>
       </section>

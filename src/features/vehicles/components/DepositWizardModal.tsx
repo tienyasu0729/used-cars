@@ -106,7 +106,7 @@ export function DepositWizardModal({
 
     const amount = Math.round(Number(data.amount))
     if (!Number.isFinite(amount)) {
-      addToast('error', 'Vui lòng nhập số tiền cọc hợp lệ.')
+      addToast('error', orderId != null ? 'Vui lòng nhập số tiền thanh toán hợp lệ.' : 'Vui lòng nhập số tiền cọc hợp lệ.')
       return
     }
 
@@ -193,7 +193,7 @@ export function DepositWizardModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Đặt Cọc Giữ Xe">
+    <Modal isOpen={isOpen} onClose={onClose} title={orderId != null ? 'Thanh Toán Đơn Hàng' : 'Đặt Cọc Giữ Xe'}>
       <div className="mb-4 flex gap-2">
         {[1, 2, 3].map((s) => (
           <div
@@ -224,7 +224,7 @@ export function DepositWizardModal({
             readOnly
           />
           <Input
-            label="Số tiền cọc (VND)"
+            label={orderId != null ? 'Số tiền thanh toán (VND)' : 'Số tiền cọc (VND)'}
             type="number"
             {...register('amount', { valueAsNumber: true })}
             error={errors.amount?.message}
@@ -269,7 +269,7 @@ export function DepositWizardModal({
               loading={isSubmitting || redirecting}
               disabled={redirecting || pmLoading || onlineMethodOptions.length === 0}
             >
-              {redirecting ? 'Đang chuyển tới cổng thanh toán…' : 'Xác Nhận Đặt Cọc'}
+              {redirecting ? 'Đang chuyển tới cổng thanh toán…' : orderId != null ? 'Xác Nhận Thanh Toán' : 'Xác Nhận Đặt Cọc'}
             </Button>
           </div>
         </form>

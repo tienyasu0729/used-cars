@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
   Heart,
+  Eye,
   Calendar,
   Shield,
   ShoppingBag,
@@ -26,6 +27,7 @@ import { useConversations } from '@/hooks/useChats'
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Tổng Quan' },
   { to: '/dashboard/saved', icon: Heart, label: 'Xe Đã Lưu' },
+  { to: '/dashboard/recently-viewed', icon: Eye, label: 'Xe Đã Xem' },
   { to: '/dashboard/bookings', icon: Calendar, label: 'Lịch Lái Thử', badgeKey: 'bookings' },
   { to: '/dashboard/deposits', icon: Shield, label: 'Đặt Cọc', badgeKey: 'deposits' },
   { to: '/dashboard/orders', icon: ShoppingBag, label: 'Đơn Mua' },

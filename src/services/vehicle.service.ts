@@ -11,6 +11,7 @@ import type {
   PaginatedResponse,
   CreateVehicleRequest,
   UpdateVehicleRequest,
+  SuggestionItem,
 } from '@/types/vehicle.types'
 
 // Helper loại bỏ các thuộc tính undefined/null/rỗng cho HTTP Request (Params)
@@ -236,5 +237,17 @@ export const vehicleService = {
    */
   deleteVehicleImage: async (vehicleId: number, imageId: number): Promise<void> => {
     await axiosInstance.delete(`/manager/vehicles/${vehicleId}/images/${imageId}`)
+  },
+
+  /**
+   * [PUBLIC] Gợi ý tìm kiếm — trả danh sách gợi ý theo từ khoá
+   * GET /vehicles/suggestions?q=...&limit=...
+   */
+  getSuggestions: async (q: string, limit = 8): Promise<SuggestionItem[]> => {
+    const res = await axiosInstance.get<{ data: SuggestionItem[] }>('/vehicles/suggestions', {
+      params: { q, limit },
+    })
+    const apiRes = res as unknown as { data: SuggestionItem[] }
+    return apiRes.data ?? (Array.isArray(res) ? (res as unknown as SuggestionItem[]) : [])
   },
 }

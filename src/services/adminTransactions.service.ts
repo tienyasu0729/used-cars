@@ -104,7 +104,7 @@ export const adminTransactionService = {
     return unwrapData<TransactionDetail>(res.data)
   },
 
-  async exportCsv(filter: Omit<TransactionFilter, 'page' | 'size'>): Promise<Blob> {
+  async exportExcel(filter: Omit<TransactionFilter, 'page' | 'size'>): Promise<Blob> {
     const res = await api.get('/admin/transactions/export', {
       params: buildParams(filter as Record<string, unknown>),
       responseType: 'blob',

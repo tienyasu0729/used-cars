@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { TransactionTable } from '@/features/customer/components/TransactionTable'
 import { useTransactions } from '@/hooks/useTransactions'
-import { Wallet, ShoppingCart, RotateCcw } from 'lucide-react'
+import { Wallet, ShoppingCart, RotateCcw, Search, X } from 'lucide-react'
+import { downloadExcel, todayStr } from '@/utils/excelExport'
+import { ExportMenu, ExportSelectionBar } from '@/components/ui'
 
 const typeFilters = [
   { key: 'all', label: 'Tất cả' },
@@ -10,14 +12,56 @@ const typeFilters = [
   { key: 'Refund', label: 'Hoàn tiền', icon: RotateCcw },
 ]
 
+const typeLabel: Record<string, string> = { Deposit: 'Đặt cọc', Purchase: 'Mua xe', Refund: 'Hoàn tiền' }
+const statusLabel: Record<string, string> = { Completed: 'Hoàn thành', Pending: 'Chờ xử lý', Failed: 'Thất bại', CompletedRefund: 'Đã hoàn tiền' }
+const exportHeaders = ['Loại', 'Ngày', 'Mô tả', 'Số tiền (VNĐ)', 'Trạng thái']
+
 export function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const { data: transactions, isLoading } = useTransactions()
 
-  const filtered =
-    typeFilter === 'all'
-      ? transactions ?? []
-      : (transactions ?? []).filter((t) => t.type === typeFilter)
+  const allItems = transactions ?? []
+
+  const filtered = useMemo(() => {
+    let list = typeFilter === 'all' ? allItems : allItems.filter((t) => t.type === typeFilter)
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      list = list.filter((t) => {
+        if (t.description && t.description.toLowerCase().includes(q)) return true
+        if (String(t.amount).includes(q)) return true
+        return false
+      })
+    }
+    return list
+  }, [allItems, typeFilter, searchQuery])
+
+  const toggleId = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const buildRows = (items: typeof allItems) =>
+    items.map((t) => [
+      typeLabel[t.type] ?? t.type,
+      t.date,
+      t.description,
+      String(t.amount),
+      statusLabel[t.status] ?? t.status,
+    ])
+
+  const handleExportSelected = () => {
+    const items = filtered.filter((t) => selectedIds.has(t.id))
+    downloadExcel(`giao-dich-chon-${todayStr()}.xlsx`, exportHeaders, buildRows(items))
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
 
   return (
     <div className="space-y-6">
@@ -43,22 +87,51 @@ export function TransactionsPage() {
               {f.label}
             </button>
           ))}
-          <div className="ml-auto flex gap-2">
-            <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h18M3 8h12M3 12h12M3 16h12" />
-              </svg>
-            </button>
-            <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-            </button>
+          <div className="relative ml-auto mr-2">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm mô tả, số tiền..."
+              className="h-9 w-52 rounded-lg border border-slate-200 bg-white pl-9 pr-8 text-sm text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-[#1A3C6E] focus:ring-1 focus:ring-[#1A3C6E]/30"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
+          <ExportMenu
+            onExportAll={() => {
+              downloadExcel(`giao-dich-tat-ca-${todayStr()}.xlsx`, exportHeaders, buildRows(allItems))
+            }}
+            onExportFiltered={() => {
+              setSelectMode(true)
+              setSelectedIds(new Set())
+            }}
+          />
         </div>
       </div>
 
-      <TransactionTable transactions={filtered} isLoading={isLoading} />
+      {selectMode && (
+        <ExportSelectionBar
+          selectedCount={selectedIds.size}
+          totalCount={filtered.length}
+          onSelectAll={() => setSelectedIds(new Set(filtered.map((t) => t.id)))}
+          onDeselectAll={() => setSelectedIds(new Set())}
+          onExport={handleExportSelected}
+          onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
+        />
+      )}
+
+      <TransactionTable
+        transactions={filtered}
+        isLoading={isLoading}
+        selectMode={selectMode}
+        selectedIds={selectedIds}
+        onToggleId={toggleId}
+      />
     </div>
   )
 }

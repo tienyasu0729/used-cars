@@ -81,6 +81,12 @@ export interface Subcategory {
   category_id: number
 }
 
+// Gợi ý tìm kiếm (Search Autocomplete)
+export interface SuggestionItem {
+  type: 'brand' | 'vehicle' | 'year'
+  text: string
+}
+
 // ============================================================
 // REQUEST PARAMS & BODY
 // ============================================================

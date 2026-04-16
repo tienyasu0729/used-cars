@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
 import { Car, Package, TrendingUp, Calendar, Download, CalendarDays } from 'lucide-react'
+import { downloadExcel, todayStr } from '@/utils/excelExport'
 import { useManagerDashboardStats } from '@/hooks/useManagerDashboardStats'
 import {
   AreaChart,
@@ -109,7 +110,27 @@ export function ManagerDashboardPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+          <button
+            onClick={() => {
+              const headers = ['Chỉ số', 'Giá trị']
+              const rows: string[][] = [
+                ['Doanh thu tháng', revNum > 0 ? `${revNum}` : '0'],
+                ['Xe đã bán', String(soldNum)],
+                ['Tổng tồn kho', String(apiStats?.totalInventory ?? 0)],
+                ['Lịch hẹn 7 ngày tới', String(apiStats?.weeklyAppointments ?? 0)],
+              ]
+              if (topStaffRows.length > 0) {
+                rows.push([])
+                rows.push(['--- Top nhân viên ---', ''])
+                rows.push(['Tên', 'Số xe bán'])
+                for (const s of topStaffRows) {
+                  rows.push([s.name, String(s.cars)])
+                }
+              }
+              downloadExcel(`dashboard-${todayStr()}.xlsx`, headers, rows)
+            }}
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
             <Download className="h-5 w-5" />
             Xuất Dữ Liệu
           </button>

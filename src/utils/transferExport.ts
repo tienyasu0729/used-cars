@@ -1,4 +1,5 @@
 import type { TransferRequest, TransferStatus } from '@/types/transfer.types'
+import { downloadExcel } from '@/utils/excelExport'
 
 const STATUS_LABEL: Record<TransferStatus, string> = {
   Pending: 'Chờ duyệt',
@@ -7,19 +8,12 @@ const STATUS_LABEL: Record<TransferStatus, string> = {
   Completed: 'Hoàn thành',
 }
 
-function escapeCsv(val: string): string {
-  if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-    return `"${val.replace(/"/g, '""')}"`
-  }
-  return val
-}
-
-/** Xuất CSV từ dữ liệu API TransferRequest (không dùng mock). */
-export function exportTransfersToCsv(
+/** Xuất Excel từ dữ liệu API TransferRequest. */
+export function exportTransfersToExcel(
   transfers: TransferRequest[],
   type: 'outgoing' | 'incoming',
 ): void {
-  const cols =
+  const headers =
     type === 'outgoing'
       ? ['Mã Yêu Cầu', 'Phương Tiện', 'Mã tin', 'Đến Chi Nhánh', 'Ngày Yêu Cầu', 'Trạng Thái']
       : ['Mã Yêu Cầu', 'Phương Tiện', 'Mã tin', 'Từ Chi Nhánh', 'Ngày Yêu Cầu', 'Trạng Thái']
@@ -30,14 +24,6 @@ export function exportTransfersToCsv(
     }
     return [String(t.id), t.vehicleTitle, t.vehicleListingId, t.fromBranchName, t.createdAt, status]
   })
-  const header = cols.join(',')
-  const body = rows.map((r) => r.map(escapeCsv).join(',')).join('\n')
-  const csv = '\uFEFF' + header + '\n' + body
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `yeu-cau-dieu-chuyen-${type}-${new Date().toISOString().slice(0, 10)}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+  const filename = `yeu-cau-dieu-chuyen-${type}-${new Date().toISOString().slice(0, 10)}.xlsx`
+  downloadExcel(filename, headers, rows, 'Điều chuyển')
 }

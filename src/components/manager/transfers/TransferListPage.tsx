@@ -1,6 +1,7 @@
 import { TransferStatusBadge } from './TransferStatusBadge'
 import type { TransferRequest, TransferStatus } from '@/types/transfer.types'
 import { Check, ThumbsUp, ThumbsDown, Eye } from 'lucide-react'
+import { Pagination } from '@/components/ui'
 
 const TABS: { key: TransferStatus | 'all'; label: string }[] = [
   { key: 'all', label: 'Tất cả' },
@@ -23,6 +24,9 @@ export function TransferListPage({
   onApprove,
   onReject,
   onComplete,
+  selectMode,
+  selectedIds,
+  onToggleId,
 }: {
   items: TransferRequest[]
   isLoading: boolean
@@ -36,6 +40,9 @@ export function TransferListPage({
   onApprove?: (id: number) => void
   onReject?: (id: number) => void
   onComplete?: (id: number) => void
+  selectMode?: boolean
+  selectedIds?: Set<number>
+  onToggleId?: (id: number) => void
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -60,6 +67,22 @@ export function TransferListPage({
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
               <tr className="border-b bg-slate-50">
+                {selectMode && (
+                  <th className="w-10 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={items.length > 0 && items.every((t) => selectedIds?.has(t.id))}
+                      onChange={() => {
+                        if (!onToggleId) return
+                        const allChecked = items.every((t) => selectedIds?.has(t.id))
+                        items.forEach((t) => {
+                          if (allChecked ? selectedIds?.has(t.id) : !selectedIds?.has(t.id)) onToggleId(t.id)
+                        })
+                      }}
+                      className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3 font-bold text-slate-500">Mã / Xe</th>
                 <th className="px-4 py-3 font-bold text-slate-500">Tuyến</th>
                 <th className="px-4 py-3 font-bold text-slate-500">Người tạo</th>
@@ -81,9 +104,19 @@ export function TransferListPage({
                 return (
                   <tr
                     key={t.id}
-                    className="cursor-pointer hover:bg-slate-50/80"
-                    onClick={() => onRowClick(t.id)}
+                    className={`cursor-pointer hover:bg-slate-50/80 ${selectMode && selectedIds?.has(t.id) ? 'bg-blue-50/50' : ''}`}
+                    onClick={() => selectMode ? onToggleId?.(t.id) : onRowClick(t.id)}
                   >
+                    {selectMode && (
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds?.has(t.id) ?? false}
+                          onChange={() => onToggleId?.(t.id)}
+                          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <p className="font-mono text-xs text-slate-500">#{t.id}</p>
                       <p className="font-semibold text-slate-900">{t.vehicleTitle}</p>
@@ -153,29 +186,16 @@ export function TransferListPage({
           <div className="py-12 text-center text-slate-500">Không có yêu cầu phù hợp.</div>
         )}
       </div>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-4 py-3">
-          <button
-            type="button"
-            disabled={page <= 0}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
-            onClick={() => onPageChange(page - 1)}
-          >
-            Trước
-          </button>
-          <span className="text-sm text-slate-600">
-            Trang {page + 1} / {totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={page >= totalPages - 1}
-            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
-            onClick={() => onPageChange(page + 1)}
-          >
-            Sau
-          </button>
-        </div>
-      )}
+      <div className="px-2 py-2">
+        <Pagination
+          page={page + 1}
+          totalPages={totalPages}
+          total={totalPages * items.length || items.length}
+          pageSize={items.length || 10}
+          onPageChange={(p) => onPageChange(p - 1)}
+          label="yêu cầu"
+        />
+      </div>
     </div>
   )
 }

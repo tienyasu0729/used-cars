@@ -41,7 +41,8 @@ export function useRecentlyViewed(limit = 8) {
     queryFn: async () => {
       const list = await interactionService.getRecentlyViewed()
       const unique = dedupeViewedByVehicleId(list)
-      return unique.slice(0, limit).map(viewedToVehicle)
+      const items = limit > 0 ? unique.slice(0, limit) : unique
+      return items.map(viewedToVehicle)
     },
     staleTime: 60_000,
   })

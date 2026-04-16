@@ -10,9 +10,11 @@ import {
 } from '@/services/homeBanners.service'
 import { Button, ConfirmDialog } from '@/components/ui'
 import { useToastStore } from '@/store/toastStore'
+import { useHasPermission } from '@/hooks/usePermissions'
 
 export function AdminHomeBannersPage() {
   const toast = useToastStore()
+  const canManageCms = useHasPermission('CMS', 'manage')
   const qc = useQueryClient()
   const { data: banners = [], isLoading, refetch } = useQuery({
     queryKey: ['admin-home-banners'],
@@ -65,6 +67,7 @@ export function AdminHomeBannersPage() {
         <h2 className="text-2xl font-bold text-slate-900">Banner trang chủ</h2>
         <p className="mt-1 text-slate-500">Upload Cloudinary — hiển thị công khai, nhiều ảnh sẽ slideshow.</p>
       </div>
+      {canManageCms && (
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 py-10 hover:bg-slate-50">
           <Upload className="h-8 w-8 text-[#1A3C6E]" />
@@ -83,6 +86,7 @@ export function AdminHomeBannersPage() {
         </label>
         {(uploading || createMut.isPending) && <p className="mt-2 text-center text-sm text-slate-500">Đang xử lý…</p>}
       </div>
+      )}
       {isLoading ? (
         <div className="py-12 text-center text-slate-500">Đang tải…</div>
       ) : (
@@ -94,6 +98,7 @@ export function AdminHomeBannersPage() {
               </div>
               <div className="flex items-center justify-between p-3">
                 <span className="text-xs text-slate-500">#{b.sortOrder}</span>
+                {canManageCms && (
                 <button
                   type="button"
                   onClick={() => setDeleteBannerId(b.id)}
@@ -102,6 +107,7 @@ export function AdminHomeBannersPage() {
                   <Trash2 className="h-4 w-4" />
                   Xóa
                 </button>
+                )}
               </div>
             </div>
           ))}

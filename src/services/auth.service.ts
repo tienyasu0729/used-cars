@@ -12,6 +12,7 @@
  */
 
 import axiosInstance from '@/utils/axiosInstance'
+import { useAuthStore } from '@/store/authStore'
 import type {
   LoginRequest,
   RegisterRequest,
@@ -20,10 +21,6 @@ import type {
   ApiResponse,
   ApiErrorResponse,
 } from '@/types/auth.types'
-
-/** Key cố định trong localStorage — không được thay đổi */
-const TOKEN_KEY = 'auth_token'
-const USER_KEY = 'auth_user'
 
 const authService = {
   /**
@@ -41,11 +38,7 @@ const authService = {
       const apiResponse = await axiosInstance.post('/auth/login', loginData) as unknown as ApiResponse<AuthResponse>
 
       const { user, token } = apiResponse.data
-
-      // Lưu token vào localStorage để các request sau tự gắn Bearer
-      localStorage.setItem(TOKEN_KEY, token)
-      localStorage.setItem(USER_KEY, JSON.stringify(user))
-
+      // Caller (vd. useLogin) phải gọi useAuthStore.setAuth để persist + state
       return { user, token }
     } catch (error) {
       // Error đã được axiosInstance parse thành ApiErrorResponse
@@ -102,9 +95,7 @@ const authService = {
    * JWT sẽ tự hết hạn theo thời gian.
    */
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem('token')
-    localStorage.removeItem(USER_KEY)
+    useAuthStore.getState().clearAuth()
     // TODO: implement khi backend xong — gọi POST /auth/logout để revoke token
   },
 
@@ -162,12 +153,81 @@ const authService = {
     }
   },
 
-  // TODO: implement khi backend xong
-  // forgotPassword(email: string): Promise<{ message: string }>
-  // resetPassword(token: string, newPassword: string): Promise<{ message: string }>
-  // refreshToken(): Promise<AuthResponse>
-  // googleLogin(): Promise<AuthResponse>
-  // verifyEmail(token: string): Promise<{ message: string }>
+  /**
+   * Quên mật khẩu — gửi email chứa link đặt lại.
+   * Server luôn trả 200 bất kể email có tồn tại hay không.
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    try {
+      const apiResponse = await axiosInstance.post('/auth/forgot-password', { email }) as unknown as ApiResponse<{ message: string }>
+      return { message: apiResponse.data.message || 'Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.' }
+    } catch {
+      return { message: 'Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.' }
+    }
+  },
+
+  /**
+   * Đặt lại mật khẩu bằng token nhận từ email.
+   * Throw lỗi nếu token hết hạn hoặc không hợp lệ (server trả 4xx).
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    try {
+      const apiResponse = await axiosInstance.post('/auth/reset-password', { token, newPassword }) as unknown as ApiResponse<{ message: string }>
+      return { message: apiResponse.data.message || 'Mật khẩu đã được đặt lại thành công.' }
+    } catch (error) {
+      const apiError = error as ApiErrorResponse
+      switch (apiError.errorCode) {
+        case 'INVALID_RESET_TOKEN':
+          throw { ...apiError, message: 'Token không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới.' }
+        case 'PASSWORD_TOO_SHORT':
+          throw { ...apiError, message: 'Mật khẩu từ 8 đến 100 ký tự.' }
+        case 'VALIDATION_FAILED':
+          throw apiError
+        default:
+          console.error('[authService.resetPassword]', apiError)
+          throw { ...apiError, message: apiError.message || 'Đặt lại mật khẩu thất bại. Vui lòng thử lại sau.' }
+      }
+    }
+  },
+
+  /**
+   * Lấy danh sách permission của user hiện tại từ backend.
+   * Gọi sau khi login thành công, trả về mảng string VD: ["Vehicles.create", "Orders.view"]
+   */
+  async fetchMyPermissions(): Promise<string[]> {
+    try {
+      const apiResponse = await axiosInstance.get('/auth/me/permissions') as unknown as ApiResponse<string[]>
+      return apiResponse.data
+    } catch (error) {
+      console.error('[authService.fetchMyPermissions] Lỗi:', error)
+      return []
+    }
+  },
+
+  /**
+   * Đăng nhập / đăng ký bằng Google.
+   * Frontend gửi Google ID Token (credential) lên backend để verify.
+   * Backend trả về cùng format LoginResponse { user, token } như login thường.
+   */
+  async googleLogin(idToken: string): Promise<AuthResponse> {
+    try {
+      const apiResponse = await axiosInstance.post('/auth/google', { idToken }) as unknown as ApiResponse<AuthResponse>
+      const { user, token } = apiResponse.data
+      return { user, token }
+    } catch (error) {
+      const apiError = error as ApiErrorResponse
+
+      switch (apiError.errorCode) {
+        case 'GOOGLE_AUTH_FAILED':
+          throw { ...apiError, message: apiError.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.' }
+        case 'ACCOUNT_SUSPENDED':
+          throw { ...apiError, message: 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.' }
+        default:
+          console.error('[authService.googleLogin] Lỗi:', apiError)
+          throw { ...apiError, message: apiError.message || 'Đăng nhập Google thất bại. Vui lòng thử lại sau.' }
+      }
+    }
+  },
 }
 
 export default authService

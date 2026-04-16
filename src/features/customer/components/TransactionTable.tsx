@@ -2,10 +2,14 @@ import { useState } from 'react'
 import type { Transaction } from '@/types'
 import { formatPrice, formatDateTime } from '@/utils/format'
 import { Wallet, ShoppingCart, RotateCcw, Eye } from 'lucide-react'
+import { Modal, Pagination } from '@/components/ui'
 
 interface TransactionTableProps {
   transactions: Transaction[]
   isLoading?: boolean
+  selectMode?: boolean
+  selectedIds?: Set<number>
+  onToggleId?: (id: number) => void
 }
 
 const typeConfig: Record<string, { label: string; icon: typeof Wallet; className: string }> = {
@@ -21,15 +25,24 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   Failed: { label: 'Thất bại', className: 'bg-red-50 text-red-700 border border-red-100' },
 }
 
-const PAGE_SIZE = 5
+// Hiển thị tên cổng thanh toán dễ đọc
+function gatewayLabel(gw: string | undefined): string {
+  if (!gw) return 'Không rõ'
+  const lower = gw.toLowerCase()
+  if (lower === 'vnpay') return 'VNPay'
+  if (lower === 'zalopay') return 'ZaloPay'
+  if (lower === 'cash') return 'Tiền mặt'
+  return gw
+}
 
-export function TransactionTable({ transactions, isLoading }: TransactionTableProps) {
+export function TransactionTable({ transactions, isLoading, selectMode, selectedIds, onToggleId }: TransactionTableProps) {
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
+  const [selected, setSelected] = useState<Transaction | null>(null)
   const total = transactions.length
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  const start = (page - 1) * PAGE_SIZE
-  const paginated = transactions.slice(start, start + PAGE_SIZE)
-  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5)
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const start = (page - 1) * pageSize
+  const paginated = transactions.slice(start, start + pageSize)
 
   if (isLoading) {
     return (
@@ -53,6 +66,23 @@ export function TransactionTable({ transactions, isLoading }: TransactionTablePr
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
+              {selectMode && (
+                <th className="w-10 px-4 py-4">
+                  <input
+                    type="checkbox"
+                    checked={paginated.length > 0 && paginated.every((tx) => selectedIds?.has(tx.id))}
+                    onChange={() => {
+                      if (!onToggleId) return
+                      const pageIds = paginated.map((tx) => tx.id)
+                      const allChecked = pageIds.every((id) => selectedIds?.has(id))
+                      pageIds.forEach((id) => {
+                        if (allChecked ? selectedIds?.has(id) : !selectedIds?.has(id)) onToggleId(id)
+                      })
+                    }}
+                    className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                  />
+                </th>
+              )}
               <th className="px-6 py-4 text-sm font-bold uppercase tracking-wider text-slate-700">Loại</th>
               <th className="px-6 py-4 text-sm font-bold uppercase tracking-wider text-slate-700">Ngày</th>
               <th className="px-6 py-4 text-sm font-bold uppercase tracking-wider text-slate-700">Mô tả</th>
@@ -68,7 +98,17 @@ export function TransactionTable({ transactions, isLoading }: TransactionTablePr
   ? statusConfig.CompletedRefund
   : (statusConfig[tx.status] ?? statusConfig.Pending)
               return (
-                <tr key={`${tx.id}-${start + rowIdx}`} className="transition-colors hover:bg-slate-50">
+                <tr key={`${tx.id}-${start + rowIdx}`} className={`transition-colors hover:bg-slate-50 ${selectMode && selectedIds?.has(tx.id) ? 'bg-blue-50/50' : ''}`}>
+                  {selectMode && (
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds?.has(tx.id) ?? false}
+                        onChange={() => onToggleId?.(tx.id)}
+                        className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase ${tc.className}`}>
                       <tc.icon className="h-3.5 w-3.5" />
@@ -87,7 +127,12 @@ export function TransactionTable({ transactions, isLoading }: TransactionTablePr
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-slate-400 transition-colors hover:text-[#1A3C6E]">
+                    <button
+                      type="button"
+                      onClick={() => setSelected(tx)}
+                      className="text-slate-400 transition-colors hover:text-[#1A3C6E]"
+                      title="Xem chi tiết"
+                    >
                       <Eye className="h-5 w-5" />
                     </button>
                   </td>
@@ -97,42 +142,64 @@ export function TransactionTable({ transactions, isLoading }: TransactionTablePr
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/50 px-6 py-4">
-        <span className="text-sm text-slate-500">
-          Hiển thị {start + 1} - {Math.min(start + PAGE_SIZE, total)} của {total} giao dịch
-        </span>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="rounded-lg border border-slate-200 p-2 text-slate-400 transition-colors hover:bg-slate-100 disabled:opacity-50"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          {pageNumbers.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium ${
-                page === p ? 'bg-[#1A3C6E] text-white' : 'hover:bg-slate-100'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className="rounded-lg border border-slate-200 p-2 text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-50"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+      <div className="px-2 py-2">
+        <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="giao dịch" />
       </div>
+
+      {/* Modal chi tiết giao dịch */}
+      <Modal
+        isOpen={selected != null}
+        onClose={() => setSelected(null)}
+        title="Chi tiết giao dịch"
+      >
+        {selected && (() => {
+          const tc = typeConfig[selected.type] ?? typeConfig.Deposit
+          const sc = selected.type === 'Refund' && selected.status === 'Completed'
+            ? statusConfig.CompletedRefund
+            : (statusConfig[selected.status] ?? statusConfig.Pending)
+          return (
+            <div className="space-y-5">
+              {/* Loại giao dịch + trạng thái */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase ${tc.className}`}>
+                  <tc.icon className="h-3.5 w-3.5" />
+                  {tc.label}
+                </span>
+                <span className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium ${sc.className}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${selected.status === 'Pending' ? 'animate-pulse bg-slate-400' : 'bg-current'}`} />
+                  {sc.label}
+                </span>
+              </div>
+
+              {/* Thông tin chi tiết */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Mã giao dịch</p>
+                  <p className="mt-1 font-semibold text-slate-900">#{selected.id}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Ngày tạo</p>
+                  <p className="mt-1 font-semibold text-slate-900">{formatDateTime(selected.date)}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Mô tả</p>
+                  <p className="mt-1 font-semibold text-slate-900">{selected.description || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Số tiền</p>
+                  <p className={`mt-1 text-lg font-bold ${selected.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {selected.amount >= 0 ? '+' : '-'}{formatPrice(Math.abs(selected.amount)).replace(' VNĐ', '₫')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Cổng thanh toán</p>
+                  <p className="mt-1 font-semibold text-slate-900">{gatewayLabel(selected.paymentGateway)}</p>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+      </Modal>
     </div>
   )
 }

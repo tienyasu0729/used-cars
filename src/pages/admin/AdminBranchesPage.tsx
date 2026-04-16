@@ -12,10 +12,12 @@ import {
   BarChart3,
   Settings,
   ChevronDown,
+  X,
 } from 'lucide-react'
 import { useBranchesAdmin } from '@/hooks/useBranchesAdmin'
 import { useUpdateBranch, useDeleteBranch } from '@/hooks/useAdminMutations'
 import { EditBranchModal } from '@/features/admin/components/EditBranchModal'
+import { BranchMap } from '@/components/map/BranchMap'
 import { Button, Modal } from '@/components/ui'
 import type { AdminBranch } from '@/types/admin.types'
 import { useToastStore } from '@/store/toastStore'
@@ -38,6 +40,7 @@ export function AdminBranchesPage() {
   const statusDropdownRef = useRef<HTMLDivElement>(null)
   const [editBranch, setEditBranch] = useState<AdminBranch | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<AdminBranch | null>(null)
+  const [showMap, setShowMap] = useState(false)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -70,7 +73,7 @@ export function AdminBranchesPage() {
 
   const handleSaveBranch = async (
     id: string,
-    data: { name: string; address: string; phone?: string; status: 'active' | 'inactive' }
+    data: { name: string; address: string; phone?: string; status: 'active' | 'inactive'; lat?: number; lng?: number }
   ) => {
     try {
       const ph = (data.phone ?? '').trim()
@@ -81,6 +84,8 @@ export function AdminBranchesPage() {
           address: data.address,
           phone: ph === '' ? null : ph,
           status: data.status,
+          lat: data.lat ?? null,
+          lng: data.lng ?? null,
         },
       })
       toast.addToast('success', 'Đã cập nhật chi nhánh.')
@@ -285,11 +290,37 @@ export function AdminBranchesPage() {
         </div>
       )}
       <div className="fixed bottom-8 right-8">
-        <button type="button" className="flex items-center gap-2 rounded-lg bg-[#1A3C6E] px-4 py-3 text-sm font-medium text-white shadow-lg hover:bg-blue-800">
+        <button
+          type="button"
+          onClick={() => setShowMap(true)}
+          className="flex items-center gap-2 rounded-lg bg-[#1A3C6E] px-4 py-3 text-sm font-medium text-white shadow-lg hover:bg-blue-800"
+        >
           <MapPin className="h-4 w-4" />
           Hiển thị trên bản đồ
         </button>
       </div>
+
+      {showMap && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="relative flex h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <h3 className="text-lg font-bold text-slate-900">
+                Bản đồ chi nhánh ({filtered.length})
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowMap(false)}
+                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1">
+              <BranchMap branches={filtered} />
+            </div>
+          </div>
+        </div>
+      )}
       <EditBranchModal
         branch={editBranch}
         isOpen={!!editBranch}

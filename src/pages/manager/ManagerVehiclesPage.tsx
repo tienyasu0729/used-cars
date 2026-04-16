@@ -1,20 +1,21 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Eye, Plus, Search, FileDown, Trash2, ArrowRightLeft, RotateCcw, Truck, CheckSquare } from 'lucide-react'
+import { Pencil, Eye, Plus, Search, Trash2, ArrowRightLeft, RotateCcw, Truck, CheckSquare } from 'lucide-react'
 import { useManagerVehicle, useManagerVehicles } from '@/hooks/useManagerVehicles'
 import { useAuthStore } from '@/store/authStore'
-import { VehicleStatusBadge, Modal, Button, ConfirmDialog } from '@/components/ui'
+import { useHasPermission } from '@/hooks/usePermissions'
+import { VehicleStatusBadge, Modal, Button, ConfirmDialog, ExportMenu, ExportSelectionBar, Pagination } from '@/components/ui'
 import { VehicleDetailModal } from '@/features/manager/components'
 import { TransferDetailModal } from '@/components/manager/transfers'
 import { transferService } from '@/services/transfer.service'
 import { vehicleService } from '@/services/vehicle.service'
 import { formatPrice, formatMileage } from '@/utils/format'
+import { downloadBlob, downloadExcel, todayStr } from '@/utils/excelExport'
+import axiosInstance from '@/utils/axiosInstance'
 import type { Vehicle } from '@/types/vehicle.types'
 import type { UserProfile } from '@/types/auth.types'
 import type { TransferRequest } from '@/types/transfer.types'
-
-const PAGE_SIZE = 10
 
 type TabScope = 'MINE' | 'NETWORK'
 
@@ -50,21 +51,35 @@ type RowCtx = {
   setVisibilityConfirm: (v: VisibilityConfirm | null) => void
   selectedIds: Set<number>
   toggleSelect: (id: number) => void
+  canDeleteVehicle: boolean
+  exportSelectMode: boolean
+  exportSelectedIds: Set<number>
+  toggleExportSelect: (id: number) => void
 }
 
 function vehicleInventoryTableRow(v: Vehicle, ctx: RowCtx) {
-  const { activeTab, user, isSubmitting, navigate, openDetail, setVisibilityConfirm, selectedIds, toggleSelect } = ctx
+  const { activeTab, user, isSubmitting, navigate, openDetail, setVisibilityConfirm, selectedIds, toggleSelect, canDeleteVehicle, exportSelectMode, exportSelectedIds, toggleExportSelect } = ctx
   const im = v.images?.[0]
   const thumb = typeof im === 'string' ? im : im?.url
   const isSelected = selectedIds.has(v.id)
+  const isExportSelected = exportSelectedIds.has(v.id)
   return (
     <tr
       key={v.id}
-      className={`cursor-pointer transition-colors ${isSelected ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'}`}
-      onClick={() => openDetail(v)}
+      className={`cursor-pointer transition-colors ${exportSelectMode && isExportSelected ? 'bg-blue-50/60' : isSelected ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'}`}
+      onClick={() => exportSelectMode ? toggleExportSelect(v.id) : openDetail(v)}
     >
-      {/* Checkbox — chỉ hiện ở tab MINE */}
-      {activeTab === 'MINE' && (
+      {exportSelectMode && (
+        <td className="w-10 p-4" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={isExportSelected}
+            onChange={() => toggleExportSelect(v.id)}
+            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+          />
+        </td>
+      )}
+      {!exportSelectMode && activeTab === 'MINE' && (
         <td className="w-10 p-4" onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"
@@ -157,7 +172,7 @@ function vehicleInventoryTableRow(v: Vehicle, ctx: RowCtx) {
                 </button>
               </Link>
             )}
-            {v.deleted ? (
+            {canDeleteVehicle && (v.deleted ? (
               <button
                 type="button"
                 disabled={isSubmitting}
@@ -185,7 +200,7 @@ function vehicleInventoryTableRow(v: Vehicle, ctx: RowCtx) {
               >
                 <Trash2 className="h-5 w-5" />
               </button>
-            )}
+            ))}
           </div>
         )}
       </td>
@@ -198,6 +213,8 @@ const VEHICLE_LIST_STATUS_PARAMS = ['Available', 'Reserved', 'Sold'] as const
 export function ManagerVehiclesPage() {
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'Admin'
+  const canCreateVehicle = useHasPermission('Vehicles', 'create')
+  const canDeleteVehicle = useHasPermission('Vehicles', 'delete')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -210,10 +227,13 @@ export function ManagerVehiclesPage() {
   const [visibilityConfirm, setVisibilityConfirm] = useState<VisibilityConfirm | null>(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   // Sprint 4 — Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
   const [bulkHideConfirmOpen, setBulkHideConfirmOpen] = useState(false)
+  const [exportSelectMode, setExportSelectMode] = useState(false)
+  const [exportSelectedIds, setExportSelectedIds] = useState<Set<number>>(new Set())
 
   const toggleSelect = useCallback((id: number) => {
     setSelectedIds((prev) => {
@@ -314,8 +334,17 @@ export function ManagerVehiclesPage() {
   const stockList = splitInventory ? filtered.filter((v) => v.status !== 'InTransfer') : filtered
   const outgoingList = splitInventory ? filtered.filter((v) => v.status === 'InTransfer') : []
   const paginateSource = stockList
-  const totalPages = Math.ceil(paginateSource.length / PAGE_SIZE) || 1
-  const paginated = paginateSource.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const totalPages = Math.ceil(paginateSource.length / pageSize) || 1
+  const paginated = paginateSource.slice((page - 1) * pageSize, page * pageSize)
+
+  const toggleExportSelect = useCallback((id: number) => {
+    setExportSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
 
   const rowCtx: RowCtx = {
     activeTab,
@@ -329,6 +358,10 @@ export function ManagerVehiclesPage() {
     setVisibilityConfirm,
     selectedIds,
     toggleSelect,
+    canDeleteVehicle,
+    exportSelectMode,
+    exportSelectedIds,
+    toggleExportSelect,
   }
 
   const handleTabChange = (tab: TabScope) => {
@@ -359,10 +392,19 @@ export function ManagerVehiclesPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-xl font-bold">Quản lý kho xe</h1>
         <div className="flex items-center gap-4">
-          <button className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100">
-            <FileDown className="h-5 w-5" />
-          </button>
-          {activeTab === 'MINE' && (
+          <ExportMenu
+            onExportAll={async () => {
+              try {
+                const res = await axiosInstance.get('/manager/vehicles/export', { responseType: 'blob' })
+                downloadBlob(res as unknown as Blob, `danh-sach-xe-tat-ca-${todayStr()}.xlsx`)
+              } catch { /* lỗi im lặng */ }
+            }}
+            onExportFiltered={() => {
+              setExportSelectMode(true)
+              setExportSelectedIds(new Set())
+            }}
+          />
+          {activeTab === 'MINE' && canCreateVehicle && (
             <Link
               to="/manager/vehicles/new"
               className="flex items-center gap-2 rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1A3C6E]/90"
@@ -446,6 +488,38 @@ export function ManagerVehiclesPage() {
           </select>
         </div>
       </div>
+
+      {exportSelectMode && (
+        <ExportSelectionBar
+          selectedCount={exportSelectedIds.size}
+          totalCount={filtered.length}
+          onSelectAll={() => setExportSelectedIds(new Set(filtered.map((v) => v.id)))}
+          onDeselectAll={() => setExportSelectedIds(new Set())}
+          onExport={() => {
+            const items = filtered.filter((v) => exportSelectedIds.has(v.id))
+            const rows = items.map((v) => [
+              String(v.id),
+              v.listing_id ?? '',
+              v.title ?? `${v.brand ?? ''} ${v.model ?? ''}`.trim(),
+              v.brand ?? '',
+              v.model ?? '',
+              String(v.year ?? ''),
+              String(v.price ?? ''),
+              String(v.mileage ?? ''),
+              v.fuel ?? '',
+              v.transmission ?? '',
+              v.status ?? '',
+              v.branch_name ?? '',
+            ])
+            downloadExcel(`danh-sach-xe-chon-${todayStr()}.xlsx`,
+              ['ID', 'Mã tin', 'Tiêu đề', 'Hãng xe', 'Dòng xe', 'Năm SX', 'Giá (VNĐ)', 'Số km', 'Nhiên liệu', 'Hộp số', 'Trạng thái', 'Chi nhánh'],
+              rows)
+            setExportSelectMode(false)
+            setExportSelectedIds(new Set())
+          }}
+          onCancel={() => { setExportSelectMode(false); setExportSelectedIds(new Set()) }}
+        />
+      )}
 
       {/* {splitInventory && (
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
@@ -604,7 +678,25 @@ export function ManagerVehiclesPage() {
           <table className="w-full min-w-[640px] text-left">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
-                {activeTab === 'MINE' && (
+                {exportSelectMode && (
+                  <th className="w-10 p-4">
+                    <input
+                      type="checkbox"
+                      checked={paginated.length > 0 && paginated.every((v) => exportSelectedIds.has(v.id))}
+                      onChange={() => {
+                        const pageIds = paginated.map((v) => v.id)
+                        const allChecked = pageIds.every((id) => exportSelectedIds.has(id))
+                        setExportSelectedIds((prev) => {
+                          const next = new Set(prev)
+                          pageIds.forEach((id) => allChecked ? next.delete(id) : next.add(id))
+                          return next
+                        })
+                      }}
+                      className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                    />
+                  </th>
+                )}
+                {!exportSelectMode && activeTab === 'MINE' && (
                   <th className="w-10 p-4">
                     <input
                       type="checkbox"
@@ -627,32 +719,8 @@ export function ManagerVehiclesPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-slate-200 p-4">
-          <p className="text-sm text-slate-500">
-            Hiển thị {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, paginateSource.length)} của{' '}
-            {paginateSource.length} xe
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="flex h-8 w-8 items-center justify-center rounded border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50"
-            >
-              ‹
-            </button>
-            <span className="px-2 text-sm text-slate-600">
-              {page} / {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="flex h-8 w-8 items-center justify-center rounded border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50"
-            >
-              ›
-            </button>
-          </div>
-        </div>
       </div>
+      <Pagination page={page} totalPages={totalPages} total={paginateSource.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="xe" />
       <TransferDetailModal
         transferId={transferDetailId}
         isOpen={transferDetailId != null}

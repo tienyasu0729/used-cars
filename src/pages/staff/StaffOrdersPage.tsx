@@ -6,9 +6,10 @@ import { useStaffOrders } from '@/hooks/useStaffOrders'
 import { useStaffOrManagerBasePath } from '@/hooks/useStaffOrManagerBasePath'
 import { useVehicles } from '@/hooks/useVehicles'
 import { formatPrice } from '@/utils/format'
-import { Badge, Button, Modal, Input } from '@/components/ui'
+import { Badge, Button, Modal, Input, Pagination } from '@/components/ui'
 import { StaffOrderPaymentsPanel } from '@/features/staff/components/StaffOrderPaymentsPanel'
 import { useAuthStore } from '@/store/authStore'
+import { useHasPermission } from '@/hooks/usePermissions'
 import { useToastStore } from '@/store/toastStore'
 import { orderApi } from '@/services/orderApi'
 import { notifyInventoryChanged } from '@/utils/inventorySync'
@@ -42,6 +43,8 @@ function OrderDetailModal({
   const [busy, setBusy] = useState(false)
   const [payAmount, setPayAmount] = useState('')
   const [payMethod, setPayMethod] = useState('cash')
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
   const thumb = vehicleThumb(vehicle)
   const remaining = order.remaining ?? Math.max(0, order.price - order.deposit)
 
@@ -66,10 +69,13 @@ function OrderDetailModal({
 
   const onAdvance = () => run(() => orderApi.advanceStatus(order.id))
   const onSold = () => run(() => orderApi.confirmSold(order.id))
-  const onCancel = () => {
-    const r = window.prompt('Lý do hủy đơn?')
-    if (r == null) return
-    void run(() => orderApi.cancel(order.id, r || undefined))
+  const onCancelClick = () => {
+    setCancelReason('')
+    setCancelOpen(true)
+  }
+  const onCancelConfirm = () => {
+    setCancelOpen(false)
+    void run(() => orderApi.cancel(order.id, cancelReason.trim() || undefined))
   }
 
   const onAddPay = () => {
@@ -140,7 +146,7 @@ function OrderDetailModal({
             </Button>
           )}
           {order.status !== 'Completed' && order.status !== 'Cancelled' && (
-            <Button variant="outline" disabled={busy} onClick={onCancel}>
+            <Button variant="outline" disabled={busy} onClick={onCancelClick}>
               Hủy đơn
             </Button>
           )}
@@ -164,6 +170,38 @@ function OrderDetailModal({
           </div>
         )}
       </div>
+
+      {/* Modal nhập lý do hủy đơn */}
+      <Modal isOpen={cancelOpen} onClose={() => setCancelOpen(false)} title="Hủy đơn hàng">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Bạn đang hủy đơn <span className="font-bold text-slate-900">{order.orderNumber ?? `#${order.id}`}</span>.
+            Vui lòng nhập lý do hủy bên dưới.
+          </p>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Lý do hủy đơn</label>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Nhập lý do hủy đơn hàng..."
+              rows={3}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-[#1A3C6E] focus:ring-1 focus:ring-[#1A3C6E]/30"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setCancelOpen(false)}>
+              Đóng
+            </Button>
+            <Button
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={onCancelConfirm}
+              disabled={busy}
+            >
+              Xác nhận hủy
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </Modal>
   )
 }
@@ -171,10 +209,17 @@ function OrderDetailModal({
 export function StaffOrdersPage() {
   const { orders: ordersPath } = useStaffOrManagerBasePath()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const { data: orders, refetch } = useStaffOrders()
   const { vehicles } = useVehicles()
   const toast = useToastStore()
   const qc = useQueryClient()
+  const canCreateOrder = useHasPermission('Orders', 'create')
+
+  const allOrders = orders ?? []
+  const totalPages = Math.max(1, Math.ceil(allOrders.length / pageSize))
+  const paginated = allOrders.slice((page - 1) * pageSize, page * pageSize)
 
   const getStatusBadge = (status: string) => {
     if (status === 'Pending') return <Badge variant="pending">Chờ xử lý</Badge>
@@ -198,12 +243,14 @@ export function StaffOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        to={`${ordersPath}/new`}
-        className="inline-flex items-center gap-2 rounded-xl bg-[#1A3C6E] px-5 py-2.5 font-bold text-white shadow-lg hover:bg-[#152d52]"
-      >
-        Tạo đơn hàng mới
-      </Link>
+      {canCreateOrder && (
+        <Link
+          to={`${ordersPath}/new`}
+          className="inline-flex items-center gap-2 rounded-xl bg-[#1A3C6E] px-5 py-2.5 font-bold text-white shadow-lg hover:bg-[#152d52]"
+        >
+          Tạo đơn hàng mới
+        </Link>
+      )}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -219,7 +266,7 @@ export function StaffOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {(orders ?? []).map((o) => {
+              {paginated.map((o) => {
                 const vehicle = vehicles.find((v) => String(v.id) === String(o.vehicleId))
                 const rowThumb = vehicleThumb(vehicle)
                 return (
@@ -273,6 +320,7 @@ export function StaffOrdersPage() {
           </table>
         </div>
       </div>
+      <Pagination page={page} totalPages={totalPages} total={allOrders.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="đơn hàng" />
       {selectedOrder && (
         <OrderDetailModal
           order={selectedOrder}

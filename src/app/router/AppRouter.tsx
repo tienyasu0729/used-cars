@@ -42,6 +42,7 @@ const TransactionsPage = lazy(() => import('@/pages/customer/TransactionsPage').
 const ChatPage = lazy(() => import('@/pages/customer/ChatPage').then((m) => ({ default: m.ChatPage })))
 const NotificationsPage = lazy(() => import('@/pages/customer/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
 const SecurityPage = lazy(() => import('@/pages/customer/SecurityPage').then((m) => ({ default: m.SecurityPage })))
+const RecentlyViewedPage = lazy(() => import('@/pages/customer/RecentlyViewedPage').then((m) => ({ default: m.RecentlyViewedPage })))
 
 const StaffDashboardPage = lazy(() => import('@/pages/staff/StaffDashboardPage').then((m) => ({ default: m.StaffDashboardPage })))
 const StaffSchedulePage = lazy(() => import('@/pages/staff/StaffSchedulePage').then((m) => ({ default: m.StaffSchedulePage })))
@@ -149,6 +150,7 @@ const router = createBrowserRouter([
       { path: 'chat', element: <Suspense fallback={<Fallback />}><ChatPage /></Suspense> },
       { path: 'notifications', element: <Suspense fallback={<Fallback />}><NotificationsPage /></Suspense> },
       { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
+      { path: 'recently-viewed', element: <Suspense fallback={<Fallback />}><RecentlyViewedPage /></Suspense> },
     ],
   },
   {
@@ -166,7 +168,7 @@ const router = createBrowserRouter([
       { path: 'bookings', element: <Suspense fallback={<Fallback />}><StaffBookingsPage /></Suspense> },
       { path: 'consultations', element: <Suspense fallback={<Fallback />}><StaffConsultationsPage /></Suspense> },
       { path: 'inventory', element: <Suspense fallback={<Fallback />}><StaffInventoryPage /></Suspense> },
-      { path: 'orders/new', element: <Suspense fallback={<Fallback />}><StaffCreateOrderPage /></Suspense> },
+      { path: 'orders/new', element: <ProtectedRoute requiredPermission={{ module: 'Orders', action: 'create' }}><Suspense fallback={<Fallback />}><StaffCreateOrderPage /></Suspense></ProtectedRoute> },
       { path: 'orders', element: <Suspense fallback={<Fallback />}><StaffOrdersPage /></Suspense> },
       { path: 'deposits/new', element: <Suspense fallback={<Fallback />}><StaffCreateDepositPage /></Suspense> },
       { path: 'deposits', element: <Suspense fallback={<Fallback />}><StaffDepositsPage /></Suspense> },
@@ -189,17 +191,17 @@ const router = createBrowserRouter([
       { index: true, element: <Suspense fallback={<Fallback />}><ManagerDashboardPage /></Suspense> },
       { path: 'dashboard', element: <Suspense fallback={<Fallback />}><ManagerDashboardPage /></Suspense> },
       { path: 'vehicles', element: <Suspense fallback={<Fallback />}><ManagerVehiclesPage /></Suspense> },
-      { path: 'vehicles/new', element: <Suspense fallback={<Fallback />}><ManagerAddVehiclePage /></Suspense> },
-      { path: 'vehicles/:id/edit', element: <Suspense fallback={<Fallback />}><ManagerEditVehiclePage /></Suspense> },
+      { path: 'vehicles/new', element: <ProtectedRoute requiredPermission={{ module: 'Vehicles', action: 'create' }}><Suspense fallback={<Fallback />}><ManagerAddVehiclePage /></Suspense></ProtectedRoute> },
+      { path: 'vehicles/:id/edit', element: <ProtectedRoute requiredPermission={{ module: 'Vehicles', action: 'update' }}><Suspense fallback={<Fallback />}><ManagerEditVehiclePage /></Suspense></ProtectedRoute> },
       { path: 'staff', element: <Suspense fallback={<Fallback />}><ManagerStaffPage /></Suspense> },
-      { path: 'staff/new', element: <Suspense fallback={<Fallback />}><ManagerCreateStaffPage /></Suspense> },
+      { path: 'staff/new', element: <ProtectedRoute requiredPermission={{ module: 'Users', action: 'create' }}><Suspense fallback={<Fallback />}><ManagerCreateStaffPage /></Suspense></ProtectedRoute> },
       { path: 'appointments', element: <Suspense fallback={<Fallback />}><ManagerAppointmentsPage /></Suspense> },
-      { path: 'orders/new', element: <Suspense fallback={<Fallback />}><StaffCreateOrderPage /></Suspense> },
+      { path: 'orders/new', element: <ProtectedRoute requiredPermission={{ module: 'Orders', action: 'create' }}><Suspense fallback={<Fallback />}><StaffCreateOrderPage /></Suspense></ProtectedRoute> },
       { path: 'orders', element: <Suspense fallback={<Fallback />}><StaffOrdersPage /></Suspense> },
       { path: 'deposits/new', element: <Suspense fallback={<Fallback />}><StaffCreateDepositPage /></Suspense> },
       { path: 'deposits', element: <Suspense fallback={<Fallback />}><StaffDepositsPage /></Suspense> },
       { path: 'transfers', element: <Suspense fallback={<Fallback />}><ManagerTransfersPage /></Suspense> },
-      { path: 'reports', element: <Suspense fallback={<Fallback />}><ManagerReportsPage /></Suspense> },
+      { path: 'reports', element: <ProtectedRoute requiredPermission={{ module: 'Reports', action: 'view' }}><Suspense fallback={<Fallback />}><ManagerReportsPage /></Suspense></ProtectedRoute> },
       { path: 'transactions', element: <Suspense fallback={<Fallback />}><AdminTransactionsPage /></Suspense> },
       { path: 'chat', element: <Suspense fallback={<Fallback />}><ManagerChatPage /></Suspense> },
       { path: 'consultations', element: <Suspense fallback={<Fallback />}><StaffConsultationsPage /></Suspense> },

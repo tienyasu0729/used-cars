@@ -1,8 +1,16 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { MessageCircle, User } from 'lucide-react'
 import { Modal } from '@/components/ui'
 import { VehicleStatusBadge } from '@/components/ui'
 import { MaintenanceHistoryPanel } from './MaintenanceHistoryPanel'
 import { formatPrice, formatMileage } from '@/utils/format'
+import { depositApi } from '@/services/deposit.service'
+import { orderApi } from '@/services/orderApi'
+import { createChatConversation } from '@/services/chat.service'
+import { rememberChatParticipantName } from '@/utils/chatParticipantStorage'
+import { useToastStore } from '@/store/toastStore'
 import type { Vehicle } from '@/types/vehicle.types'
 
 interface VehicleDetailModalProps {
@@ -12,16 +20,111 @@ interface VehicleDetailModalProps {
   onHide?: (id: string) => void
 }
 
+// Lấy thông tin khách hàng liên quan đến xe (cọc hoặc đơn hàng)
+function useVehicleCustomerInfo(vehicleId: number | undefined, vehicleStatus: string | undefined) {
+  const isReserved = vehicleStatus === 'Reserved'
+  const isSold = vehicleStatus === 'Sold'
+  const shouldFetch = !!vehicleId && (isReserved || isSold)
+
+  // B1: Lấy danh sách cọc — chỉ fetch khi xe đã đặt cọc
+  const { data: depositData } = useQuery({
+    queryKey: ['deposits-for-vehicle', vehicleId],
+    queryFn: async () => {
+      const result = await depositApi.list({ size: 200 })
+      return result.items
+    },
+    enabled: shouldFetch && isReserved,
+    staleTime: 1000 * 60,
+  })
+
+  // B2: Lấy danh sách đơn hàng — chỉ fetch khi xe đã bán
+  const { data: orderData } = useQuery({
+    queryKey: ['orders-for-vehicle', vehicleId],
+    queryFn: async () => {
+      const result = await orderApi.list({ size: 200 })
+      return result.items
+    },
+    enabled: shouldFetch && isSold,
+    staleTime: 1000 * 60,
+  })
+
+  // B3: Lọc theo vehicleId, lấy bản ghi mới nhất
+  if (isReserved && depositData) {
+    const deposit = depositData.find(
+      (d) => String(d.vehicleId) === String(vehicleId) && (d.status === 'Confirmed' || d.status === 'Pending'),
+    )
+    if (deposit) {
+      return {
+        customerId: deposit.customerId,
+        customerName: deposit.customerName ?? `Khách #${deposit.customerId}`,
+        type: 'deposit' as const,
+        amount: deposit.amount,
+      }
+    }
+  }
+
+  if (isSold && orderData) {
+    const order = orderData.find(
+      (o) => String(o.vehicleId) === String(vehicleId) && o.status !== 'Cancelled',
+    )
+    if (order) {
+      return {
+        customerId: order.customerId,
+        customerName: order.customerName ?? `Khách #${order.customerId}`,
+        type: 'order' as const,
+        amount: order.price,
+      }
+    }
+  }
+
+  return null
+}
+
 export function VehicleDetailModal({
   vehicle,
   isOpen,
   onClose,
   onHide,
 }: VehicleDetailModalProps) {
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const toast = useToastStore()
+  const qc = useQueryClient()
+  const [chatLoading, setChatLoading] = useState(false)
+
+  const customerInfo = useVehicleCustomerInfo(
+    vehicle?.id,
+    vehicle?.status,
+  )
+
   if (!vehicle) return null
 
   const img0 = vehicle.images?.[0]
   const cover = typeof img0 === 'string' ? img0 : img0?.url
+
+  // Xác định đường dẫn chat dựa theo role (manager hoặc staff)
+  const chatBasePath = pathname.startsWith('/manager') ? '/manager/chat' : '/staff/chat'
+
+  // B1: Gọi API tạo (hoặc lấy lại) hội thoại với khách
+  // B2: Xóa cache conversations cũ để trang chat fetch lại list mới nhất
+  // B3: Đóng modal, chuyển đến trang chat kèm ?cid= để mở luôn khung nhắn tin
+  const handleOpenChat = async () => {
+    if (!customerInfo?.customerId) return
+    setChatLoading(true)
+    try {
+      const conversationId = await createChatConversation(Number(customerInfo.customerId))
+      rememberChatParticipantName(conversationId, customerInfo.customerName)
+      await qc.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+      onClose()
+      navigate(`${chatBasePath}?cid=${conversationId}`, {
+        state: { chatParticipantName: customerInfo.customerName },
+      })
+    } catch {
+      toast.addToast('error', 'Không thể mở cuộc trò chuyện.')
+    } finally {
+      setChatLoading(false)
+    }
+  }
 
   return (
     <Modal
@@ -94,6 +197,36 @@ export function VehicleDetailModal({
             </p>
           </div>
         </div>
+
+        {/* Thông tin khách hàng — hiện khi xe đã đặt cọc hoặc đã bán */}
+        {customerInfo && (
+          <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-4">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase text-slate-600">
+              <User className="h-4 w-4" />
+              {customerInfo.type === 'deposit' ? 'Khách đặt cọc' : 'Người mua'}
+            </h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-slate-900">{customerInfo.customerName}</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {customerInfo.type === 'deposit' ? 'Số tiền cọc: ' : 'Giá trị đơn: '}
+                  <span className="font-bold text-[#1A3C6E]">{formatPrice(customerInfo.amount)}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenChat}
+                disabled={chatLoading}
+                className="flex items-center gap-1.5 rounded-lg bg-[#1A3C6E] px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-[#152d52] disabled:opacity-50"
+                title="Nhắn tin cho khách hàng"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Nhắn tin
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Sprint 4 — Lịch sử bảo dưỡng */}
         <MaintenanceHistoryPanel vehicleId={vehicle.id} />
       </div>

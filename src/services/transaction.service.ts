@@ -10,6 +10,7 @@ function parseAmount(s: string): number {
 
 function mapRow(r: Record<string, unknown>): Transaction {
   const st = String(r.status ?? 'Pending')
+  const refId = r.referenceId != null ? Number(r.referenceId) : undefined
   return {
     id: String(r.id ?? ''),
     date: String(r.createdAt ?? ''),
@@ -17,6 +18,9 @@ function mapRow(r: Record<string, unknown>): Transaction {
     type: String(r.type ?? 'Deposit') as TransactionType,
     amount: parseAmount(String(r.amount ?? '0')),
     status: st as Transaction['status'],
+    paymentGateway: r.paymentGateway ? String(r.paymentGateway) : undefined,
+    referenceType: r.referenceType ? String(r.referenceType) : undefined,
+    referenceId: Number.isFinite(refId) ? refId : undefined,
   }
 }
 

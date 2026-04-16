@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { TrendingUp, TrendingDown, Star, ChevronLeft, ChevronRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, Star } from 'lucide-react'
+import { Pagination } from '@/components/ui'
 import { useSystemReports } from '@/hooks/useSystemReports'
 import { useAdminDashboardStats } from '@/hooks/useAdminDashboardStats'
 import { useAdminDashboardCatalogSales } from '@/hooks/useAdminDashboardCatalogSales'
@@ -37,9 +38,9 @@ export function AdminDashboardPage() {
 
   const topModels = catalogSales?.topModels ?? []
   const topBrands = catalogSales?.topBrands ?? []
-  const perPage = 8
-  const totalPages = Math.max(1, Math.ceil(topModels.length / perPage))
-  const paginated = topModels.slice((page - 1) * perPage, page * perPage)
+  const [pageSize, setPageSize] = useState(8)
+  const totalPages = Math.max(1, Math.ceil(topModels.length / pageSize))
+  const paginated = topModels.slice((page - 1) * pageSize, page * pageSize)
 
   const revenueFromBranches = branchFilteredReports.reduce((s: number, r: { revenue: number }) => s + r.revenue, 0)
   const totalRevenue = revenueFromBranches > 0 ? revenueFromBranches : (stats?.totalRevenue ?? 0)
@@ -224,42 +225,8 @@ export function AdminDashboardPage() {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4">
-          <p className="text-sm text-slate-500">
-            {topModels.length === 0
-              ? 'Không có mục nào'
-              : `Hiển thị ${(page - 1) * perPage + 1} - ${Math.min(page * perPage, topModels.length)} trong ${topModels.length} dòng`}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPage(p)}
-                className={`h-9 min-w-[36px] rounded-lg px-3 text-sm font-medium ${
-                  page === p ? 'bg-[#1A3C6E] text-white' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
+        <div className="px-2 py-2">
+          <Pagination page={page} totalPages={totalPages} total={topModels.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="dòng xe" />
         </div>
       </div>
     </div>

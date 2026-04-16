@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Check, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Check, Calendar } from 'lucide-react'
 import { useStaffBookings } from '@/hooks/useStaffBookings'
 import { useBranches } from '@/hooks/useBranches'
 import { useVehicles } from '@/hooks/useVehicles'
@@ -7,10 +7,8 @@ import { useToastStore } from '@/store/toastStore'
 import { customerDisplayLabel } from '@/lib/customerDisplay'
 import { BookingDetailModal } from '@/features/staff/components/BookingDetailModal'
 import { BookingActionButtons } from '@/components/staff/BookingActionButtons'
-import { ConfirmDialog } from '@/components/ui'
+import { ConfirmDialog, Pagination } from '@/components/ui'
 import type { Booking } from '@/types/booking.types'
-
-const PAGE_SIZE = 4
 const tabs = ['Tất Cả', 'Chờ Xác Nhận', 'Đã Xác Nhận', 'Đã Hủy']
 
 function formatDate(d: string) {
@@ -28,6 +26,7 @@ function formatTime(slot: string) {
 export function StaffBookingsPage() {
   const [activeTab, setActiveTab] = useState(0)
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const [detailBooking, setDetailBooking] = useState<Booking | null>(null)
   const [cancelDetailConfirmOpen, setCancelDetailConfirmOpen] = useState(false)
   const {
@@ -54,9 +53,9 @@ export function StaffBookingsPage() {
   }, [bookings, activeTab])
 
   const paginated = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE
-    return filteredBookings.slice(start, start + PAGE_SIZE)
-  }, [filteredBookings, page])
+    const start = (page - 1) * pageSize
+    return filteredBookings.slice(start, start + pageSize)
+  }, [filteredBookings, page, pageSize])
 
   const today = new Date().toISOString().slice(0, 10)
   const todayBookings = (bookings ?? []).filter((b) => b.bookingDate === today)
@@ -89,7 +88,7 @@ export function StaffBookingsPage() {
 
   const vehicle = detailBooking ? vehicles?.find((x) => x.id === detailBooking.vehicleId) : null
   const branch = detailBooking ? branches?.find((b) => String(b.id) === String(detailBooking.branchId)) : null
-  const totalPages = Math.ceil(filteredBookings.length / PAGE_SIZE) || 1
+  const totalPages = Math.ceil(filteredBookings.length / pageSize) || 1
 
   return (
     <div className="space-y-6">
@@ -219,46 +218,8 @@ export function StaffBookingsPage() {
           </table>
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 px-6 py-4 sm:flex-row">
-          <p className="text-sm text-slate-500">
-            Hiển thị {filteredBookings.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filteredBookings.length)} trong {filteredBookings.length} lịch hẹn
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            {Array.from({ length: Math.min(6, totalPages) }, (_, i) => {
-              const p = totalPages <= 6 ? i + 1 : (page <= 3 ? i + 1 : page <= totalPages - 2 ? page - 2 + i : totalPages - 5 + i)
-              if (p < 1 || p > totalPages) return null
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPage(p)}
-                  className={`min-w-[36px] rounded-lg px-3 py-2 text-sm font-medium ${
-                    page === p ? 'bg-[#1A3C6E] text-white' : 'border border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {p}
-                </button>
-              )
-            })}
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
       </div>
+      <Pagination page={page} totalPages={totalPages} total={filteredBookings.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="lịch hẹn" />
 
       <BookingDetailModal
         booking={detailBooking}

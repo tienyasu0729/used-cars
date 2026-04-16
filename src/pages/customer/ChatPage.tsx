@@ -3,7 +3,7 @@ import { ChatLayout } from '@/features/customer/components/ChatLayout'
 import { useBranches } from '@/hooks/useBranches'
 import { useBranchTeam } from '@/hooks/useBranches'
 import { useConversations, useChatMessages, useInvalidateChatConversations } from '@/hooks/useChats'
-import { createChatConversation, sendChatMessage } from '@/services/chat.service'
+import { createChatConversation, deleteChatConversation, sendChatMessage } from '@/services/chat.service'
 import { useToastStore } from '@/store/toastStore'
 import { Button } from '@/components/ui'
 
@@ -32,6 +32,18 @@ export function ChatPage() {
       await refetch()
     } catch {
       toast.addToast('error', 'Không gửi được tin nhắn.')
+    }
+  }
+
+  const handleDeleteConversation = async (id: string) => {
+    const cid = parseInt(id, 10)
+    if (!Number.isFinite(cid)) return
+    try {
+      await deleteChatConversation(cid)
+      if (selectedId === id) setSelectedId(undefined)
+      await refetch()
+    } catch {
+      toast.addToast('error', 'Không xóa được hội thoại.')
     }
   }
 
@@ -71,6 +83,7 @@ export function ChatPage() {
         selectedId={selectedId}
         onSelectConversation={setSelectedId}
         onSendMessage={handleSendMessage}
+        onDeleteConversation={handleDeleteConversation}
       />
 
       {modalOpen && (

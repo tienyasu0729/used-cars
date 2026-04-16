@@ -1,12 +1,22 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Download, Plus, Calendar, List, Target, UserPlus, DollarSign } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Plus, Calendar, List, Target, UserPlus, DollarSign, Search, X } from 'lucide-react'
+import { downloadExcel, todayStr } from '@/utils/excelExport'
 import { useAppointments } from '@/hooks/useAppointments'
 import { useManagerBookingMutations } from '@/hooks/useManagerBookingMutations'
 import { AppointmentDetailModal } from '@/features/manager/components'
-import { ConfirmDialog } from '@/components/ui'
+import { ConfirmDialog, ExportMenu, ExportSelectionBar, Pagination } from '@/components/ui'
 import { formatPrice } from '@/utils/format'
 import { useAuthStore } from '@/store/authStore'
 import type { ManagerAppointment } from '@/types/managerAppointment.types'
+
+const STATUS_TABS = [
+  { key: 'all', label: 'Tất cả' },
+  { key: 'Pending', label: 'Chờ Xử Lý' },
+  { key: 'Confirmed', label: 'Đã Xác Nhận' },
+  { key: 'Completed', label: 'Hoàn Thành' },
+  { key: 'Cancelled', label: 'Đã Hủy' },
+  { key: 'Rescheduled', label: 'Đổi Lịch' },
+] as const
 
 const TYPE_LABELS: Record<string, string> = {
   test_drive: 'Lái Thử',
@@ -61,6 +71,12 @@ export function ManagerAppointmentsPage() {
   const [selected, setSelected] = useState<ManagerAppointment | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [pendingCancelId, setPendingCancelId] = useState<number | null>(null)
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set())
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
 
   const openDetail = (a: ManagerAppointment) => {
     setSelected(a)
@@ -110,7 +126,29 @@ export function ManagerAppointmentsPage() {
     )
   }
 
-  const list = appointments ?? []
+  const allItems = appointments ?? []
+
+  const list = useMemo(() => {
+    let result = statusFilter === 'all' ? allItems : allItems.filter((a) => a.status === statusFilter)
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      result = result.filter((a) => {
+        if (a.customerName?.toLowerCase().includes(q)) return true
+        if (a.vehicleName?.toLowerCase().includes(q)) return true
+        if (a.staffName?.toLowerCase().includes(q)) return true
+        return false
+      })
+    }
+    return result
+  }, [allItems, statusFilter, searchQuery])
+
+  const listTotal = list.length
+  const listTotalPages = Math.max(1, Math.ceil(listTotal / pageSize))
+  const listStart = (page - 1) * pageSize
+  const paginatedList = list.slice(listStart, listStart + pageSize)
+
+  useEffect(() => { setPage(1) }, [statusFilter, searchQuery])
+
   const { monday, sunday } = getWeekBounds()
   const weekList = list.filter((a) => {
     const d = new Date(a.date)
@@ -162,10 +200,20 @@ export function ManagerAppointmentsPage() {
               Lịch
             </button>
           </div>
-          <button className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 font-semibold transition-colors hover:bg-slate-50">
-            <Download className="h-5 w-5" />
-            Xuất
-          </button>
+          <ExportMenu
+            onExportAll={() => {
+              const rows = allItems.map((a) => [
+                a.date, a.timeSlot, a.customerName, TYPE_LABELS[a.type] ?? a.type,
+                a.vehicleName, a.staffName, STATUS_LABELS[a.status] ?? a.status,
+              ])
+              downloadExcel(`lich-hen-tat-ca-${todayStr()}.xlsx`,
+                ['Ngày', 'Giờ', 'Khách hàng', 'Loại', 'Xe', 'Nhân viên', 'Trạng thái'], rows)
+            }}
+            onExportFiltered={() => {
+              setSelectMode(true)
+              setSelectedIds(new Set())
+            }}
+          />
           <button className="flex items-center justify-center gap-2 rounded-lg bg-[#1A3C6E] px-4 py-2 font-semibold text-white transition-opacity hover:opacity-90">
             <Plus className="h-5 w-5" />
             Lịch Hẹn Mới
@@ -185,6 +233,60 @@ export function ManagerAppointmentsPage() {
           </div>
         ))}
       </div>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex gap-2">
+          {STATUS_TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setStatusFilter(t.key)}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                statusFilter === t.key
+                  ? 'bg-[#1A3C6E] text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative ml-auto">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Tìm khách, xe, nhân viên..."
+            className="h-9 w-56 rounded-lg border border-slate-200 bg-white pl-9 pr-8 text-sm text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-[#1A3C6E] focus:ring-1 focus:ring-[#1A3C6E]/30"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {selectMode && (
+        <ExportSelectionBar
+          selectedCount={selectedIds.size}
+          totalCount={list.length}
+          onSelectAll={() => setSelectedIds(new Set(list.map((a) => a.id)))}
+          onDeselectAll={() => setSelectedIds(new Set())}
+          onExport={() => {
+            const items = list.filter((a) => selectedIds.has(a.id))
+            const rows = items.map((a) => [
+              a.date, a.timeSlot, a.customerName, TYPE_LABELS[a.type] ?? a.type,
+              a.vehicleName, a.staffName, STATUS_LABELS[a.status] ?? a.status,
+            ])
+            downloadExcel(`lich-hen-chon-${todayStr()}.xlsx`,
+              ['Ngày', 'Giờ', 'Khách hàng', 'Loại', 'Xe', 'Nhân viên', 'Trạng thái'], rows)
+            setSelectMode(false)
+            setSelectedIds(new Set())
+          }}
+          onCancel={() => { setSelectMode(false); setSelectedIds(new Set()) }}
+        />
+      )}
+
       {viewMode === 'calendar' ? (
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="mb-4 flex items-center justify-between">
@@ -228,75 +330,98 @@ export function ManagerAppointmentsPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          {list.map((a) => (
-            <div
-              key={a.id}
-              onClick={() => openDetail(a)}
-              className="cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-[#1A3C6E]/40"
-            >
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-[#1A3C6E]">
-                    <span className="text-xs font-bold">{a.timeSlot}</span>
-                    <span className="text-[10px] uppercase">Slot</span>
+        <>
+          <div className="space-y-3">
+            {paginatedList.map((a) => (
+              <div
+                key={a.id}
+                onClick={() => !selectMode && openDetail(a)}
+                className={`rounded-xl border bg-white p-4 shadow-sm transition-colors ${
+                  selectMode
+                    ? selectedIds.has(a.id) ? 'border-blue-300 bg-blue-50/40' : 'border-slate-200'
+                    : 'cursor-pointer border-slate-200 hover:border-[#1A3C6E]/40'
+                }`}
+              >
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-4">
+                    {selectMode && (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(a.id)}
+                        onChange={() => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev)
+                            if (next.has(a.id)) next.delete(a.id)
+                            else next.add(a.id)
+                            return next
+                          })
+                        }}
+                        className="h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                      />
+                    )}
+                    <div className="flex h-16 w-16 flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-[#1A3C6E]">
+                      <span className="text-xs font-bold">{a.timeSlot}</span>
+                      <span className="text-[10px] uppercase">Slot</span>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900">{a.customerName}</h4>
+                      <p className="text-sm text-slate-500">
+                        {TYPE_LABELS[a.type] ?? a.type}: {a.vehicleName}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900">{a.customerName}</h4>
-                    <p className="text-sm text-slate-500">
-                      {TYPE_LABELS[a.type] ?? a.type}: {a.vehicleName}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-6">
-                  <div className="hidden flex-col items-end sm:flex">
-                    <span className="text-xs text-slate-400">Nhân viên phụ trách</span>
-                    <span className="text-sm font-semibold">{a.staffName}</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold ${
-                        a.type === 'test_drive'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-purple-100 text-purple-700'
-                      }`}
-                    >
-                      {TYPE_LABELS[a.type] ?? a.type}
-                    </span>
-                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusBadgeClass(a.status)}`}>
-                      {STATUS_LABELS[a.status] ?? a.status}
-                    </span>
-                    <div
-                      className="flex flex-wrap gap-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {canManagerConfirm(a.status) && (
-                        <button
-                          type="button"
-                          disabled={actionBookingId === Number(a.id)}
-                          onClick={() => void handleConfirm(Number(a.id))}
-                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
-                        >
-                          {actionBookingId === Number(a.id) ? '...' : 'Xác nhận'}
-                        </button>
-                      )}
-                      {canManagerCancel(a.status) && (
-                        <button
-                          type="button"
-                          disabled={actionBookingId === Number(a.id)}
-                          onClick={() => setPendingCancelId(Number(a.id))}
-                          className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                        >
-                          Hủy
-                        </button>
-                      )}
+                  <div className="flex flex-wrap items-center gap-6">
+                    <div className="hidden flex-col items-end sm:flex">
+                      <span className="text-xs text-slate-400">Nhân viên phụ trách</span>
+                      <span className="text-sm font-semibold">{a.staffName}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          a.type === 'test_drive'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-purple-100 text-purple-700'
+                        }`}
+                      >
+                        {TYPE_LABELS[a.type] ?? a.type}
+                      </span>
+                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusBadgeClass(a.status)}`}>
+                        {STATUS_LABELS[a.status] ?? a.status}
+                      </span>
+                      <div
+                        className="flex flex-wrap gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {canManagerConfirm(a.status) && (
+                          <button
+                            type="button"
+                            disabled={actionBookingId === Number(a.id)}
+                            onClick={() => void handleConfirm(Number(a.id))}
+                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            {actionBookingId === Number(a.id) ? '...' : 'Xác nhận'}
+                          </button>
+                        )}
+                        {canManagerCancel(a.status) && (
+                          <button
+                            type="button"
+                            disabled={actionBookingId === Number(a.id)}
+                            onClick={() => setPendingCancelId(Number(a.id))}
+                            className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            Hủy
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          <Pagination page={page} totalPages={listTotalPages} total={listTotal} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="lịch hẹn" />
+        </>
       )}
       {list.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">

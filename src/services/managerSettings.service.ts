@@ -23,6 +23,8 @@ export interface BranchSettingsDto {
   workingDays: number[]
   dailySchedules?: BranchDayScheduleDto[]
   showroomImageUrls?: string[]
+  lat?: number | null
+  lng?: number | null
 }
 
 export interface UpdateBranchSettingsPayload {
@@ -36,6 +38,8 @@ export interface UpdateBranchSettingsPayload {
     closeTime: string
   }>
   showroomImageUrls?: string[]
+  lat?: number | null
+  lng?: number | null
 }
 
 function unwrapData<T>(res: unknown): T {
@@ -96,6 +100,8 @@ export async function getBranchSettings(branchId?: number): Promise<BranchSettin
   const showroomImageUrls = Array.isArray(rawShowroom)
     ? (rawShowroom as unknown[]).map((x) => String(x).trim()).filter(Boolean)
     : undefined
+  const lat = d.lat != null && Number.isFinite(Number(d.lat)) ? Number(d.lat) : null
+  const lng = d.lng != null && Number.isFinite(Number(d.lng)) ? Number(d.lng) : null
   return {
     name: String(d.name ?? ''),
     address: String(d.address ?? ''),
@@ -106,6 +112,8 @@ export async function getBranchSettings(branchId?: number): Promise<BranchSettin
     workingDays,
     dailySchedules,
     showroomImageUrls,
+    lat,
+    lng,
   }
 }
 
@@ -116,6 +124,29 @@ export async function updateBranchSettings(
   await axiosInstance.put<unknown>('/manager/settings', payload, {
     params: branchId != null ? { branchId } : undefined,
   })
+}
+
+// --- Goong Geocoding: chuyển địa chỉ thành tọa độ GPS ---
+
+const GOONG_API_KEY = import.meta.env.VITE_GOONG_API_KEY || ''
+
+export async function geocodeAddress(address: string): Promise<{ lat: number; lng: number }> {
+  if (!GOONG_API_KEY) throw new Error('Chưa cấu hình VITE_GOONG_API_KEY.')
+  const trimmed = address.trim()
+  if (!trimmed) throw new Error('Địa chỉ không được để trống.')
+  const url = `https://rsapi.goong.io/geocode?address=${encodeURIComponent(trimmed)}&api_key=${GOONG_API_KEY}`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Goong API lỗi: ${res.status}`)
+  const json = await res.json()
+  const results = json?.results
+  if (!Array.isArray(results) || results.length === 0) {
+    throw new Error('Không tìm thấy tọa độ cho địa chỉ này.')
+  }
+  const loc = results[0]?.geometry?.location
+  if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) {
+    throw new Error('Kết quả geocoding không hợp lệ.')
+  }
+  return { lat: loc.lat, lng: loc.lng }
 }
 
 // --- Booking slots (template theo chi nhánh) ---

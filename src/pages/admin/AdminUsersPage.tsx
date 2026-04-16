@@ -39,9 +39,8 @@ import {
 import { EditUserModal } from '@/features/admin/components/EditUserModal'
 import { CreateUserModal } from '@/features/admin/components/CreateUserModal'
 import { ResetPasswordResultModal } from '@/features/admin/components/ResetPasswordResultModal'
-import { Modal, Button } from '@/components/ui'
+import { Modal, Button, Pagination } from '@/components/ui'
 import type { AdminUser } from '@/types/admin.types'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useToastStore } from '@/store/toastStore'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -104,7 +103,7 @@ export function AdminUsersPage() {
   const [confirmResetPassword, setConfirmResetPassword] = useState<AdminUser | null>(null)
   const [page, setPage] = useState(1)
 
-  const perPage = 8
+  const [pageSize, setPageSize] = useState(12)
   const branchOptions = branches ?? []
 
   const filteredByTab = useMemo(() => {
@@ -131,8 +130,8 @@ export function AdminUsersPage() {
     return list
   }, [filteredByTab, branchFilter])
 
-  const totalPages = Math.ceil(filtered.length / perPage) || 1
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage)
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   useEffect(() => {
     setPage(1)
@@ -425,26 +424,7 @@ export function AdminUsersPage() {
           <div className="py-12 text-center text-slate-500">Không tìm thấy người dùng</div>
         )}
       </div>
-      {!isLoading && filtered.length > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-500">
-            Hiển thị {(page - 1) * perPage + 1} - {Math.min(page * perPage, filtered.length)} của {filtered.length} người dùng (theo bộ lọc hiện tại)
-          </p>
-          <div className="flex items-center gap-1">
-            <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50">
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
-              <button key={p} type="button" onClick={() => setPage(p)} className={`h-9 min-w-[36px] rounded-lg px-3 text-sm font-medium ${page === p ? 'bg-[#1A3C6E] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
-                {p}
-              </button>
-            ))}
-            <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50">
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} total={filtered.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="người dùng" />
       <EditUserModal
         user={editUser}
         isOpen={!!editUser}

@@ -1,11 +1,12 @@
 /**
- * LoginForm — Component form đăng nhập
+ * LoginForm — Component form đăng nhập (email/password + Google)
  * 
- * Mapping: POST /auth/login
+ * Mapping: POST /auth/login, POST /auth/google
  * 
  * Component này CHỈ lo render UI:
  * - 2 field: Email, Password (có toggle hiện/ẩn)
  * - Nút submit với loading spinner
+ * - Nút đăng nhập bằng Google (Google One Tap)
  * - Hiện lỗi chung + lỗi từng field
  * - Link quên mật khẩu + đăng ký
  * 
@@ -16,6 +17,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useLogin } from '@/hooks/useLogin'
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton'
 import { Button, Input } from '@/components/ui'
 import type { LoginRequest } from '@/types/auth.types'
 
@@ -25,8 +27,8 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
-  // Hook xử lý toàn bộ logic đăng nhập
-  const { login, isLoading, error, fieldErrors, clearErrors } = useLogin()
+  // Hook xử lý toàn bộ logic đăng nhập (email/password + Google)
+  const { login, googleLogin, isLoading, error, fieldErrors, clearErrors } = useLogin()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -144,11 +146,8 @@ export function LoginForm() {
         <div className="flex-1 border-t border-gray-200" />
       </div>
 
-      {/* Google login — TODO: implement khi backend xong */}
-      <Button variant="outline" className="mt-4 w-full" type="button" disabled>
-        Tiếp tục với Google
-        {/* TODO: implement khi backend xong — POST /auth/google */}
-      </Button>
+      {/* Đăng nhập bằng Google — gửi ID Token lên backend POST /auth/google */}
+      <GoogleLoginButton isLoading={isLoading} onGoogleLogin={googleLogin} />
 
       {/* Link đăng ký */}
       <p className="mt-6 text-center text-sm text-gray-500">

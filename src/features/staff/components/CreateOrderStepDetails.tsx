@@ -1,11 +1,15 @@
 import { useEffect, useMemo } from 'react'
-import { Car, Pencil } from 'lucide-react'
+import { Car, Loader2, Pencil } from 'lucide-react'
 import { formatPrice, formatPriceNumber } from '@/utils/format'
 import type { Vehicle } from '@/types/vehicle.types'
 import { usePaymentDepositMethods } from '@/hooks/usePaymentDepositMethods'
 
 interface CreateOrderStepDetailsProps {
   vehicle: Vehicle | null
+  vehiclePrice: number
+  depositAmount: number | null
+  depositsLoading: boolean
+  customerSelected: boolean
   totalPrice: number
   onTotalPriceChange: (v: number) => void
   depositId: string
@@ -19,6 +23,10 @@ interface CreateOrderStepDetailsProps {
 
 export function CreateOrderStepDetails({
   vehicle,
+  vehiclePrice,
+  depositAmount,
+  depositsLoading,
+  customerSelected,
   totalPrice,
   onTotalPriceChange,
   depositId,
@@ -47,6 +55,8 @@ export function CreateOrderStepDetails({
     }
   }, [paymentOptions, paymentMethod, onPaymentChange])
 
+  const showDepositRow = Boolean(vehicle && customerSelected)
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-6 flex items-center justify-between">
@@ -57,8 +67,11 @@ export function CreateOrderStepDetails({
           <div>
             <label className="mb-1 flex items-center gap-2 text-sm font-medium text-slate-700">
               <Car className="h-4 w-4 text-slate-500" />
-              Tổng giá đơn (VNĐ)
+              Số tiền còn lại — tổng giá đơn (VNĐ)
             </label>
+            <p className="mb-2 text-xs text-slate-500">
+              Mặc định = giá niêm yết − cọc đã xác nhận (nếu có). Có thể chỉnh nếu cần.
+            </p>
             <input
               type="number"
               min={1}
@@ -66,22 +79,40 @@ export function CreateOrderStepDetails({
               onChange={(e) => onTotalPriceChange(Number(e.target.value) || 0)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             />
-            <p className="mt-1 text-xs text-slate-500">{formatPrice(totalPrice)}</p>
+            <p className="mt-1 text-xs font-medium text-slate-700">{formatPrice(totalPrice)}</p>
+            {vehiclePrice > 0 && (
+              <div className="mt-2 rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2 text-xs text-slate-600">
+                <p>Giá niêm yết: {formatPriceNumber(vehiclePrice)} ₫</p>
+                {depositAmount != null && depositAmount > 0 && (
+                  <p className="mt-0.5">Đã cọc (phiếu đã xác nhận): −{formatPriceNumber(depositAmount)} ₫</p>
+                )}
+                <p className="mt-1 font-semibold text-slate-800">
+                  Còn lại (gợi ý): {formatPriceNumber(Math.max(1, vehiclePrice - (depositAmount ?? 0)))} ₫
+                </p>
+              </div>
+            )}
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">ID phiếu cọc đã xác nhận (tuỳ chọn)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={depositId}
-              onChange={(e) => onDepositIdChange(e.target.value.replace(/\D/g, ''))}
-              placeholder="Để trống nếu không gắn cọc"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-            <p className="mt-1 text-xs text-slate-500">
-              Nếu nhập, cọc phải trùng khách &amp; xe; hệ thống tự trừ vào số tiền còn lại.
-            </p>
-          </div>
+          {showDepositRow && (
+            <div>
+              <label className="mb-1 flex items-center gap-2 text-sm font-medium text-slate-700">
+                ID phiếu cọc đã xác nhận (tuỳ chọn)
+                {depositsLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={depositId}
+                onChange={(e) => onDepositIdChange(e.target.value.replace(/\D/g, ''))}
+                placeholder={depositsLoading ? 'Đang tải…' : 'Để trống nếu không gắn cọc'}
+                disabled={depositsLoading}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Hệ thống tự điền khi có phiếu cọc đã xác nhận đúng khách &amp; xe. Sửa ID nếu sai — khi tạo đơn sẽ kiểm tra
+                khớp khách và xe.
+              </p>
+            </div>
+          )}
         </div>
         <div className="space-y-4">
           <div>

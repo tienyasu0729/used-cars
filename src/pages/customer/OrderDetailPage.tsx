@@ -118,7 +118,7 @@ export function OrderDetailPage() {
               Thanh toán online
             </Button>
           )}
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2" onClick={() => window.print()}>
             <Download className="h-5 w-5" />
             Tải hóa đơn
           </Button>

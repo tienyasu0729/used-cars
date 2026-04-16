@@ -3,14 +3,13 @@ import { Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   CreditCard,
-  Download,
   RefreshCw,
   Search,
   X,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import { Button, Badge, Input, Spinner, EmptyState } from '@/components/ui'
+import { Button, Badge, Input, Spinner, EmptyState, ExportMenu, ExportSelectionBar, Pagination } from '@/components/ui'
 import { useAuthStore } from '@/store/authStore'
 import { useBranchesAdmin } from '@/hooks/useBranchesAdmin'
 import {
@@ -19,6 +18,7 @@ import {
   useAdminTransactionDetail,
 } from '@/hooks/useAdminTransactions'
 import { adminTransactionService, type TransactionRow } from '@/services/adminTransactions.service'
+import { downloadExcel, todayStr } from '@/utils/excelExport'
 
 const VN_TZ = 'Asia/Ho_Chi_Minh'
 
@@ -112,6 +112,9 @@ export function AdminTransactionsPage() {
   const [page, setPage] = useState(0)
   const [exporting, setExporting] = useState(false)
 
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectIds, setSelectIds] = useState<Set<string>>(new Set())
+
   const [panelOpen, setPanelOpen] = useState(false)
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -174,14 +177,14 @@ export function AdminTransactionsPage() {
     resetPage()
   }
 
-  const onExport = async () => {
+  const doExport = async (filter: Record<string, unknown>) => {
     setExporting(true)
     try {
-      const blob = await adminTransactionService.exportCsv(summaryFilter)
+      const blob = await adminTransactionService.exportExcel(filter)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `transactions_${vnYmd().replace(/-/g, '')}.csv`
+      a.download = `transactions_${vnYmd().replace(/-/g, '')}.xlsx`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -218,10 +221,15 @@ export function AdminTransactionsPage() {
             <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             Tải lại
           </Button>
-          <Button type="button" size="sm" onClick={() => void onExport()} disabled={exporting}>
-            {exporting ? <Spinner size="sm" className="mr-2" /> : <Download className="mr-2 h-4 w-4" />}
-            Xuất CSV
-          </Button>
+          <ExportMenu
+            disabled={exporting}
+            label={exporting ? 'Đang xuất...' : 'Xuất Excel'}
+            onExportAll={() => void doExport({ from: fromIso, to: toIso })}
+            onExportFiltered={() => {
+              setSelectMode(true)
+              setSelectIds(new Set())
+            }}
+          />
         </div>
       </div>
 
@@ -379,11 +387,58 @@ export function AdminTransactionsPage() {
         </div>
       </div>
 
+      {selectMode && (
+        <ExportSelectionBar
+          selectedCount={selectIds.size}
+          totalCount={items.length}
+          onSelectAll={() => setSelectIds(new Set(items.map((r) => `${r.source}-${r.sourceId}`)))}
+          onDeselectAll={() => setSelectIds(new Set())}
+          onExport={() => {
+            const selected = items.filter((r) => selectIds.has(`${r.source}-${r.sourceId}`))
+            const rows = selected.map((r) => [
+              formatDateTime(r.createdAt),
+              r.type,
+              r.customerName ?? '',
+              r.customerPhone ?? '',
+              r.vehicleTitle ?? '',
+              r.branchName ?? '',
+              String(r.amount ?? 0),
+              gatewayLabel(r.paymentGateway),
+              r.statusLabel ?? '',
+              r.gatewayTxnRef ?? '',
+            ])
+            downloadExcel(`giao-dich-chon-${todayStr()}.xlsx`,
+              ['Thời gian', 'Loại', 'Khách hàng', 'SĐT', 'Xe', 'Chi nhánh', 'Số tiền', 'Cổng TT', 'Trạng thái', 'Mã GD'],
+              rows)
+            setSelectMode(false)
+            setSelectIds(new Set())
+          }}
+          onCancel={() => { setSelectMode(false); setSelectIds(new Set()) }}
+        />
+      )}
+
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
               <tr>
+                {selectMode && (
+                  <th className="w-10 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={items.length > 0 && items.every((r) => selectIds.has(`${r.source}-${r.sourceId}`))}
+                      onChange={() => {
+                        const allChecked = items.every((r) => selectIds.has(`${r.source}-${r.sourceId}`))
+                        if (allChecked) {
+                          setSelectIds(new Set())
+                        } else {
+                          setSelectIds(new Set(items.map((r) => `${r.source}-${r.sourceId}`)))
+                        }
+                      }}
+                      className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3">Thời gian</th>
                 <th className="px-4 py-3">Loại</th>
                 <th className="px-4 py-3">Khách hàng</th>
@@ -422,9 +477,36 @@ export function AdminTransactionsPage() {
                         return (
                           <tr
                             key={`${row.source}-${row.sourceId}`}
-                            className="cursor-pointer transition-colors hover:bg-slate-50"
-                            onClick={() => openRow(row)}
+                            className={`cursor-pointer transition-colors hover:bg-slate-50 ${selectMode && selectIds.has(`${row.source}-${row.sourceId}`) ? 'bg-blue-50/50' : ''}`}
+                            onClick={() => selectMode
+                              ? setSelectIds((prev) => {
+                                  const key = `${row.source}-${row.sourceId}`
+                                  const next = new Set(prev)
+                                  if (next.has(key)) next.delete(key)
+                                  else next.add(key)
+                                  return next
+                                })
+                              : openRow(row)
+                            }
                           >
+                            {selectMode && (
+                              <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="checkbox"
+                                  checked={selectIds.has(`${row.source}-${row.sourceId}`)}
+                                  onChange={() => {
+                                    const key = `${row.source}-${row.sourceId}`
+                                    setSelectIds((prev) => {
+                                      const next = new Set(prev)
+                                      if (next.has(key)) next.delete(key)
+                                      else next.add(key)
+                                      return next
+                                    })
+                                  }}
+                                  className="h-4 w-4 cursor-pointer rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                                />
+                              </td>
+                            )}
                             <td className="whitespace-nowrap px-4 py-3 text-slate-700">{formatDateTime(row.createdAt)}</td>
                             <td className="px-4 py-3">
                               <Badge
@@ -467,38 +549,16 @@ export function AdminTransactionsPage() {
             </tbody>
           </table>
         </div>
-        {!isLoading && totalPages > 0 && (
-          <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 sm:flex-row">
-            <p className="text-sm text-slate-500">
-              Hiển thị {items.length} / {totalElements} giao dịch
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page <= 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Trước
-              </Button>
-              <span className="text-sm text-slate-600">
-                Trang {page + 1} / {Math.max(1, totalPages)}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Sau
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
+        <div className="px-2 py-2">
+          <Pagination
+            page={page + 1}
+            totalPages={Math.max(1, totalPages)}
+            total={totalElements}
+            pageSize={items.length || 20}
+            onPageChange={(p) => setPage(p - 1)}
+            label="giao dịch"
+          />
+        </div>
       </div>
 
       {panelOpen && (

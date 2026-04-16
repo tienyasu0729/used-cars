@@ -154,3 +154,11 @@ export async function fetchTransferCandidates(conversationId: number): Promise<C
 export async function transferChatConversation(conversationId: number, targetUserId: number): Promise<void> {
   await axiosInstance.post(`/chat/conversations/${conversationId}/transfer`, { targetUserId })
 }
+
+/**
+ * Ẩn (xóa) hội thoại khỏi danh sách.
+ * Hội thoại sẽ tự hiện lại nếu đối phương gửi tin nhắn mới.
+ */
+export async function deleteChatConversation(conversationId: number): Promise<void> {
+  await axiosInstance.delete(`/chat/conversations/${conversationId}`)
+}

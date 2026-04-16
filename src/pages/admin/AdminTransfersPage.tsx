@@ -4,7 +4,7 @@ import { useTransfersAdmin } from '@/hooks/useTransfersAdmin'
 import { useApproveTransfer, useRejectTransfer } from '@/hooks/useAdminMutations'
 import { TransferApprovalModal } from '@/features/admin/components/TransferApprovalModal'
 import { TransferStatusBadge } from '@/components/manager/transfers/TransferStatusBadge'
-import { Button } from '@/components/ui'
+import { Button, Pagination } from '@/components/ui'
 import type { TransferRequest, TransferStatus } from '@/types/transfer.types'
 import { useToastStore } from '@/store/toastStore'
 
@@ -205,29 +205,14 @@ export function AdminTransfersPage() {
           <div className="py-12 text-center text-slate-500">Không có yêu cầu</div>
         )}
       </div>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-500">Trang {page + 1}/{totalPages}</p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page <= 0}
-              className="rounded-lg p-2 disabled:opacity-50"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="rounded-lg p-2 disabled:opacity-50"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        page={page + 1}
+        totalPages={totalPages}
+        total={(meta?.totalElements as number) ?? items.length}
+        pageSize={perPage}
+        onPageChange={(p) => setPage(p - 1)}
+        label="yêu cầu"
+      />
       <TransferApprovalModal
         transfer={selectedTransfer}
         isOpen={!!selectedTransfer}

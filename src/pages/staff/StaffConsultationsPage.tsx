@@ -7,7 +7,7 @@ import {
   type ConsultationListItem,
 } from '@/services/consultation.service'
 import { useToastStore } from '@/store/toastStore'
-import { Button } from '@/components/ui'
+import { Button, Pagination } from '@/components/ui'
 
 const consultationsKey = ['consultations', 'staff'] as const
 
@@ -30,16 +30,19 @@ export function StaffConsultationsPage() {
   const qc = useQueryClient()
   const toast = useToastStore()
   const [tab, setTab] = useState<'all' | 'pending' | 'processing' | 'resolved'>('all')
-  const [page] = useState(0)
+  const [uiPage, setUiPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
 
   const statusParam = tab === 'all' ? undefined : tab
 
   const { data, isLoading } = useQuery({
-    queryKey: [...consultationsKey, tab, page],
-    queryFn: async () => listConsultations({ status: statusParam, page, size: 50 }),
+    queryKey: [...consultationsKey, tab],
+    queryFn: async () => listConsultations({ status: statusParam, page: 0, size: 200 }),
   })
 
   const rows: ConsultationListItem[] = data?.items ?? []
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
+  const paginatedRows = rows.slice((uiPage - 1) * pageSize, uiPage * pageSize)
 
   const respondMut = useMutation({
     mutationFn: (id: number) => respondToConsultation(id),
@@ -89,7 +92,7 @@ export function StaffConsultationsPage() {
           <button
             key={t.key}
             type="button"
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); setUiPage(1) }}
             className={`rounded-lg px-4 py-2 text-sm font-medium ${
               tab === t.key ? 'bg-[#1A3C6E] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
@@ -119,7 +122,7 @@ export function StaffConsultationsPage() {
                 </td>
               </tr>
             ) : (
-              rows.map((r) => (
+              paginatedRows.map((r) => (
                 <tr key={r.id} className="border-b border-slate-100">
                   <td className="px-4 py-3 font-medium text-slate-900">{r.customerName}</td>
                   <td className="px-4 py-3">{r.customerPhone}</td>
@@ -161,6 +164,7 @@ export function StaffConsultationsPage() {
           </tbody>
         </table>
       </div>
+      <Pagination page={uiPage} totalPages={totalPages} total={rows.length} pageSize={pageSize} onPageChange={setUiPage} onPageSizeChange={(s) => { setPageSize(s); setUiPage(1) }} label="phiếu" />
     </div>
   )
 }

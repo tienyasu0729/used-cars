@@ -16,6 +16,7 @@ import type { UserProfile } from '@/types/auth.types'
 /** Key cố định trong localStorage — đồng bộ với auth.service.ts */
 const TOKEN_KEY = 'auth_token'
 const USER_KEY = 'auth_user'
+const PERMISSIONS_KEY = 'auth_permissions'
 
 interface AuthState {
   /** Thông tin user đang đăng nhập, null nếu chưa login */
@@ -26,9 +27,13 @@ interface AuthState {
   isAuthenticated: boolean
   /** Flag đang gọi API (login/register) */
   isLoading: boolean
+  /** Danh sách permission của user hiện tại (VD: ["Vehicles.create", "Orders.view"]) */
+  permissions: string[]
 
   /** Lưu thông tin auth sau login thành công, persist vào localStorage */
   setAuth: (user: UserProfile, token: string) => void
+  /** Lưu danh sách permission sau khi gọi API /me/permissions */
+  setPermissions: (permissions: string[]) => void
   /** Xóa toàn bộ auth state + localStorage khi logout */
   clearAuth: () => void
   /** Alias UI — gọi cùng logic clearAuth */
@@ -46,26 +51,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   token: null,
   isAuthenticated: false,
   isLoading: false,
+  permissions: [],
 
   setAuth: (user, token) => {
-    // Persist vào localStorage để không mất khi reload
+    // Persist vào localStorage để không mất khi reload (một key token chuẩn)
     localStorage.setItem(TOKEN_KEY, token)
     localStorage.setItem(USER_KEY, JSON.stringify(user))
-    
-    // Đồng thời giữ key "token" cũ để apiClient.ts (code cũ) vẫn hoạt động
-    localStorage.setItem('token', token)
 
     set({ user, token, isAuthenticated: true })
+  },
+
+  setPermissions: (permissions) => {
+    localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(permissions))
+    set({ permissions })
   },
 
   clearAuth: () => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
+    localStorage.removeItem(PERMISSIONS_KEY)
     // Xóa luôn key cũ để đồng bộ
     localStorage.removeItem('token')
     localStorage.removeItem('auth')
 
-    set({ user: null, token: null, isAuthenticated: false })
+    set({ user: null, token: null, isAuthenticated: false, permissions: [] })
   },
 
   logout: () => get().clearAuth(),
@@ -80,10 +89,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (savedToken && savedUser) {
         const parsedUser = JSON.parse(savedUser) as UserProfile
+        const savedPerms = localStorage.getItem(PERMISSIONS_KEY)
+        const parsedPerms = savedPerms ? JSON.parse(savedPerms) as string[] : []
         set({
           user: parsedUser,
           token: savedToken,
           isAuthenticated: true,
+          permissions: parsedPerms,
         })
       }
     } catch (parseError) {
