@@ -57,14 +57,12 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: devPort,
-      strictPort: false,
-      hmr: disableHmr
-        ? false
-        : {
-            protocol: 'ws',
-            port: devPort,
-            clientPort: devPort,
-          },
+      strictPort: true,
+      hmr: disableHmr ? false : {
+        protocol: 'ws',
+        host: 'localhost',
+        port: 24678,
+      },
       proxy: { ...proxy },
     },
     preview: {

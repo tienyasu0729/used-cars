@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -23,6 +23,7 @@ import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 import { useBookings } from '@/hooks/useBookings'
 import { useDeposits } from '@/hooks/useDeposits'
 import { useConversations } from '@/hooks/useChats'
+import { useOrders } from '@/hooks/useOrders'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Tổng Quan' },
@@ -30,7 +31,7 @@ const navItems = [
   { to: '/dashboard/recently-viewed', icon: Eye, label: 'Xe Đã Xem' },
   { to: '/dashboard/bookings', icon: Calendar, label: 'Lịch Lái Thử', badgeKey: 'bookings' },
   { to: '/dashboard/deposits', icon: Shield, label: 'Đặt Cọc', badgeKey: 'deposits' },
-  { to: '/dashboard/orders', icon: ShoppingBag, label: 'Đơn Mua' },
+  { to: '/dashboard/orders', icon: ShoppingBag, label: 'Đơn Mua', badgeKey: 'orders' },
   { to: '/dashboard/transactions', icon: CreditCard, label: 'Giao Dịch' },
   { to: '/dashboard/chat', icon: MessageCircle, label: 'Chat', badgeKey: 'chat' },
   { to: '/dashboard/notifications', icon: Bell, label: 'Thông Báo', badgeKey: 'notifications' },
@@ -48,6 +49,12 @@ export function CustomerSidebar() {
   const { data: depData } = useDeposits({ size: 200 })
   const deposits = depData?.deposits ?? []
   const { data: conversations } = useConversations()
+  const { data: ordersData } = useOrders({ size: 200 })
+
+  const ordersAwaiting = useMemo(() => {
+    if (!ordersData?.orders?.length) return 0
+    return ordersData.orders.filter((o) => o.status === 'Pending' || o.status === 'Processing').length
+  }, [ordersData])
 
   const bookingPending = bookings?.filter((b) => b.status === 'Pending').length ?? 0
   const depositActive =
@@ -58,6 +65,7 @@ export function CustomerSidebar() {
     if (key === 'notifications') return notificationUnread
     if (key === 'bookings') return bookingPending
     if (key === 'deposits') return depositActive
+    if (key === 'orders') return ordersAwaiting
     if (key === 'chat') return chatUnread
     return 0
   }

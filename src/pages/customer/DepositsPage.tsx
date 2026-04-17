@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDeposits } from '@/hooks/useDeposits'
 import { depositApi } from '@/services/depositApi'
+import { setPaymentReturnContext } from '@/services/paymentApi'
+import { navigateToPaymentUrl } from '@/utils/paymentNavigation'
 import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import { notifyInventoryChanged } from '@/utils/inventorySync'
 import { formatPrice, formatDateVNCalendar, formatDateTimeVN } from '@/utils/format'
@@ -11,7 +13,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button, Pagination } from '@/components/ui'
 import { useToastStore } from '@/store/toastStore'
 
-const ACTIVE_STATUSES = ['Confirmed', 'Pending', 'RefundPending']
+const ACTIVE_STATUSES = ['AwaitingPayment', 'Confirmed', 'Pending', 'RefundPending']
 const HISTORY_STATUSES = [
   'Refunded',
   'ConvertedToOrder',
@@ -48,6 +50,7 @@ function getStatusDisplay(status: string, expiryDate: string) {
     return { label: 'Sắp hết hạn', className: 'bg-red-100 text-red-700' }
   }
   const map: Record<string, { label: string; className: string }> = {
+    AwaitingPayment: { label: 'Chờ thanh toán', className: 'bg-blue-100 text-blue-700' },
     Confirmed: { label: 'Đang giữ chỗ', className: 'bg-green-100 text-green-700' },
     Pending: { label: 'Chờ xác nhận', className: 'bg-amber-100 text-amber-700' },
     RefundPending: { label: 'Đang hoàn cọc', className: 'bg-amber-100 text-amber-800' },
@@ -85,6 +88,29 @@ export function DepositsPage() {
         e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
           ? (e as { message: string }).message
           : 'Không thể hủy cọc. Vui lòng thử lại.'
+      addToast('error', msg)
+    },
+  })
+
+  const resumeMut = useMutation({
+    mutationFn: (id: string) => depositApi.resumePayment(id),
+    onSuccess: (data) => {
+      const url = data.paymentUrl?.trim()
+      if (!url) {
+        addToast('error', 'Không nhận được liên kết thanh toán.')
+        return
+      }
+      const vid = data.vehicleId
+      if (typeof vid === 'number' && Number.isFinite(vid) && vid > 0) {
+        setPaymentReturnContext({ kind: 'deposit', id: Number(data.id), vehicleId: vid })
+      }
+      navigateToPaymentUrl(url)
+    },
+    onError: (e: unknown) => {
+      const msg =
+        e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
+          ? (e as { message: string }).message
+          : 'Không mở được cổng thanh toán. Vui lòng thử lại.'
       addToast('error', msg)
     },
   })
@@ -276,6 +302,26 @@ export function DepositsPage() {
                           <Link to={`/vehicles/${d.vehicleId}`} className="text-sm font-semibold text-[#1A3C6E] hover:underline">
                             Chi tiết
                           </Link>
+                        )}
+                        {d.status === 'AwaitingPayment' && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={resumeMut.isPending || cancelMut.isPending}
+                              onClick={() => resumeMut.mutate(d.id)}
+                              className="text-sm font-semibold text-[#1A3C6E] hover:underline disabled:opacity-50"
+                            >
+                              {resumeMut.isPending && resumeMut.variables === d.id ? 'Đang mở…' : 'Thanh toán tiếp'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={cancelMut.isPending || resumeMut.isPending}
+                              onClick={() => setCancelDepositId(d.id)}
+                              className="text-sm font-semibold text-red-600 hover:underline disabled:opacity-50"
+                            >
+                              Hủy
+                            </button>
+                          </>
                         )}
                         {d.status === 'Pending' && (
                           <button

@@ -157,12 +157,39 @@ export function VehicleDetailPage() {
                 {isSaved ? '❤️ Đã lưu' : '🤍 Lưu xe'}
               </button>
 
-              {/* Banner: xe có cọc bởi người khác */}
-              {(vehicle.status === 'Reserved' || (listingHold && vehicle.my_pending_deposit_id == null)) && (
+              {vehicle.status === 'Reserved' && vehicle.my_pending_deposit_id != null && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+                  <p className="mb-2 font-semibold">Bạn đang giữ chỗ xe này. Vui lòng hoàn tất thanh toán.</p>
+                  <Link
+                    to="/dashboard/deposits"
+                    className="text-sm font-semibold text-[#1A3C6E] underline"
+                  >
+                    Xem đặt cọc &rarr;
+                  </Link>
+                </div>
+              )}
+
+              {vehicle.status === 'Reserved' && vehicle.my_pending_deposit_id == null && vehicle.my_confirmed_deposit_id != null && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-900">
+                  <p className="mb-2 font-semibold">Xe đã được giữ chỗ bởi bạn.</p>
+                  <Link
+                    to="/dashboard/deposits"
+                    className="text-sm font-semibold text-[#1A3C6E] underline"
+                  >
+                    Xem đặt cọc &rarr;
+                  </Link>
+                </div>
+              )}
+
+              {vehicle.status === 'Reserved' && vehicle.my_pending_deposit_id == null && vehicle.my_confirmed_deposit_id == null && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-sm text-amber-900">
-                  {vehicle.status === 'Reserved'
-                    ? 'Xe đang được giữ chỗ. Vui lòng chọn xe khác hoặc liên hệ showroom.'
-                    : 'Xe đang có cọc / thanh toán đang xử lý. Vui lòng chọn xe khác hoặc liên hệ showroom.'}
+                  Xe đang được giữ chỗ. Vui lòng chọn xe khác hoặc liên hệ showroom.
+                </div>
+              )}
+
+              {vehicle.status !== 'Reserved' && listingHold && vehicle.my_pending_deposit_id == null && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-sm text-amber-900">
+                  Xe đang có cọc / thanh toán đang xử lý. Vui lòng chọn xe khác hoặc liên hệ showroom.
                 </div>
               )}
 

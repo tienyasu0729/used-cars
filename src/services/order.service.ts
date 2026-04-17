@@ -29,7 +29,10 @@ function mapRow(r: Record<string, unknown>): Order {
 function mapDetail(r: Record<string, unknown>): Order {
   return {
     ...mapRow(r),
+    staffId: r.staffId != null ? String(r.staffId) : undefined,
     staffName: r.staffName != null ? String(r.staffName) : undefined,
+    staffEmail: r.staffEmail != null ? String(r.staffEmail) : undefined,
+    staffPhone: r.staffPhone != null ? String(r.staffPhone) : undefined,
     branchName: r.branchName != null ? String(r.branchName) : undefined,
     updatedAt: r.updatedAt != null ? String(r.updatedAt) : undefined,
   }

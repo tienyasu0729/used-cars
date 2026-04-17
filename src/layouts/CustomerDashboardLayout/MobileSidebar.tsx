@@ -12,17 +12,19 @@ import {
   LogOut,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { useMemo } from 'react'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 import { useBookings } from '@/hooks/useBookings'
 import { useDeposits } from '@/hooks/useDeposits'
 import { useConversations } from '@/hooks/useChats'
+import { useOrders } from '@/hooks/useOrders'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Tổng Quan' },
   { to: '/dashboard/saved', icon: Heart, label: 'Xe Đã Lưu' },
   { to: '/dashboard/bookings', icon: Calendar, label: 'Lịch Lái Thử', badgeKey: 'bookings' },
   { to: '/dashboard/deposits', icon: Shield, label: 'Đặt Cọc', badgeKey: 'deposits' },
-  { to: '/dashboard/orders', icon: ShoppingBag, label: 'Đơn Mua' },
+  { to: '/dashboard/orders', icon: ShoppingBag, label: 'Đơn Mua', badgeKey: 'orders' },
   { to: '/dashboard/transactions', icon: CreditCard, label: 'Giao Dịch' },
   { to: '/dashboard/chat', icon: MessageCircle, label: 'Chat', badgeKey: 'chat' },
   { to: '/dashboard/notifications', icon: Bell, label: 'Thông Báo', badgeKey: 'notifications' },
@@ -41,6 +43,12 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const { data: depData } = useDeposits({ size: 200 })
   const deposits = depData?.deposits ?? []
   const { data: conversations } = useConversations()
+  const { data: ordersData } = useOrders({ size: 200 })
+
+  const ordersAwaiting = useMemo(() => {
+    if (!ordersData?.orders?.length) return 0
+    return ordersData.orders.filter((o) => o.status === 'Pending' || o.status === 'Processing').length
+  }, [ordersData])
 
   const bookingPending = bookings?.filter((b) => b.status === 'Pending').length ?? 0
   const depositActive =
@@ -51,6 +59,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     if (key === 'notifications') return notificationUnread
     if (key === 'bookings') return bookingPending
     if (key === 'deposits') return depositActive
+    if (key === 'orders') return ordersAwaiting
     if (key === 'chat') return chatUnread
     return 0
   }

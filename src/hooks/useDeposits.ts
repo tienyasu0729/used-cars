@@ -32,6 +32,6 @@ export function useDeposits(params?: { status?: string; page?: number; size?: nu
       })
       return { deposits: items.map(toDeposit), meta }
     },
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 15,
   })
 }

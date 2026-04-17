@@ -1,4 +1,5 @@
 export type DepositStatus =
+  | 'AwaitingPayment'
   | 'Pending'
   | 'Confirmed'
   | 'Refunded'

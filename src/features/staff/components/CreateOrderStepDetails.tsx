@@ -19,6 +19,7 @@ interface CreateOrderStepDetailsProps {
   notes: string
   onNotesChange: (v: string) => void
   onChangeVehicle: () => void
+  orderMode?: 'deposit' | 'direct'
 }
 
 export function CreateOrderStepDetails({
@@ -36,6 +37,7 @@ export function CreateOrderStepDetails({
   notes,
   onNotesChange,
   onChangeVehicle,
+  orderMode,
 }: CreateOrderStepDetailsProps) {
   const { data: pmCfg } = usePaymentDepositMethods(true)
   const paymentOptions = useMemo(() => {
@@ -55,7 +57,7 @@ export function CreateOrderStepDetails({
     }
   }, [paymentOptions, paymentMethod, onPaymentChange])
 
-  const showDepositRow = Boolean(vehicle && customerSelected)
+  const showDepositRow = Boolean(vehicle && customerSelected && orderMode !== 'deposit')
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -140,6 +142,16 @@ export function CreateOrderStepDetails({
                 </label>
               ))}
             </div>
+            {(paymentMethod === 'vnpay' || paymentMethod === 'zalopay') && (
+              <p className="mt-2 rounded-lg bg-blue-50 p-3 text-xs text-slate-600">
+                Hệ thống sẽ tạo link thanh toán và gửi email + thông báo cho khách hàng. Staff không cần thu tiền mặt.
+              </p>
+            )}
+            {paymentMethod === 'cash' && (
+              <p className="mt-2 rounded-lg bg-amber-50 p-3 text-xs text-slate-600">
+                Đơn tạo xong, staff thu tiền trực tiếp và ghi nhận thủ công sau.
+              </p>
+            )}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Ghi chú đơn hàng</label>

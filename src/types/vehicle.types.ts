@@ -40,6 +40,8 @@ export interface Vehicle {
   listing_hold_active?: boolean
   /** ID cọc AwaitingPayment của user hiện tại cho xe này (null nếu không có hoặc chưa login) */
   my_pending_deposit_id?: number | null
+  /** ID cọc Confirmed của user hiện tại cho xe này (null nếu không có hoặc chưa login) */
+  my_confirmed_deposit_id?: number | null
   /** true = đã ẩn khỏi tin đăng công khai (xóa mềm), vẫn xem trong quản lý chi nhánh */
   deleted?: boolean
   category_id: number

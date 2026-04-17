@@ -96,4 +96,14 @@ export const depositApi = {
     const res = (await axiosInstance.patch(`/deposits/${id}/confirm`)) as ApiResponse<null>
     unwrapApiResponse(res)
   },
+
+  async resumePayment(id: number | string): Promise<CreateDepositResult> {
+    const res = (await axiosInstance.post(`/deposits/${id}/resume-payment`)) as ApiResponse<CreateDepositResult>
+    return unwrapApiResponse(res)
+  },
+
+  async markRefunded(id: number | string): Promise<void> {
+    const res = (await axiosInstance.patch(`/deposits/${id}/mark-refunded`)) as ApiResponse<null>
+    unwrapApiResponse(res)
+  },
 }

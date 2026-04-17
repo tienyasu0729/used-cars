@@ -208,7 +208,7 @@ function OrderDetailModal({
 
 export function StaffOrdersPage() {
   const { orders: ordersPath } = useStaffOrManagerBasePath()
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
   const { data: orders, refetch } = useStaffOrders()
@@ -218,6 +218,10 @@ export function StaffOrdersPage() {
   const canCreateOrder = useHasPermission('Orders', 'create')
 
   const allOrders = orders ?? []
+  // Derive tu data moi nhat thay vi snapshot cu
+  const selectedOrder = selectedOrderId != null
+    ? allOrders.find((o) => o.id === selectedOrderId) ?? null
+    : null
   const totalPages = Math.max(1, Math.ceil(allOrders.length / pageSize))
   const paginated = allOrders.slice((page - 1) * pageSize, page * pageSize)
 
@@ -295,7 +299,7 @@ export function StaffOrdersPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => setSelectedOrder(o)}
+                          onClick={() => setSelectedOrderId(o.id)}
                           className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#1A3C6E]"
                           title="Xem chi tiết"
                           type="button"
@@ -325,7 +329,7 @@ export function StaffOrdersPage() {
         <OrderDetailModal
           order={selectedOrder}
           vehicle={vehicles.find((v) => String(v.id) === String(selectedOrder.vehicleId)) ?? null}
-          onClose={() => setSelectedOrder(null)}
+          onClose={() => setSelectedOrderId(null)}
         />
       )}
     </div>

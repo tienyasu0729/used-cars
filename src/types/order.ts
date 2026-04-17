@@ -13,7 +13,10 @@ export interface Order {
   createdAt: string
   paymentMethod?: string
   notes?: string
+  staffId?: string
   staffName?: string
+  staffEmail?: string
+  staffPhone?: string
   branchName?: string
   updatedAt?: string
 }

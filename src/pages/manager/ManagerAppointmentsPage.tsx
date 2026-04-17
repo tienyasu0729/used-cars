@@ -118,14 +118,6 @@ export function ManagerAppointmentsPage() {
     if (fresh && fresh.status !== selected.status) setSelected(fresh)
   }, [appointments, selected])
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-[300px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1A3C6E] border-t-transparent" />
-      </div>
-    )
-  }
-
   const allItems = appointments ?? []
 
   const list = useMemo(() => {
@@ -142,12 +134,20 @@ export function ManagerAppointmentsPage() {
     return result
   }, [allItems, statusFilter, searchQuery])
 
+  useEffect(() => { setPage(1) }, [statusFilter, searchQuery])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1A3C6E] border-t-transparent" />
+      </div>
+    )
+  }
+
   const listTotal = list.length
   const listTotalPages = Math.max(1, Math.ceil(listTotal / pageSize))
   const listStart = (page - 1) * pageSize
   const paginatedList = list.slice(listStart, listStart + pageSize)
-
-  useEffect(() => { setPage(1) }, [statusFilter, searchQuery])
 
   const { monday, sunday } = getWeekBounds()
   const weekList = list.filter((a) => {

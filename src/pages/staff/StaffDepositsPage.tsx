@@ -9,6 +9,22 @@ import { formatPrice, formatDate } from '@/utils/format'
 import { Button, Pagination } from '@/components/ui'
 
 
+const STATUS_MAP: Record<string, { label: string; className: string }> = {
+  AwaitingPayment: { label: 'Chờ thanh toán', className: 'bg-blue-100 text-blue-700' },
+  Pending: { label: 'Chờ xác nhận', className: 'bg-amber-100 text-amber-700' },
+  Confirmed: { label: 'Đang giữ chỗ', className: 'bg-green-100 text-green-700' },
+  RefundPending: { label: 'Đang hoàn cọc', className: 'bg-amber-100 text-amber-800' },
+  Refunded: { label: 'Đã hoàn cọc', className: 'bg-slate-100 text-slate-600' },
+  RefundFailed: { label: 'Hoàn cọc thất bại', className: 'bg-red-100 text-red-700' },
+  ConvertedToOrder: { label: 'Đã chuyển đơn', className: 'bg-purple-100 text-purple-700' },
+  Expired: { label: 'Hết hạn', className: 'bg-slate-100 text-slate-600' },
+  Cancelled: { label: 'Đã hủy', className: 'bg-slate-100 text-slate-500' },
+}
+
+function statusBadge(s: string) {
+  return STATUS_MAP[s] ?? { label: s, className: 'bg-slate-100 text-slate-700' }
+}
+
 function errMsg(e: unknown): string {
   if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string') {
     return (e as { message: string }).message
@@ -33,6 +49,15 @@ export function StaffDepositsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['deposits'] })
       toast.addToast('success', 'Đã xác nhận cọc.')
+    },
+    onError: (e) => toast.addToast('error', errMsg(e)),
+  })
+
+  const markRefundedMut = useMutation({
+    mutationFn: (id: string) => depositApi.markRefunded(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deposits'] })
+      toast.addToast('success', 'Đã đánh dấu hoàn cọc thành công.')
     },
     onError: (e) => toast.addToast('error', errMsg(e)),
   })
@@ -62,6 +87,7 @@ export function StaffDepositsPage() {
           { key: undefined as string | undefined, label: 'Tất cả' },
           { key: 'Pending', label: 'Chờ xác nhận' },
           { key: 'Confirmed', label: 'Đã xác nhận' },
+          { key: 'RefundFailed', label: 'Hoàn cọc thất bại' },
           { key: 'Cancelled', label: 'Đã hủy' },
         ].map((t) => (
           <button
@@ -102,8 +128,12 @@ export function StaffDepositsPage() {
                     <td className="max-w-[200px] truncate px-4 py-3">{d.vehicleTitle ?? d.vehicleId}</td>
                     <td className="px-4 py-3 font-semibold">{formatPrice(d.amount)}</td>
                     <td className="px-4 py-3 text-slate-600">{formatDate(d.expiryDate)}</td>
-                    <td className="px-4 py-3">{d.status}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${statusBadge(d.status).className}`}>
+                        {statusBadge(d.status).label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right space-x-2">
                       {d.status === 'Pending' && (
                         <Button
                           type="button"
@@ -113,6 +143,21 @@ export function StaffDepositsPage() {
                           onClick={() => confirmMut.mutate(d.id)}
                         >
                           Xác nhận cọc
+                        </Button>
+                      )}
+                      {(d.status === 'RefundPending' || d.status === 'RefundFailed') && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-amber-600 hover:bg-amber-700 text-white"
+                          disabled={markRefundedMut.isPending}
+                          onClick={() => {
+                            if (window.confirm('Xác nhận đã hoàn tiền cọc cho khách hàng ngoài hệ thống?')) {
+                              markRefundedMut.mutate(d.id)
+                            }
+                          }}
+                        >
+                          Đánh dấu đã hoàn
                         </Button>
                       )}
                     </td>
