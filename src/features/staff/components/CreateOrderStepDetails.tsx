@@ -165,6 +165,23 @@ export function CreateOrderStepDetails({
           </div>
         </div>
       </div>
+      {vehicle && vehicle.status === 'Reserved' && orderMode === 'direct' && (
+        <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-white">
+              !
+            </span>
+            <div className="text-sm text-amber-900">
+              <p className="mb-1 font-bold">Xe này đang ở trạng thái Reserved</p>
+              <p className="text-xs leading-relaxed">
+                Rất có khả năng xe đã có phiếu cọc của khách khác. Vui lòng chuyển về luồng
+                <b> &quot;Từ đặt cọc&quot;</b> và chọn đúng phiếu cọc tương ứng. Nếu tạo đơn trực tiếp, hệ thống sẽ từ
+                chối để tránh bán sai chủ.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {vehicle && (
         <div className="mt-6 flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-4">
           <div className="flex items-center gap-3">

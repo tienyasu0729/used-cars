@@ -1,12 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Search, Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useTransfersAdmin } from '@/hooks/useTransfersAdmin'
-import { useApproveTransfer, useRejectTransfer } from '@/hooks/useAdminMutations'
-import { TransferApprovalModal } from '@/features/admin/components/TransferApprovalModal'
 import { TransferStatusBadge } from '@/components/manager/transfers/TransferStatusBadge'
-import { Button, Pagination } from '@/components/ui'
-import type { TransferRequest, TransferStatus } from '@/types/transfer.types'
-import { useToastStore } from '@/store/toastStore'
+import { Pagination } from '@/components/ui'
+import type { TransferStatus } from '@/types/transfer.types'
 
 type StatusTab = 'pending' | 'approved' | 'completed' | 'rejected'
 
@@ -18,11 +15,6 @@ const TAB_TO_API: Record<StatusTab, TransferStatus> = {
 }
 
 export function AdminTransfersPage() {
-  const toast = useToastStore()
-  const approveTransfer = useApproveTransfer()
-  const rejectTransfer = useRejectTransfer()
-  const [selectedTransfer, setSelectedTransfer] = useState<TransferRequest | null>(null)
-  const [modalMode, setModalMode] = useState<'confirm' | 'reject'>('confirm')
   const [statusFilter, setStatusFilter] = useState<StatusTab>('pending')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
@@ -63,28 +55,6 @@ export function AdminTransfersPage() {
     })
   }, [allForCountsData])
 
-  const handleApprove = async (id: number, note: string) => {
-    try {
-      await approveTransfer.mutateAsync({ id, note })
-      toast.addToast('success', 'Đã phê duyệt.')
-    } catch (e) {
-      const err = e as { message?: string }
-      toast.addToast('error', err.message || 'Lỗi phê duyệt')
-      throw e
-    }
-  }
-
-  const handleReject = async (id: number, note: string) => {
-    try {
-      await rejectTransfer.mutateAsync({ id, note })
-      toast.addToast('success', 'Đã từ chối.')
-    } catch (e) {
-      const err = e as { message?: string }
-      toast.addToast('error', err.message || 'Lỗi từ chối')
-      throw e
-    }
-  }
-
   const handleStatusChange = (status: StatusTab) => {
     setStatusFilter(status)
     setPage(0)
@@ -101,8 +71,10 @@ export function AdminTransfersPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Duyệt điều chuyển xe</h2>
-        <p className="mt-1 text-sm text-slate-500">Xem và phê duyệt hoặc từ chối yêu cầu điều chuyển xe giữa các chi nhánh.</p>
+        <h2 className="text-2xl font-bold text-slate-900">Điều chuyển xe</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Theo dõi các yêu cầu điều chuyển xe giữa các chi nhánh trên toàn hệ thống. Việc phê duyệt/từ chối do quản lý chi nhánh nguồn thực hiện.
+        </p>
       </div>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -150,7 +122,6 @@ export function AdminTransfersPage() {
                 <th className="px-4 py-3 text-xs font-bold uppercase text-slate-500">Người yêu cầu</th>
                 <th className="px-4 py-3 text-xs font-bold uppercase text-slate-500">Ngày</th>
                 <th className="px-4 py-3 text-xs font-bold uppercase text-slate-500">Trạng thái</th>
-                <th className="px-4 py-3 text-right text-xs font-bold uppercase text-slate-500">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -168,34 +139,6 @@ export function AdminTransfersPage() {
                   <td className="px-4 py-3">
                     <TransferStatusBadge status={t.status} />
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    {t.status === 'Pending' && (
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedTransfer(t)
-                            setModalMode('confirm')
-                          }}
-                        >
-                          <Check className="mr-1 h-4 w-4" />
-                          Duyệt
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedTransfer(t)
-                            setModalMode('reject')
-                          }}
-                        >
-                          <X className="mr-1 h-4 w-4" />
-                          Từ chối
-                        </Button>
-                      </div>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -212,14 +155,6 @@ export function AdminTransfersPage() {
         pageSize={perPage}
         onPageChange={(p) => setPage(p - 1)}
         label="yêu cầu"
-      />
-      <TransferApprovalModal
-        transfer={selectedTransfer}
-        isOpen={!!selectedTransfer}
-        onClose={() => setSelectedTransfer(null)}
-        onApprove={handleApprove}
-        onReject={handleReject}
-        initialMode={modalMode}
       />
     </div>
   )

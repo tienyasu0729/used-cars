@@ -21,6 +21,27 @@ const STEPS = ['Loại đơn', 'Thông tin', 'Chi tiết', 'Xác nhận']
 
 type OrderMode = 'deposit' | 'direct'
 
+// Map error code tu BE sang thong bao tieng Viet cho UI.
+// Axios interceptor reject voi ApiErrorResponse -> field la errorCode.
+function mapCreateOrderError(e: unknown): string {
+  const raw = e && typeof e === 'object' ? (e as { errorCode?: string; message?: string }) : {}
+  const code = raw.errorCode ?? ''
+  switch (code) {
+    case 'VEHICLE_HAS_ACTIVE_ORDER':
+      return 'Xe đã có đơn hàng đang xử lý. Vui lòng kiểm tra lại danh sách đơn.'
+    case 'DEPOSIT_OWNER_MISMATCH':
+      return 'Xe đang được khách khác đặt cọc, không thể bán cho khách này.'
+    case 'DEPOSIT_REQUIRED':
+      return 'Xe đã có phiếu cọc — vui lòng chuyển sang luồng "Từ đặt cọc" và chọn đúng phiếu.'
+    case 'DEPOSIT_ALREADY_CONVERTED':
+      return 'Phiếu cọc này đã được dùng cho một đơn khác.'
+    case 'VEHICLE_NOT_AVAILABLE':
+      return 'Xe không ở trạng thái có thể tạo đơn.'
+    default:
+      return typeof raw.message === 'string' && raw.message.trim() ? raw.message : 'Không thể tạo đơn hàng.'
+  }
+}
+
 export function StaffCreateOrderPage() {
   const { dashboard, orders } = useStaffOrManagerBasePath()
   const navigate = useNavigate()
@@ -57,7 +78,16 @@ export function StaffCreateOrderPage() {
   // Load du lieu
   const { data: inventory, available } = useInventory()
   const { data: customerRows = [] } = useStaffCustomerOptions()
-  const branchVehicles = (available?.length ? available : inventory) ?? []
+  const rawBranchVehicles = (available?.length ? available : inventory) ?? []
+  // Nhanh "ban truc tiep": loai bo xe dang Reserved (co the da co coc cua khach khac).
+  // BE se reject nhung chan som o UI de staff khong mat cong nhap.
+  // Nhanh "deposit": khong filter vi da tim theo deposit -> xe chac chan thuoc dung khach.
+  const branchVehicles = useMemo(() => {
+    if (orderMode === 'direct') {
+      return rawBranchVehicles.filter((v) => v.status === 'Available')
+    }
+    return rawBranchVehicles
+  }, [rawBranchVehicles, orderMode])
 
   // Fetch deposits Confirmed chua co orderId
   const { data: depositListResult, isLoading: depositsLoading } = useQuery({
@@ -177,11 +207,7 @@ export function StaffCreateOrderPage() {
         navigate(orders)
       }
     } catch (e: unknown) {
-      const msg =
-        e && typeof e === 'object' && 'message' in e && typeof (e as { message: string }).message === 'string'
-          ? (e as { message: string }).message
-          : 'Không thể tạo đơn hàng'
-      toast.addToast('error', msg)
+      toast.addToast('error', mapCreateOrderError(e))
     } finally {
       setSubmitting(false)
     }

@@ -67,7 +67,19 @@ function OrderDetailModal({
     }
   }
 
-  const onAdvance = () => run(() => orderApi.advanceStatus(order.id))
+  // Don khong co coc (depositAmount = 0) duoc coi la "yeu" theo Rule 4:
+  // khach chua commit tai chinh -> can xac nhan 2 buoc truoc khi duyet.
+  const isNoDepositOrder = Number(order.deposit ?? 0) === 0
+  const onAdvance = () => {
+    if (order.status === 'Pending' && isNoDepositOrder) {
+      const ok = window.confirm(
+        'Đơn này KHÔNG có cọc. Hãy xác nhận lại bạn đã liên hệ khách và xe đúng khách thật sự muốn mua.\n\n' +
+          'Bạn có chắc chắn muốn chuyển đơn sang trạng thái Đang xử lý?',
+      )
+      if (!ok) return
+    }
+    return run(() => orderApi.advanceStatus(order.id))
+  }
   const onSold = () => run(() => orderApi.confirmSold(order.id))
   const onCancelClick = () => {
     setCancelReason('')
@@ -101,6 +113,23 @@ function OrderDetailModal({
       }
     >
       <div className="space-y-4">
+        {/* Canh bao khi don KHONG co coc - Manager can xem ky truoc khi duyet (Rule 4) */}
+        {isNoDepositOrder && order.status === 'Pending' && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-white">
+                !
+              </span>
+              <div className="text-sm text-amber-900">
+                <p className="mb-1 font-bold">Đơn KHÔNG có cọc — cần kiểm tra kỹ trước khi duyệt</p>
+                <p className="text-xs leading-relaxed">
+                  Đơn này không có ràng buộc tài chính nào từ khách. Hãy liên hệ khách xác nhận và kiểm tra xe có
+                  đang được khách khác quan tâm không trước khi chuyển sang <b>Đang xử lý</b>.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <h3 className="mb-2 text-sm font-bold uppercase text-slate-500">Khách</h3>
           <p className="font-semibold text-slate-900">{order.customerName ?? `ID ${order.customerId}`}</p>
@@ -295,7 +324,19 @@ export function StaffOrdersPage() {
                     <td className="px-6 py-4 text-sm text-slate-500">
                       {new Date(o.createdAt).toLocaleDateString('vi-VN')}
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(o.status)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col items-start gap-1">
+                        {getStatusBadge(o.status)}
+                        {Number(o.deposit ?? 0) === 0 && o.status === 'Pending' && (
+                          <span
+                            className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800"
+                            title="Đơn không có cọc - cần xác nhận kỹ trước khi duyệt"
+                          >
+                            Không cọc
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
