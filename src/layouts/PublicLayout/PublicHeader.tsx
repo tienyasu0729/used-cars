@@ -34,6 +34,10 @@ const navLinks = [
   { to: '/about', label: 'Về Chúng Tôi' },
 ]
 
+/** Ô tìm kiếm nền trắng trên header xanh — dropdown dùng variant light trong SearchAutocomplete */
+const headerSearchInputClassName =
+  'w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-500 focus:border-[#1A3C6E] focus:outline-none focus:ring-1 focus:ring-[#1A3C6E]/30'
+
 export function PublicHeader() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -86,9 +90,9 @@ export function PublicHeader() {
             value={searchQuery}
             onChange={setSearchQuery}
             onSearch={doSearch}
-            variant="dark"
-            iconClassName="text-white/70"
-            inputClassName="w-full rounded-lg border border-white/20 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
+            variant="light"
+            iconClassName="text-slate-400"
+            inputClassName={headerSearchInputClassName}
           />
         </div>
 
@@ -248,9 +252,9 @@ export function PublicHeader() {
               value={searchQuery}
               onChange={setSearchQuery}
               onSearch={doSearch}
-              variant="dark"
-              iconClassName="text-white/70"
-              inputClassName="w-full rounded-lg border border-white/20 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/60"
+              variant="light"
+              iconClassName="text-slate-400"
+              inputClassName={headerSearchInputClassName}
             />
           </div>
           <nav className="flex flex-col gap-1 px-4">

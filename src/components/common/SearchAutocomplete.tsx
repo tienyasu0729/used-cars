@@ -2,7 +2,8 @@
  * Component ô tìm kiếm có gợi ý (autocomplete dropdown)
  * Dùng cho PublicHeader và HomePage hero search
  */
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, X } from 'lucide-react'
 import { useSearchSuggestions } from '@/hooks/useSearchSuggestions'
 import type { SuggestionItem } from '@/types/vehicle.types'
@@ -82,7 +83,13 @@ export function SearchAutocomplete({
 }: SearchAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [dropdownLayout, setDropdownLayout] = useState<{
+    top: number
+    left: number
+    width: number
+  } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
 
@@ -102,16 +109,44 @@ export function SearchAutocomplete({
     setActiveIndex(-1)
   }, [suggestions, isLoading, value])
 
-  // Đóng dropdown khi click ra ngoài
+  // Dropdown portal: đo vị trí ô tìm (tránh bị section z-index cao hơn đè, ví dụ Home hero + stats)
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      setDropdownLayout(null)
+      return
+    }
+    const el = containerRef.current
+    if (!el) return
+
+    const update = () => {
+      const rect = el.getBoundingClientRect()
+      setDropdownLayout({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      })
+    }
+    update()
+    window.addEventListener('resize', update)
+    window.addEventListener('scroll', update, true)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', update, true)
+    }
+  }, [isOpen])
+
+  // Đóng khi click ra ngoài (kể cả panel trong portal)
   useEffect(() => {
+    if (!isOpen) return
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
+      const t = e.target as Node
+      if (containerRef.current?.contains(t)) return
+      if (dropdownRef.current?.contains(t)) return
+      setIsOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [isOpen])
 
   // Chọn 1 gợi ý → điền vào ô tìm kiếm → submit tìm kiếm
   const selectSuggestion = useCallback(
@@ -180,6 +215,63 @@ export function SearchAutocomplete({
   // Đếm index liên tục qua các nhóm để keyboard navigation
   let globalIdx = -1
 
+  const dropdownPanel =
+    isOpen && dropdownLayout ? (
+      <div
+        ref={dropdownRef}
+        className={`fixed z-[200] max-h-80 overflow-y-auto rounded-lg border shadow-lg ${dropdownBg} ${dropdownClassName}`}
+        style={{
+          top: dropdownLayout.top,
+          left: dropdownLayout.left,
+          width: dropdownLayout.width,
+        }}
+      >
+        {isLoading && suggestions.length === 0 ? (
+          <div className={`flex items-center gap-2 px-4 py-3 ${textColor}`}>
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
+            <span className="text-sm opacity-70">Đang tìm...</span>
+          </div>
+        ) : (
+          <ul ref={listRef} id="search-suggestions-list" role="listbox">
+            {groups.map((group) => (
+              <li key={group.type} role="presentation">
+                <div className={`px-4 py-1.5 text-xs font-medium uppercase tracking-wide ${labelColor}`}>
+                  {typeLabels[group.type] ?? group.type}
+                </div>
+                <ul role="group">
+                  {group.items.map((item) => {
+                    globalIdx++
+                    const idx = globalIdx
+                    const isActive = idx === activeIndex
+                    return (
+                      <li
+                        key={`${item.type}-${item.text}`}
+                        id={`suggestion-${idx}`}
+                        role="option"
+                        aria-selected={isActive}
+                        data-suggestion-item
+                        className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm ${textColor} ${
+                          isActive ? itemActive : itemHover
+                        }`}
+                        onMouseEnter={() => setActiveIndex(idx)}
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          selectSuggestion(item)
+                        }}
+                      >
+                        <span className="shrink-0 text-base">{typeIcons[item.type] ?? '🔍'}</span>
+                        <span>{highlightMatch(item.text, value.trim())}</span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    ) : null
+
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
@@ -223,55 +315,7 @@ export function SearchAutocomplete({
         )}
       </div>
 
-      {isOpen && (
-        <div
-          className={`absolute left-0 right-0 top-full z-50 mt-1 max-h-80 overflow-y-auto rounded-lg border shadow-lg ${dropdownBg} ${dropdownClassName}`}
-        >
-          {isLoading && suggestions.length === 0 ? (
-            <div className={`flex items-center gap-2 px-4 py-3 ${textColor}`}>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
-              <span className="text-sm opacity-70">Đang tìm...</span>
-            </div>
-          ) : (
-            <ul ref={listRef} id="search-suggestions-list" role="listbox">
-              {groups.map((group) => (
-                <li key={group.type} role="presentation">
-                  <div className={`px-4 py-1.5 text-xs font-medium uppercase tracking-wide ${labelColor}`}>
-                    {typeLabels[group.type] ?? group.type}
-                  </div>
-                  <ul role="group">
-                    {group.items.map((item) => {
-                      globalIdx++
-                      const idx = globalIdx
-                      const isActive = idx === activeIndex
-                      return (
-                        <li
-                          key={`${item.type}-${item.text}`}
-                          id={`suggestion-${idx}`}
-                          role="option"
-                          aria-selected={isActive}
-                          data-suggestion-item
-                          className={`flex cursor-pointer items-center gap-2 px-4 py-2 text-sm ${textColor} ${
-                            isActive ? itemActive : itemHover
-                          }`}
-                          onMouseEnter={() => setActiveIndex(idx)}
-                          onMouseDown={(e) => {
-                            e.preventDefault()
-                            selectSuggestion(item)
-                          }}
-                        >
-                          <span className="shrink-0 text-base">{typeIcons[item.type] ?? '🔍'}</span>
-                          <span>{highlightMatch(item.text, value.trim())}</span>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      {typeof document !== 'undefined' && dropdownPanel ? createPortal(dropdownPanel, document.body) : null}
     </div>
   )
 }

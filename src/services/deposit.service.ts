@@ -19,12 +19,20 @@ export interface DepositListItem {
   gatewayTxnRef?: string | null
 }
 
+export interface ShowroomCustomerInfo {
+  fullName: string
+  email: string
+  phone: string
+  address: string
+}
+
 export interface CreateDepositPayload {
   vehicleId: number
   amount: number
   paymentMethod: string
   note?: string
   customerId?: number
+  showroomCustomer?: ShowroomCustomerInfo
   depositDate?: string
   expiryDate?: string
 }

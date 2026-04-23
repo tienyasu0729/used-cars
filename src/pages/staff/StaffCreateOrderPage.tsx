@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ChevronRight, ChevronLeft, Check, Info, FileText, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, ChevronRight, ChevronLeft, Check, Info, FileText, ShoppingCart, UserPlus, X } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useInventory } from '@/hooks/useInventory'
 import { useStaffOrManagerBasePath } from '@/hooks/useStaffOrManagerBasePath'
@@ -16,6 +16,7 @@ import { VehicleSearchSelect } from '@/features/staff/components/VehicleSearchSe
 import { CustomerSearchSelect } from '@/features/staff/components/CustomerSearchSelect'
 import { DepositSearchSelect } from '@/features/staff/components/DepositSearchSelect'
 import { OrderPaymentLinkModal } from '@/features/staff/components/OrderPaymentLinkModal'
+import { ShowroomCustomerModal, type ShowroomCustomerData } from '@/features/staff/components/ShowroomCustomerModal'
 
 const STEPS = ['Loại đơn', 'Thông tin', 'Chi tiết', 'Xác nhận']
 
@@ -58,6 +59,8 @@ export function StaffCreateOrderPage() {
   // B3: State cho luong direct
   const [vehicleId, setVehicleId] = useState('')
   const [customerId, setCustomerId] = useState('')
+  const [showroomCustomer, setShowroomCustomer] = useState<ShowroomCustomerData | null>(null)
+  const [showroomModalOpen, setShowroomModalOpen] = useState(false)
 
   // B4: State chung cho buoc 3 & 4
   const [totalPrice, setTotalPrice] = useState(0)
@@ -116,9 +119,11 @@ export function StaffCreateOrderPage() {
     branchVehicles.find((v) => String(v.id) === String(resolvedVehicleId))
   const vehiclePrice = selectedVehicle?.price ?? 0
 
-  // Tim khach da chon
+  // Tim khach da chon (deposit luon dung customerId co san, direct co the la showroom)
   const resolvedCustomerId = orderMode === 'deposit' ? selectedDeposit?.customerId ?? '' : customerId
-  const selectedCustomer = customerRows.find((c) => c.id === String(resolvedCustomerId))
+  const selectedCustomer = showroomCustomer
+    ? { id: '', name: showroomCustomer.fullName, phone: showroomCustomer.phone, email: showroomCustomer.email }
+    : customerRows.find((c) => c.id === String(resolvedCustomerId))
 
   // Khi chon deposit -> tinh totalPrice
   useEffect(() => {
@@ -141,6 +146,7 @@ export function StaffCreateOrderPage() {
     setSelectedDepositId('')
     setVehicleId('')
     setCustomerId('')
+    setShowroomCustomer(null)
     setTotalPrice(0)
     setDepositAmount(0)
     setPaymentMethod('cash')
@@ -149,10 +155,15 @@ export function StaffCreateOrderPage() {
 
   // Xu ly submit tao don hang
   const handleCreateOrder = async () => {
-    const cId = Number(resolvedCustomerId)
+    const hasShowroom = orderMode === 'direct' && showroomCustomer != null
+    const cId = hasShowroom ? 0 : Number(resolvedCustomerId)
     const vId = Number(resolvedVehicleId)
-    if (!cId || !vId) {
-      toast.addToast('error', 'Thiếu thông tin khách hàng hoặc xe.')
+    if (!hasShowroom && !cId) {
+      toast.addToast('error', 'Thiếu thông tin khách hàng.')
+      return
+    }
+    if (!vId) {
+      toast.addToast('error', 'Thiếu thông tin xe.')
       return
     }
     const tp = Number(totalPrice)
@@ -172,7 +183,8 @@ export function StaffCreateOrderPage() {
         ? tp + depositAmount
         : tp
       const res = await orderApi.create({
-        customerId: cId,
+        customerId: hasShowroom ? undefined : cId,
+        showroomCustomer: hasShowroom ? showroomCustomer : undefined,
         vehicleId: vId,
         totalPrice: orderTotalPrice,
         depositId: depId,
@@ -388,12 +400,31 @@ export function StaffCreateOrderPage() {
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-lg font-bold text-slate-900">Khách hàng</h3>
-            <CustomerSearchSelect
-              customers={customerRows}
-              value={customerId}
-              onChange={setCustomerId}
-              placeholder="Tìm theo tên, SĐT hoặc email..."
-            />
+            {showroomCustomer ? (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2">
+                <div className="flex-1 text-sm">
+                  <p className="font-medium text-emerald-800">{showroomCustomer.fullName}</p>
+                  <p className="text-emerald-600">{showroomCustomer.phone} &middot; {showroomCustomer.email}</p>
+                </div>
+                <button type="button" onClick={() => setShowroomCustomer(null)} className="rounded p-1 text-emerald-600 hover:bg-emerald-100">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <CustomerSearchSelect
+                    customers={customerRows}
+                    value={customerId}
+                    onChange={(id) => { setCustomerId(id); setShowroomCustomer(null) }}
+                    placeholder="Tìm theo tên, SĐT hoặc email..."
+                  />
+                </div>
+                <Button type="button" variant="outline" className="h-[38px] shrink-0 px-3" title="Thêm khách hàng" onClick={() => setShowroomModalOpen(true)}>
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setStep(1)}>
@@ -538,6 +569,11 @@ export function StaffCreateOrderPage() {
           onClose={handleClosePaymentModal}
         />
       )}
+      <ShowroomCustomerModal
+        isOpen={showroomModalOpen}
+        onClose={() => setShowroomModalOpen(false)}
+        onConfirm={(data) => { setShowroomCustomer(data); setCustomerId(''); setShowroomModalOpen(false) }}
+      />
     </div>
   )
 }

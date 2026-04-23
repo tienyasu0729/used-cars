@@ -60,7 +60,11 @@ export function ManagerSidebar() {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/manager/dashboard'}
+              end={
+                item.to === '/manager/dashboard' ||
+                item.to === '/manager/orders' ||
+                item.to === '/manager/deposits'
+              }
               className={({ isActive }) =>
                 `flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
                   isActive

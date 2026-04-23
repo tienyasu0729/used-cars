@@ -38,8 +38,16 @@ function mapDetail(r: Record<string, unknown>): Order {
   }
 }
 
+export interface ShowroomCustomerInfo {
+  fullName: string
+  email: string
+  phone: string
+  address: string
+}
+
 export interface CreateOrderPayload {
-  customerId: number
+  customerId?: number
+  showroomCustomer?: ShowroomCustomerInfo
   vehicleId: number
   totalPrice: number
   depositId?: number | null
@@ -73,13 +81,17 @@ export const orderApi = {
   },
 
   async create(payload: CreateOrderPayload): Promise<CreateOrderResult> {
-    const body = {
-      customerId: payload.customerId,
+    const body: Record<string, unknown> = {
       vehicleId: payload.vehicleId,
       totalPrice: payload.totalPrice,
       depositId: payload.depositId ?? undefined,
       paymentMethod: payload.paymentMethod ?? undefined,
       notes: payload.notes ?? undefined,
+    }
+    if (payload.showroomCustomer) {
+      body.showroomCustomer = payload.showroomCustomer
+    } else {
+      body.customerId = payload.customerId
     }
     const res = (await axiosInstance.post('/orders', body)) as ApiResponse<CreateOrderResult>
     return unwrapApiResponse(res)

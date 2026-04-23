@@ -164,6 +164,7 @@ export function normalizeVehicle(raw: unknown): Vehicle {
     brand: toStr(r.categoryName ?? r.brand),
     model: toStr(r.subcategoryName ?? r.model),
     created_at: r.created_at != null ? toStr(r.created_at) : undefined,
+    updated_at: r.updatedAt != null || r.updated_at != null ? toStr(r.updatedAt ?? r.updated_at) : undefined,
     description: desc || undefined,
     body_style: bodyStyle || undefined,
     origin: origin || undefined,

@@ -12,6 +12,7 @@
 
 import { create } from 'zustand'
 import type { UserProfile } from '@/types/auth.types'
+import { useCompareStore } from './compareStore'
 
 /** Key cố định trong localStorage — đồng bộ với auth.service.ts */
 const TOKEN_KEY = 'auth_token'
@@ -70,9 +71,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
     localStorage.removeItem(PERMISSIONS_KEY)
-    // Xóa luôn key cũ để đồng bộ
     localStorage.removeItem('token')
     localStorage.removeItem('auth')
+
+    useCompareStore.getState().clear()
 
     set({ user: null, token: null, isAuthenticated: false, permissions: [] })
   },

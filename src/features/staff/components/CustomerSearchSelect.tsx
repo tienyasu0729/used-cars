@@ -71,7 +71,7 @@ export function CustomerSearchSelect({ customers, value, onChange, placeholder =
             setTimeout(() => inputRef.current?.focus(), 0)
           }
         }}
-        className={`flex min-h-[38px] cursor-pointer items-center rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-10 text-sm ${disabled ? 'cursor-not-allowed bg-slate-50' : ''}`}
+        className={`relative flex h-[38px] cursor-pointer items-center rounded-lg border border-slate-200 bg-white text-sm ${disabled ? 'cursor-not-allowed bg-slate-50' : ''}`}
       >
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 shrink-0 text-slate-400" />
         <input
@@ -82,10 +82,9 @@ export function CustomerSearchSelect({ customers, value, onChange, placeholder =
           onFocus={handleFocus}
           placeholder={showPlaceholder ? placeholder : undefined}
           readOnly={!isOpen}
-          className="absolute inset-0 w-full cursor-pointer bg-transparent pl-10 pr-10 outline-none"
+          className="h-full w-full min-w-0 flex-1 cursor-pointer truncate bg-transparent pl-10 pr-10 text-sm outline-none"
           autoComplete="off"
         />
-        <span className="invisible flex-1" aria-hidden>{inputValue || placeholder}</span>
         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 shrink-0 text-slate-400" />
       </div>
       {isOpen && (

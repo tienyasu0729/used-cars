@@ -52,7 +52,11 @@ export function StaffSidebar() {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/staff/dashboard'}
+              end={
+                item.to === '/staff/dashboard' ||
+                item.to === '/staff/orders' ||
+                item.to === '/staff/deposits'
+              }
               className={({ isActive }) =>
                 `flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
                   isActive

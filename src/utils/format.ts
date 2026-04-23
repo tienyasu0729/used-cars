@@ -84,6 +84,34 @@ export function formatLogInstant(raw: string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('vi-VN')
 }
 
+/** Thời gian tương đối kiểu "3 phút trước", "Hôm qua", "15/04/2026". */
+export function formatRelativeTime(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const then = new Date(iso)
+  if (Number.isNaN(then.getTime())) return '—'
+  const now = Date.now()
+  const diffMs = now - then.getTime()
+  if (diffMs < 0) return '—'
+
+  const SEC = 1000
+  const MIN = 60 * SEC
+  const HOUR = 60 * MIN
+  const DAY = 24 * HOUR
+
+  if (diffMs < MIN) return 'Vừa xong'
+  if (diffMs < HOUR) return `${Math.floor(diffMs / MIN)} phút trước`
+  if (diffMs < DAY) return `${Math.floor(diffMs / HOUR)} giờ trước`
+  if (diffMs < 2 * DAY) return 'Hôm qua'
+  if (diffMs < 30 * DAY) return `${Math.floor(diffMs / DAY)} ngày trước`
+
+  return then.toLocaleDateString('vi-VN', {
+    timeZone: VN_TZ,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
 /** Thời gian hiển thị cạnh tên trong danh sách chat (widget / sidebar). */
 export function formatChatSidebarTime(iso: string | null | undefined): string {
   if (!iso) return ''

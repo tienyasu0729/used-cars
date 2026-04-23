@@ -1,9 +1,9 @@
 import { useForm } from 'react-hook-form'
-import { useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate } from 'react-router-dom'
-import { Calendar, UserPlus, FileText, Info, AlertCircle } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Calendar, UserPlus, FileText, Info, AlertCircle, X } from 'lucide-react'
 import { useInventory } from '@/hooks/useInventory'
 import { useStaffOrManagerBasePath } from '@/hooks/useStaffOrManagerBasePath'
 import { useStaffCustomerOptions } from '@/hooks/useStaffCustomerOptions'
@@ -15,10 +15,11 @@ import { Button } from '@/components/ui'
 import { CustomerSearchSelect } from '@/features/staff/components/CustomerSearchSelect'
 import { VehicleSearchSelect } from '@/features/staff/components/VehicleSearchSelect'
 import { usePaymentDepositMethods } from '@/hooks/usePaymentDepositMethods'
+import { ShowroomCustomerModal, type ShowroomCustomerData } from '@/features/staff/components/ShowroomCustomerModal'
 
 const schema = z.object({
   vehicleId: z.string().min(1, 'Chọn xe'),
-  customerId: z.string().min(1, 'Chọn khách hàng'),
+  customerId: z.string().optional(),
   amount: z.number().min(1000000, 'Tối thiểu 1.000.000 VND'),
   paymentMethod: z.string().min(1, 'Chọn phương thức'),
   depositDate: z.string().min(1, 'Chọn ngày đặt cọc'),
@@ -35,6 +36,7 @@ function toDateStr(d: Date) {
 export function StaffCreateDepositPage() {
   const { dashboard, orders } = useStaffOrManagerBasePath()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const toast = useToastStore()
   const queryClient = useQueryClient()
   const { data: inventory, available } = useInventory()
@@ -43,6 +45,9 @@ export function StaffCreateDepositPage() {
     (v) => !v.deleted,
   )
   const { data: pmCfg } = usePaymentDepositMethods(true)
+
+  const [showroomCustomer, setShowroomCustomer] = useState<ShowroomCustomerData | null>(null)
+  const [showroomModalOpen, setShowroomModalOpen] = useState(false)
 
   const methodOptions = useMemo(() => {
     if (!pmCfg) return [] as { value: string; label: string }[]
@@ -77,14 +82,29 @@ export function StaffCreateDepositPage() {
     }
   }, [methodOptions, form])
 
+  useEffect(() => {
+    const vid = searchParams.get('vehicleId')
+    if (vid && !form.getValues('vehicleId')) {
+      form.setValue('vehicleId', vid)
+    }
+  }, [searchParams, form])
+
   const filteredVehicles = branchVehicles
   const filteredCustomers = customerRows
 
+  const hasCustomer = !!(form.watch('customerId') || showroomCustomer)
+  const customerError = !hasCustomer ? 'Chọn hoặc thêm khách hàng' : undefined
+
   const onSubmit = form.handleSubmit(async (data) => {
+    if (!data.customerId && !showroomCustomer) {
+      toast.addToast('error', 'Vui lòng chọn hoặc thêm khách hàng.')
+      return
+    }
     try {
       const res = await depositApi.create({
         vehicleId: Number(data.vehicleId),
-        customerId: Number(data.customerId),
+        customerId: showroomCustomer ? undefined : Number(data.customerId),
+        showroomCustomer: showroomCustomer ?? undefined,
         amount: data.amount,
         paymentMethod: data.paymentMethod,
         depositDate: data.depositDate,
@@ -105,6 +125,21 @@ export function StaffCreateDepositPage() {
       toast.addToast('error', detail)
     }
   })
+
+  const handleShowroomConfirm = (data: ShowroomCustomerData) => {
+    setShowroomCustomer(data)
+    form.setValue('customerId', '')
+    setShowroomModalOpen(false)
+  }
+
+  const handleClearShowroom = () => {
+    setShowroomCustomer(null)
+  }
+
+  const handleSelectCustomer = (id: string) => {
+    form.setValue('customerId', id)
+    setShowroomCustomer(null)
+  }
 
   return (
     <div className="space-y-6">
@@ -181,20 +216,32 @@ export function StaffCreateDepositPage() {
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Khách hàng <span className="text-red-500">*</span></label>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <CustomerSearchSelect
-                    customers={filteredCustomers}
-                    value={form.watch('customerId')}
-                    onChange={(id) => form.setValue('customerId', id)}
-                    placeholder="Nhập tên hoặc SĐT để tìm..."
-                    error={form.formState.errors.customerId?.message}
-                  />
+              {showroomCustomer ? (
+                <div className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2">
+                  <div className="flex-1 text-sm">
+                    <p className="font-medium text-emerald-800">{showroomCustomer.fullName}</p>
+                    <p className="text-emerald-600">{showroomCustomer.phone} &middot; {showroomCustomer.email}</p>
+                  </div>
+                  <button type="button" onClick={handleClearShowroom} className="rounded p-1 text-emerald-600 hover:bg-emerald-100">
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <Button type="button" variant="outline" size="sm" className="shrink-0 px-3" title="Thêm khách hàng">
-                  <UserPlus className="h-5 w-5" />
-                </Button>
-              </div>
+              ) : (
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <CustomerSearchSelect
+                      customers={filteredCustomers}
+                      value={form.watch('customerId') ?? ''}
+                      onChange={handleSelectCustomer}
+                      placeholder="Nhập tên hoặc SĐT để tìm..."
+                      error={customerError}
+                    />
+                  </div>
+                  <Button type="button" variant="outline" className="h-[38px] shrink-0 px-3" title="Thêm khách hàng" onClick={() => setShowroomModalOpen(true)}>
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Phương thức thanh toán</label>
@@ -240,6 +287,7 @@ export function StaffCreateDepositPage() {
           </Button>
         </div>
       </form>
+      <ShowroomCustomerModal isOpen={showroomModalOpen} onClose={() => setShowroomModalOpen(false)} onConfirm={handleShowroomConfirm} />
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="flex gap-3 rounded-lg bg-blue-50 p-4">
           <Info className="h-5 w-5 shrink-0 text-[#1A3C6E]" />

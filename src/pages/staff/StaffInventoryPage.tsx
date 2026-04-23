@@ -1,14 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useInventory } from '@/hooks/useInventory'
-import { useStaffCustomerOptions } from '@/hooks/useStaffCustomerOptions'
-import { depositApi } from '@/services/depositApi'
-import { useToastStore } from '@/store/toastStore'
-import { useQueryClient } from '@tanstack/react-query'
-import { formatPrice } from '@/utils/format'
+import { useStaffOrManagerBasePath } from '@/hooks/useStaffOrManagerBasePath'
+import { formatPrice, formatRelativeTime } from '@/utils/format'
 import { VehicleStatusBadge, Pagination } from '@/components/ui'
-import { ReserveVehicleModal } from '@/features/staff/components/ReserveVehicleModal'
-import type { Vehicle, VehicleStatus } from '@/types/vehicle.types'
+import type { VehicleStatus } from '@/types/vehicle.types'
 
 const tabs = ['Tất Cả', 'Còn Hàng', 'Đã Đặt Cọc', 'Đã Bán']
 
@@ -19,9 +15,9 @@ export function StaffInventoryPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
-  const [reserveVehicle, setReserveVehicle] = useState<Vehicle | null>(null)
-  const { data: inventory, setFilters, refetch } = useInventory()
-  const { data: customerRows = [] } = useStaffCustomerOptions()
+  const { data: inventory, setFilters, isLoading, error } = useInventory()
+  const navigate = useNavigate()
+  const { deposits } = useStaffOrManagerBasePath()
 
   useEffect(() => {
     const s = TAB_API_STATUS[activeTab]
@@ -30,42 +26,19 @@ export function StaffInventoryPage() {
 
   const filtered = (inventory ?? []).filter((v) => {
     const q = search.trim().toLowerCase()
-    const matchSearch =
-      !q ||
+    if (!q) return true
+    return (
       (v.title?.toLowerCase().includes(q) ?? false) ||
+      (v.listing_id?.toLowerCase().includes(q) ?? false) ||
       (v.brand?.toLowerCase().includes(q) ?? false) ||
       (v.model?.toLowerCase().includes(q) ?? false)
-    return matchSearch
+    )
   })
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   useEffect(() => { setPage(1) }, [activeTab, search])
-
-  const toast = useToastStore()
-  const queryClient = useQueryClient()
-
-  const handleReserveSubmit = async (data: { customerId: string; notes?: string }) => {
-    if (!reserveVehicle) return
-    try {
-      const amt = Math.max(1_000_000, Math.floor(reserveVehicle.price * 0.1))
-      await depositApi.create({
-        vehicleId: Number(reserveVehicle.id),
-        customerId: Number(data.customerId),
-        amount: amt,
-        paymentMethod: 'cash',
-        note: data.notes?.trim() || undefined,
-      })
-      queryClient.invalidateQueries({ queryKey: ['deposits'] })
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] })
-      void refetch()
-      toast.addToast('success', 'Đã đặt chỗ xe thành công')
-      setReserveVehicle(null)
-    } catch {
-      toast.addToast('error', 'Không thể đặt chỗ')
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -86,7 +59,7 @@ export function StaffInventoryPage() {
         <div className="p-4">
           <input
             type="text"
-            placeholder="Tìm kiếm Biển số hoặc tên xe..."
+            placeholder="Tìm kiếm mã tin hoặc tên xe..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full max-w-md rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm"
@@ -98,7 +71,7 @@ export function StaffInventoryPage() {
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="px-6 py-4">Hình ảnh</th>
                 <th className="px-6 py-4">Tên xe</th>
-                <th className="px-6 py-4 text-center">Biển số</th>
+                <th className="px-6 py-4 text-center">Mã tin</th>
                 <th className="px-6 py-4 text-center">Năm SX</th>
                 <th className="px-6 py-4 text-right">Giá niêm yết</th>
                 <th className="px-6 py-4 text-center">Trạng Thái</th>
@@ -107,7 +80,13 @@ export function StaffInventoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {paginated.map((v) => {
+              {isLoading ? (
+                <tr><td colSpan={8} className="px-6 py-16 text-center text-sm text-slate-400">Đang tải dữ liệu...</td></tr>
+              ) : error ? (
+                <tr><td colSpan={8} className="px-6 py-16 text-center text-sm text-red-500">{error}</td></tr>
+              ) : paginated.length === 0 ? (
+                <tr><td colSpan={8} className="px-6 py-16 text-center text-sm text-slate-400">Không có xe nào</td></tr>
+              ) : paginated.map((v) => {
                 const im = v.images?.[0]
                 const thumb = typeof im === 'string' ? im : im?.url
                 return (
@@ -120,16 +99,16 @@ export function StaffInventoryPage() {
                   </td>
                   <td className="px-6 py-4 font-bold text-slate-900">
                     <Link to={`/vehicles/${v.id}`} className="hover:text-[#1A3C6E] hover:underline">
-                      {v.brand} {v.model}
+                      {v.title || `${v.brand ?? ''} ${v.model ?? ''}`.trim() || 'Xe'}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-center font-mono text-slate-600">43A-***.**</td>
+                  <td className="px-6 py-4 text-center font-mono text-slate-600">{v.listing_id || '—'}</td>
                   <td className="px-6 py-4 text-center">{v.year}</td>
                   <td className="px-6 py-4 text-right font-bold text-[#1A3C6E]">{formatPrice(v.price)}</td>
                   <td className="px-6 py-4 text-center">
                     <VehicleStatusBadge status={v.status} />
                   </td>
-                  <td className="px-6 py-4 text-xs text-slate-500">2 giờ trước</td>
+                  <td className="px-6 py-4 text-xs text-slate-500">{formatRelativeTime(v.updated_at)}</td>
                   <td className="px-6 py-4 text-right">
                     <Link
                       to={`/vehicles/${v.id}`}
@@ -139,10 +118,10 @@ export function StaffInventoryPage() {
                     </Link>
                     {v.status === 'Available' && (
                       <button
-                        onClick={() => setReserveVehicle(v)}
+                        onClick={() => navigate(`${deposits}/new?vehicleId=${v.id}`)}
                         className="text-sm font-medium text-[#E8612A] hover:underline"
                       >
-                        Đặt chỗ
+                        Đặt cọc
                       </button>
                     )}
                   </td>
@@ -153,13 +132,6 @@ export function StaffInventoryPage() {
         </div>
       </div>
       <Pagination page={page} totalPages={totalPages} total={filtered.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="xe" />
-      <ReserveVehicleModal
-        vehicle={reserveVehicle}
-        isOpen={!!reserveVehicle}
-        onClose={() => setReserveVehicle(null)}
-        onSubmit={handleReserveSubmit}
-        customers={customerRows.map((c) => ({ id: c.id, name: c.name }))}
-      />
     </div>
   )
 }

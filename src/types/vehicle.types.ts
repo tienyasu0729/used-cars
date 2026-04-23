@@ -49,6 +49,7 @@ export interface Vehicle {
   branch_id: number
   images: VehicleImage[]
   created_at?: string
+  updated_at?: string
   /** Chi tiết API */
   description?: string
   body_style?: string

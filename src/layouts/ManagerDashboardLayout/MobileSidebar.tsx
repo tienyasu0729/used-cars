@@ -54,7 +54,11 @@ export function ManagerMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 key={item.to}
                 to={item.to}
                 onClick={onClose}
-                end={item.to === '/manager/dashboard'}
+                end={
+                  item.to === '/manager/dashboard' ||
+                  item.to === '/manager/orders' ||
+                  item.to === '/manager/deposits'
+                }
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-lg px-4 py-3 text-sm ${
                     isActive ? 'bg-white/15 text-white' : 'text-white/80 hover:bg-white/10'

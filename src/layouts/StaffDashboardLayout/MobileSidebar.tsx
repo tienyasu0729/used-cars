@@ -45,7 +45,11 @@ export function StaffMobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               key={item.to}
               to={item.to}
               onClick={onClose}
-              end={item.to === '/staff/dashboard'}
+              end={
+                item.to === '/staff/dashboard' ||
+                item.to === '/staff/orders' ||
+                item.to === '/staff/deposits'
+              }
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-4 py-3 text-sm ${
                   isActive ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-slate-800'
