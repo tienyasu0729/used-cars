@@ -1,0 +1,65 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui'
+import { Input } from '@/components/ui'
+import { CheckCircle } from 'lucide-react'
+import authService from '@/services/auth.service'
+
+export function ForgotPasswordPage() {
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await authService.forgotPassword(email)
+    } catch {
+      // Không phân biệt kết quả — luôn chuyển sang màn xác nhận
+    } finally {
+      setSent(true)
+      setLoading(false)
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm md:p-8">
+        <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
+        <h1 className="mt-4 text-xl font-bold">Kiểm tra email của bạn</h1>
+        <p className="mt-2 text-gray-500">
+          Nếu email <strong>{email}</strong> tồn tại trong hệ thống, chúng tôi đã gửi link đặt lại mật khẩu.
+        </p>
+        <p className="mt-1 text-sm text-gray-400">
+          Vui lòng kiểm tra cả thư mục spam nếu không thấy email.
+        </p>
+        <Link to="/login" className="mt-6 inline-block">
+          <Button variant="primary">Quay lại đăng nhập</Button>
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+      <h1 className="text-2xl font-bold text-gray-900">Quên Mật Khẩu</h1>
+      <p className="mt-2 text-gray-500">Nhập email để nhận link đặt lại mật khẩu</p>
+      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <Input
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+          {loading ? 'Đang gửi...' : 'Gửi Link Đặt Lại'}
+        </Button>
+      </form>
+      <Link to="/login" className="mt-4 block text-center text-sm text-[#E8612A] hover:underline">
+        Quay lại đăng nhập
+      </Link>
+    </div>
+  )
+}

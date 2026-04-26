@@ -1,0 +1,280 @@
+import { lazy, Suspense } from 'react'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
+import { PublicLayout } from '@/layouts/PublicLayout'
+import { AuthLayout } from '@/layouts/AuthLayout'
+import { CustomerDashboardLayout } from '@/layouts/CustomerDashboardLayout'
+import { StaffDashboardLayout } from '@/layouts/StaffDashboardLayout'
+import { ManagerDashboardLayout } from '@/layouts/ManagerDashboardLayout'
+import { AdminDashboardLayout } from '@/layouts/AdminDashboardLayout'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { ScrollToTop } from '@/components/common/ScrollToTop'
+import { Spinner } from '@/components/ui'
+
+const HomePage = lazy(() => import('@/pages/public/HomePage').then((m) => ({ default: m.HomePage })))
+const VehicleListingPage = lazy(() => import('@/pages/public/VehicleListingPage').then((m) => ({ default: m.VehicleListingPage })))
+const VehicleDetailPage = lazy(() => import('@/pages/public/VehicleDetailPage').then((m) => ({ default: m.VehicleDetailPage })))
+const ComparePage = lazy(() => import('@/pages/public/ComparePage').then((m) => ({ default: m.ComparePage })))
+const BranchListingPage = lazy(() => import('@/pages/public/BranchListingPage').then((m) => ({ default: m.BranchListingPage })))
+const BranchDetailPage = lazy(() => import('@/pages/public/BranchDetailPage').then((m) => ({ default: m.BranchDetailPage })))
+const ContactPage = lazy(() => import('@/pages/public/ContactPage').then((m) => ({ default: m.ContactPage })))
+const AboutPage = lazy(() => import('@/pages/public/AboutPage').then((m) => ({ default: m.AboutPage })))
+const BlogListingPage = lazy(() => import('@/pages/public/BlogListingPage').then((m) => ({ default: m.BlogListingPage })))
+const BlogDetailPage = lazy(() => import('@/pages/public/BlogDetailPage').then((m) => ({ default: m.BlogDetailPage })))
+const LoginPage = lazy(() => import('@/pages/public/LoginPage').then((m) => ({ default: m.LoginPage })))
+const MandatoryNewPasswordPage = lazy(() =>
+  import('@/pages/public/MandatoryNewPasswordPage').then((m) => ({ default: m.MandatoryNewPasswordPage })),
+)
+const RegisterPage = lazy(() => import('@/pages/public/RegisterPage').then((m) => ({ default: m.RegisterPage })))
+const ForgotPasswordPage = lazy(() => import('@/pages/public/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('@/pages/public/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
+const TermsPage = lazy(() => import('@/pages/public/TermsPage').then((m) => ({ default: m.TermsPage })))
+const PrivacyPage = lazy(() => import('@/pages/public/PrivacyPage').then((m) => ({ default: m.PrivacyPage })))
+const PaymentResultPage = lazy(() =>
+  import('@/pages/public/PaymentResultPage').then((m) => ({ default: m.PaymentResultPage })),
+)
+const MobileUploadPage = lazy(() =>
+  import('@/pages/public/MobileUploadPage').then((m) => ({ default: m.MobileUploadPage })),
+)
+
+const BookingContractPage = lazy(() => import('@/pages/customer/BookingContractPage').then((m) => ({ default: m.BookingContractPage })))
+const DashboardOverviewPage = lazy(() => import('@/pages/customer/DashboardOverviewPage').then((m) => ({ default: m.DashboardOverviewPage })))
+const ProfilePage = lazy(() => import('@/pages/customer/ProfilePage').then((m) => ({ default: m.ProfilePage })))
+const SavedVehiclesPage = lazy(() => import('@/pages/customer/SavedVehiclesPage').then((m) => ({ default: m.SavedVehiclesPage })))
+const BookingsPage = lazy(() => import('@/pages/customer/BookingsPage').then((m) => ({ default: m.BookingsPage })))
+const DepositsPage = lazy(() => import('@/pages/customer/DepositsPage').then((m) => ({ default: m.DepositsPage })))
+const OrdersPage = lazy(() => import('@/pages/customer/OrdersPage').then((m) => ({ default: m.OrdersPage })))
+const OrderDetailPage = lazy(() => import('@/pages/customer/OrderDetailPage').then((m) => ({ default: m.OrderDetailPage })))
+const TransactionsPage = lazy(() => import('@/pages/customer/TransactionsPage').then((m) => ({ default: m.TransactionsPage })))
+const ChatPage = lazy(() => import('@/pages/customer/ChatPage').then((m) => ({ default: m.ChatPage })))
+const NotificationsPage = lazy(() => import('@/pages/customer/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
+const SecurityPage = lazy(() => import('@/pages/customer/SecurityPage').then((m) => ({ default: m.SecurityPage })))
+const RecentlyViewedPage = lazy(() => import('@/pages/customer/RecentlyViewedPage').then((m) => ({ default: m.RecentlyViewedPage })))
+const InstallmentWizardPage = lazy(() => import('@/pages/customer/InstallmentWizardPage').then((m) => ({ default: m.InstallmentWizardPage })))
+const InstallmentStatusPage = lazy(() => import('@/pages/customer/InstallmentStatusPage').then((m) => ({ default: m.InstallmentStatusPage })))
+
+const StaffDashboardPage = lazy(() => import('@/pages/staff/StaffDashboardPage').then((m) => ({ default: m.StaffDashboardPage })))
+const StaffSchedulePage = lazy(() => import('@/pages/staff/StaffSchedulePage').then((m) => ({ default: m.StaffSchedulePage })))
+const StaffBookingsPage = lazy(() => import('@/pages/staff/StaffBookingsPage').then((m) => ({ default: m.StaffBookingsPage })))
+const StaffConsultationsPage = lazy(() => import('@/pages/staff/StaffConsultationsPage').then((m) => ({ default: m.StaffConsultationsPage })))
+const StaffInventoryPage = lazy(() => import('@/pages/staff/StaffInventoryPage').then((m) => ({ default: m.StaffInventoryPage })))
+const StaffCreateOrderPage = lazy(() => import('@/pages/staff/StaffCreateOrderPage').then((m) => ({ default: m.StaffCreateOrderPage })))
+const StaffOrdersPage = lazy(() => import('@/pages/staff/StaffOrdersPage').then((m) => ({ default: m.StaffOrdersPage })))
+const StaffCreateDepositPage = lazy(() => import('@/pages/staff/StaffCreateDepositPage').then((m) => ({ default: m.StaffCreateDepositPage })))
+const StaffDepositsPage = lazy(() => import('@/pages/staff/StaffDepositsPage').then((m) => ({ default: m.StaffDepositsPage })))
+const StaffChatPage = lazy(() => import('@/pages/staff/StaffChatPage').then((m) => ({ default: m.StaffChatPage })))
+const StaffTransferRequestsPage = lazy(() => import('@/pages/staff/StaffTransferRequestsPage').then((m) => ({ default: m.StaffTransferRequestsPage })))
+const StaffNotificationsPage = lazy(() => import('@/pages/staff/StaffNotificationsPage').then((m) => ({ default: m.StaffNotificationsPage })))
+const StaffInstallmentsPage = lazy(() => import('@/pages/staff/StaffInstallmentsPage').then((m) => ({ default: m.StaffInstallmentsPage })))
+const StaffCreateInstallmentPage = lazy(() => import('@/pages/staff/StaffCreateInstallmentPage').then((m) => ({ default: m.StaffCreateInstallmentPage })))
+
+const ManagerDashboardPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerDashboardPage })))
+const ManagerVehiclesPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerVehiclesPage })))
+const ManagerAddVehiclePage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerAddVehiclePage })))
+const ManagerEditVehiclePage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerEditVehiclePage })))
+const ManagerStaffPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerStaffPage })))
+const ManagerCreateStaffPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerCreateStaffPage })))
+const ManagerAppointmentsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerAppointmentsPage })))
+const ManagerTransfersPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerTransfersPage })))
+const ManagerReportsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerReportsPage })))
+const ManagerSettingsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerSettingsPage })))
+const ManagerNotificationsPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerNotificationsPage })))
+const ManagerChatPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerChatPage })))
+
+const AdminDashboardPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminDashboardPage })))
+const AdminUsersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminUsersPage })))
+const AdminRolesPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminRolesPage })))
+const AdminBranchesPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminBranchesPage })))
+const AdminAddBranchPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminAddBranchPage })))
+const AdminCatalogPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminCatalogPage })))
+const AdminTransfersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminTransfersPage })))
+const AdminHomeBannersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminHomeBannersPage })))
+const AdminConfigPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminConfigPage })))
+const AdminReportsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminReportsPage })))
+const AdminTransactionsPage = lazy(() =>
+  import('@/pages/admin').then((m) => ({ default: m.AdminTransactionsPage })),
+)
+const AdminLogsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminLogsPage })))
+const AdminNotificationsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminNotificationsPage })))
+const AdminConsultationsPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminConsultationsPage })))
+const AdminArticlesPage = lazy(() => import('@/pages/admin/AdminArticlesPage').then((m) => ({ default: m.AdminArticlesPage })))
+const AdminReviewsPage = lazy(() => import('@/pages/admin/AdminReviewsPage').then((m) => ({ default: m.AdminReviewsPage })))
+
+const Fallback = () => (
+  <div className="flex min-h-[400px] items-center justify-center">
+    <Spinner size="lg" />
+  </div>
+)
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <PublicLayout />,
+    children: [
+      { index: true, element: <Suspense fallback={<Fallback />}><HomePage /></Suspense> },
+      { path: 'vehicles', element: <Suspense fallback={<Fallback />}><VehicleListingPage /></Suspense> },
+      { path: 'vehicles/:id', element: <Suspense fallback={<Fallback />}><VehicleDetailPage /></Suspense> },
+      { path: 'compare', element: <Suspense fallback={<Fallback />}><ComparePage /></Suspense> },
+      { path: 'branches', element: <Suspense fallback={<Fallback />}><BranchListingPage /></Suspense> },
+      { path: 'branches/:id', element: <Suspense fallback={<Fallback />}><BranchDetailPage /></Suspense> },
+      { path: 'contact', element: <Suspense fallback={<Fallback />}><ContactPage /></Suspense> },
+      { path: 'about', element: <Suspense fallback={<Fallback />}><AboutPage /></Suspense> },
+      { path: 'sell', element: <Suspense fallback={<Fallback />}><ContactPage /></Suspense> },
+      { path: 'news', element: <Suspense fallback={<Fallback />}><BlogListingPage /></Suspense> },
+      { path: 'news/:slug', element: <Suspense fallback={<Fallback />}><BlogDetailPage /></Suspense> },
+      { path: 'terms', element: <Suspense fallback={<Fallback />}><TermsPage /></Suspense> },
+      { path: 'privacy', element: <Suspense fallback={<Fallback />}><PrivacyPage /></Suspense> },
+      { path: 'payment/result', element: <Suspense fallback={<Fallback />}><PaymentResultPage /></Suspense> },
+    ],
+  },
+  {
+    element: <AuthLayout />,
+    children: [
+      { path: 'login', element: <Suspense fallback={<Fallback />}><LoginPage /></Suspense> },
+      {
+        path: 'login/set-new-password',
+        element: (
+          <Suspense fallback={<Fallback />}>
+            <MandatoryNewPasswordPage />
+          </Suspense>
+        ),
+      },
+      { path: 'register', element: <Suspense fallback={<Fallback />}><RegisterPage /></Suspense> },
+      { path: 'forgot-password', element: <Suspense fallback={<Fallback />}><ForgotPasswordPage /></Suspense> },
+      { path: 'reset-password', element: <Suspense fallback={<Fallback />}><ResetPasswordPage /></Suspense> },
+    ],
+  },
+  {
+    path: '/dashboard',
+    element: (
+      <ProtectedRoute roles={['customer', 'Customer']}>
+        <ScrollToTop />
+        <CustomerDashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Suspense fallback={<Fallback />}><DashboardOverviewPage /></Suspense> },
+      { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
+      { path: 'saved', element: <Suspense fallback={<Fallback />}><SavedVehiclesPage /></Suspense> },
+      { path: 'bookings', element: <Suspense fallback={<Fallback />}><BookingsPage /></Suspense> },
+      { path: 'bookings/:id/contract', element: <Suspense fallback={<Fallback />}><BookingContractPage /></Suspense> },
+      { path: 'deposits', element: <Suspense fallback={<Fallback />}><DepositsPage /></Suspense> },
+      { path: 'orders', element: <Suspense fallback={<Fallback />}><OrdersPage /></Suspense> },
+      { path: 'orders/:id', element: <Suspense fallback={<Fallback />}><OrderDetailPage /></Suspense> },
+      { path: 'transactions', element: <Suspense fallback={<Fallback />}><TransactionsPage /></Suspense> },
+      { path: 'chat', element: <Suspense fallback={<Fallback />}><ChatPage /></Suspense> },
+      { path: 'notifications', element: <Suspense fallback={<Fallback />}><NotificationsPage /></Suspense> },
+      { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
+      { path: 'recently-viewed', element: <Suspense fallback={<Fallback />}><RecentlyViewedPage /></Suspense> },
+      { path: 'installment/:vehicleId', element: <Suspense fallback={<Fallback />}><InstallmentWizardPage /></Suspense> },
+      { path: 'installments/:id', element: <Suspense fallback={<Fallback />}><InstallmentStatusPage /></Suspense> },
+    ],
+  },
+  {
+    path: '/staff',
+    element: (
+      <ProtectedRoute roles={['staff', 'SalesStaff']}>
+        <ScrollToTop />
+        <StaffDashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Suspense fallback={<Fallback />}><StaffDashboardPage /></Suspense> },
+      { path: 'dashboard', element: <Suspense fallback={<Fallback />}><StaffDashboardPage /></Suspense> },
+      { path: 'schedule', element: <Suspense fallback={<Fallback />}><StaffSchedulePage /></Suspense> },
+      { path: 'bookings', element: <Suspense fallback={<Fallback />}><StaffBookingsPage /></Suspense> },
+      { path: 'consultations', element: <Suspense fallback={<Fallback />}><StaffConsultationsPage /></Suspense> },
+      { path: 'inventory', element: <Suspense fallback={<Fallback />}><StaffInventoryPage /></Suspense> },
+      { path: 'orders/new', element: <ProtectedRoute requiredPermission={{ module: 'Orders', action: 'create' }}><Suspense fallback={<Fallback />}><StaffCreateOrderPage /></Suspense></ProtectedRoute> },
+      { path: 'orders', element: <Suspense fallback={<Fallback />}><StaffOrdersPage /></Suspense> },
+      { path: 'deposits/new', element: <Suspense fallback={<Fallback />}><StaffCreateDepositPage /></Suspense> },
+      { path: 'deposits', element: <Suspense fallback={<Fallback />}><StaffDepositsPage /></Suspense> },
+      { path: 'chat', element: <Suspense fallback={<Fallback />}><StaffChatPage /></Suspense> },
+      { path: 'transfer-requests', element: <Suspense fallback={<Fallback />}><StaffTransferRequestsPage /></Suspense> },
+      { path: 'installments', element: <Suspense fallback={<Fallback />}><StaffInstallmentsPage /></Suspense> },
+      { path: 'installments/create/:vehicleId', element: <Suspense fallback={<Fallback />}><StaffCreateInstallmentPage /></Suspense> },
+      { path: 'notifications', element: <Suspense fallback={<Fallback />}><StaffNotificationsPage /></Suspense> },
+      { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
+      { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
+    ],
+  },
+  {
+    path: '/manager',
+    element: (
+      <ProtectedRoute roles={['manager', 'BranchManager']}>
+        <ScrollToTop />
+        <ManagerDashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Suspense fallback={<Fallback />}><ManagerDashboardPage /></Suspense> },
+      { path: 'dashboard', element: <Suspense fallback={<Fallback />}><ManagerDashboardPage /></Suspense> },
+      { path: 'vehicles', element: <Suspense fallback={<Fallback />}><ManagerVehiclesPage /></Suspense> },
+      { path: 'vehicles/new', element: <ProtectedRoute requiredPermission={{ module: 'Vehicles', action: 'create' }}><Suspense fallback={<Fallback />}><ManagerAddVehiclePage /></Suspense></ProtectedRoute> },
+      { path: 'vehicles/:id/edit', element: <ProtectedRoute requiredPermission={{ module: 'Vehicles', action: 'update' }}><Suspense fallback={<Fallback />}><ManagerEditVehiclePage /></Suspense></ProtectedRoute> },
+      { path: 'staff', element: <Suspense fallback={<Fallback />}><ManagerStaffPage /></Suspense> },
+      { path: 'staff/new', element: <ProtectedRoute requiredPermission={{ module: 'Users', action: 'create' }}><Suspense fallback={<Fallback />}><ManagerCreateStaffPage /></Suspense></ProtectedRoute> },
+      { path: 'appointments', element: <Suspense fallback={<Fallback />}><ManagerAppointmentsPage /></Suspense> },
+      { path: 'orders/new', element: <ProtectedRoute requiredPermission={{ module: 'Orders', action: 'create' }}><Suspense fallback={<Fallback />}><StaffCreateOrderPage /></Suspense></ProtectedRoute> },
+      { path: 'orders', element: <Suspense fallback={<Fallback />}><StaffOrdersPage /></Suspense> },
+      { path: 'deposits/new', element: <Suspense fallback={<Fallback />}><StaffCreateDepositPage /></Suspense> },
+      { path: 'deposits', element: <Suspense fallback={<Fallback />}><StaffDepositsPage /></Suspense> },
+      { path: 'transfers', element: <Suspense fallback={<Fallback />}><ManagerTransfersPage /></Suspense> },
+      { path: 'reports', element: <ProtectedRoute requiredPermission={{ module: 'Reports', action: 'view' }}><Suspense fallback={<Fallback />}><ManagerReportsPage /></Suspense></ProtectedRoute> },
+      { path: 'transactions', element: <Suspense fallback={<Fallback />}><AdminTransactionsPage /></Suspense> },
+      { path: 'chat', element: <Suspense fallback={<Fallback />}><ManagerChatPage /></Suspense> },
+      { path: 'consultations', element: <Suspense fallback={<Fallback />}><StaffConsultationsPage /></Suspense> },
+      {
+        path: 'articles',
+        element: (
+          <ProtectedRoute requiredPermission={{ module: 'CMS', action: 'manage' }}>
+            <Suspense fallback={<Fallback />}>
+              <AdminArticlesPage scope="manager" />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      { path: 'installments', element: <Suspense fallback={<Fallback />}><StaffInstallmentsPage /></Suspense> },
+      { path: 'installments/create/:vehicleId', element: <Suspense fallback={<Fallback />}><StaffCreateInstallmentPage /></Suspense> },
+      { path: 'settings', element: <Suspense fallback={<Fallback />}><ManagerSettingsPage /></Suspense> },
+      { path: 'notifications', element: <Suspense fallback={<Fallback />}><ManagerNotificationsPage /></Suspense> },
+      { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
+      { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
+    ],
+  },
+  {
+    path: '/admin',
+    element: (
+      <ProtectedRoute roles={['admin', 'Admin']}>
+        <ScrollToTop />
+        <AdminDashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <Suspense fallback={<Fallback />}><AdminDashboardPage /></Suspense> },
+      { path: 'dashboard', element: <Suspense fallback={<Fallback />}><AdminDashboardPage /></Suspense> },
+      { path: 'users', element: <Suspense fallback={<Fallback />}><AdminUsersPage /></Suspense> },
+      { path: 'roles', element: <Suspense fallback={<Fallback />}><AdminRolesPage /></Suspense> },
+      { path: 'branches', element: <Suspense fallback={<Fallback />}><AdminBranchesPage /></Suspense> },
+      { path: 'branches/new', element: <Suspense fallback={<Fallback />}><AdminAddBranchPage /></Suspense> },
+      { path: 'catalog', element: <Suspense fallback={<Fallback />}><AdminCatalogPage /></Suspense> },
+      { path: 'transfers', element: <Suspense fallback={<Fallback />}><AdminTransfersPage /></Suspense> },
+      { path: 'home-banners', element: <Suspense fallback={<Fallback />}><AdminHomeBannersPage /></Suspense> },
+      { path: 'config', element: <Suspense fallback={<Fallback />}><AdminConfigPage /></Suspense> },
+      { path: 'reports', element: <Suspense fallback={<Fallback />}><AdminReportsPage /></Suspense> },
+      { path: 'transactions', element: <Suspense fallback={<Fallback />}><AdminTransactionsPage /></Suspense> },
+      { path: 'logs', element: <Suspense fallback={<Fallback />}><AdminLogsPage /></Suspense> },
+      { path: 'notifications', element: <Suspense fallback={<Fallback />}><AdminNotificationsPage /></Suspense> },
+      { path: 'consultations', element: <Suspense fallback={<Fallback />}><AdminConsultationsPage /></Suspense> },
+      { path: 'articles', element: <Suspense fallback={<Fallback />}><AdminArticlesPage /></Suspense> },
+      { path: 'reviews', element: <Suspense fallback={<Fallback />}><AdminReviewsPage /></Suspense> },
+      { path: 'profile', element: <Suspense fallback={<Fallback />}><ProfilePage /></Suspense> },
+      { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
+    ],
+  },
+  { path: '/m/upload', element: <Suspense fallback={<Fallback />}><MobileUploadPage /></Suspense> },
+  { path: '*', element: <Navigate to="/" replace /> },
+])
+
+export function AppRouter() {
+  return <RouterProvider router={router} />
+}

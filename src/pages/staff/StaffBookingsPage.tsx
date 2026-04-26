@@ -1,0 +1,250 @@
+import { useState, useMemo } from 'react'
+import { Check, Calendar } from 'lucide-react'
+import { useStaffBookings } from '@/hooks/useStaffBookings'
+import { useBranches } from '@/hooks/useBranches'
+import { useVehicles } from '@/hooks/useVehicles'
+import { useToastStore } from '@/store/toastStore'
+import { customerDisplayLabel } from '@/lib/customerDisplay'
+import { BookingDetailModal } from '@/features/staff/components/BookingDetailModal'
+import { BookingActionButtons } from '@/components/staff/BookingActionButtons'
+import { ConfirmDialog, Pagination } from '@/components/ui'
+import type { Booking } from '@/types/booking.types'
+const tabs = ['Tất Cả', 'Chờ Xác Nhận', 'Đã Xác Nhận', 'Đã Hủy']
+
+function formatDate(d: string) {
+  const [y, m, day] = d.split('-')
+  return `${day}/${m}/${y}`
+}
+
+function formatTime(slot: string) {
+  const [h, m] = slot.split(':').map(Number)
+  if (h < 12) return `${slot} sáng`
+  if (h === 12) return `${slot} trưa`
+  return `${String(h - 12).padStart(2, '0')}:${String(m).padStart(2, '0')} chiều`
+}
+
+export function StaffBookingsPage() {
+  const [activeTab, setActiveTab] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
+  const [detailBooking, setDetailBooking] = useState<Booking | null>(null)
+  const [cancelDetailConfirmOpen, setCancelDetailConfirmOpen] = useState(false)
+  const {
+    bookings,
+    confirmBooking,
+    rescheduleBooking,
+    completeBooking,
+    cancelBooking,
+  } = useStaffBookings()
+  const { data: branches } = useBranches()
+  const { vehicles } = useVehicles()
+  const toast = useToastStore()
+
+  const filteredBookings = useMemo(() => {
+    const list = (bookings ?? []).filter((b) => {
+      if (activeTab === 0) return true
+      if (activeTab === 1) return b.status === 'Pending' || b.status === 'Rescheduled'
+      if (activeTab === 2) return b.status === 'Confirmed'
+      if (activeTab === 3) return b.status === 'Cancelled'
+      return true
+    })
+    const order: Record<string, number> = { Pending: 0, Rescheduled: 1, Confirmed: 2, Completed: 3, Cancelled: 4 }
+    return list.sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9))
+  }, [bookings, activeTab])
+
+  const paginated = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return filteredBookings.slice(start, start + pageSize)
+  }, [filteredBookings, page, pageSize])
+
+  const today = new Date().toISOString().slice(0, 10)
+  const todayBookings = (bookings ?? []).filter((b) => b.bookingDate === today)
+  const todayNew = todayBookings.filter((b) => b.status === 'Pending').length
+  const pendingCount = (bookings ?? []).filter((b) => b.status === 'Pending' || b.status === 'Rescheduled').length
+  const confirmedCount = (bookings ?? []).filter((b) => b.status === 'Confirmed').length
+  const completedCount = (bookings ?? []).filter((b) => b.status === 'Completed').length
+  const totalCount = (bookings ?? []).length
+  const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+
+  const getStatusBadge = (status: string) => {
+    if (status === 'AwaitingContract') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">Chờ ký HĐ</span>
+    if (status === 'Pending') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Chờ xác nhận</span>
+    if (status === 'Rescheduled') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">Đổi lịch</span>
+    if (status === 'Confirmed') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">Đã xác nhận</span>
+    if (status === 'Cancelled') return <span className="text-sm font-medium text-slate-500">Đã hủy</span>
+    return <span className="rounded px-2.5 py-1 text-xs font-medium bg-sky-100 text-sky-800">Hoàn thành</span>
+  }
+
+  const getCustomerName = (customerId: number | undefined) => customerDisplayLabel(customerId)
+
+  const wrap = async (msgOk: string, fn: () => Promise<void>) => {
+    try {
+      await fn()
+      toast.addToast('success', msgOk)
+      setDetailBooking(null)
+    } catch {
+      toast.addToast('error', 'Thao tác thất bại')
+    }
+  }
+
+  const vehicle = detailBooking ? vehicles?.find((x) => x.id === detailBooking.vehicleId) : null
+  const branch = detailBooking ? branches?.find((b) => String(b.id) === String(detailBooking.branchId)) : null
+  const totalPages = Math.ceil(filteredBookings.length / pageSize) || 1
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-slate-900">Lịch Hẹn Lái Thử</h2>
+        <p className="text-sm text-slate-500">Quản lý và điều phối các yêu cầu lái thử xe từ khách hàng tại khu vực Đà Nẵng.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">Tổng lịch hẹn hôm nay</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{todayBookings.length}</p>
+          {todayNew > 0 && <p className="mt-0.5 text-xs font-medium text-green-600">+{todayNew} mới</p>}
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">Chờ xác nhận</p>
+          <p className="mt-1 text-2xl font-bold text-amber-600">{pendingCount}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">Đã xác nhận</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{confirmedCount}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">Tỷ lệ hoàn thành</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{completionRate}%</p>
+        </div>
+      </div>
+
+      <div className="flex gap-2 border-b border-slate-200">
+        {tabs.map((tab, i) => (
+          <button
+            key={tab}
+            onClick={() => { setActiveTab(i); setPage(1) }}
+            className={`border-b-2 px-6 py-4 text-sm font-bold ${
+              activeTab === i ? 'border-[#1A3C6E] bg-blue-50/50 text-[#1A3C6E]' : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="border-b border-slate-200 bg-slate-50">
+              <tr>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">MẪU XE</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">KHÁCH HÀNG</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">NGÀY & GIỜ</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">TRẠNG THÁI</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">THAO TÁC</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {paginated.map((b) => {
+                const v = vehicles?.find((x) => x.id === b.vehicleId)
+                const customerName = getCustomerName(b.customerId)
+                const detail = [v?.trim && `Bản ${v.trim}`, v?.exteriorColor].filter(Boolean).join(' - ') || '-'
+                return (
+                  <tr key={b.id} className="transition-colors hover:bg-slate-50/50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                          <img
+                            src={
+                              (() => {
+                                const im = v?.images?.[0]
+                                if (!im) return 'https://placehold.co/80x56'
+                                return typeof im === 'string' ? im : im.url
+                              })()
+                            }
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">{b.vehicleTitle || `${v?.brand} ${v?.model} ${v?.year}`}</p>
+                          <p className="text-xs text-slate-500">{detail}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-slate-900">{customerName}</p>
+                      <p className="text-xs text-slate-500">SĐT: chưa có từ API</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-slate-700">{formatDate(b.bookingDate)}</p>
+                      <p className="text-xs text-slate-500">{formatTime(b.timeSlot)}</p>
+                    </td>
+                    <td className="px-6 py-4">{getStatusBadge(b.status)}</td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-center justify-end gap-2">
+                          {b.status === 'Pending' && (
+                            <button
+                              onClick={() => wrap('Đã xác nhận lịch hẹn', () => confirmBooking(b.id))}
+                              className="rounded-lg bg-green-100 p-2 text-green-700 hover:bg-green-200"
+                              title="Chấp nhận"
+                              type="button"
+                            >
+                              <Check className="h-5 w-5" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setDetailBooking(b)}
+                            className="rounded-lg bg-blue-100 p-2 text-blue-700 hover:bg-blue-200"
+                            title="Chi tiết / thao tác"
+                            type="button"
+                          >
+                            <Calendar className="h-5 w-5" />
+                          </button>
+                        </div>
+                        <BookingActionButtons
+                          booking={b}
+                          onConfirm={(id, note) => wrap('Đã xác nhận', () => confirmBooking(id, note))}
+                          onReschedule={(id, body) => wrap('Đã đổi lịch', () => rescheduleBooking(id, body))}
+                          onComplete={(id) => wrap('Đã hoàn thành', () => completeBooking(id))}
+                          onCancel={(id) => wrap('Đã hủy', () => cancelBooking(id))}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+      <Pagination page={page} totalPages={totalPages} total={filteredBookings.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="lịch hẹn" />
+
+      <BookingDetailModal
+        booking={detailBooking}
+        vehicle={vehicle ?? null}
+        branchName={branch?.name}
+        isOpen={!!detailBooking}
+        onClose={() => setDetailBooking(null)}
+        onConfirm={() => detailBooking && wrap('Đã xác nhận', () => confirmBooking(detailBooking.id))}
+        onCancel={() => {
+          if (detailBooking) setCancelDetailConfirmOpen(true)
+        }}
+      />
+      <ConfirmDialog
+        isOpen={cancelDetailConfirmOpen}
+        onClose={() => setCancelDetailConfirmOpen(false)}
+        title="Hủy lịch hẹn"
+        message="Bạn có chắc muốn hủy lịch hẹn này? Khách hàng sẽ nhận thông báo theo quy trình."
+        confirmLabel="Hủy lịch"
+        onConfirm={async () => {
+          if (!detailBooking) return
+          await wrap('Đã hủy', () => cancelBooking(detailBooking.id))
+          setCancelDetailConfirmOpen(false)
+        }}
+      />
+    </div>
+  )
+}
