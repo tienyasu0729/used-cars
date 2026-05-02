@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { NotificationList } from '@/features/customer/components/NotificationList'
 import { useStaffNotifications } from '@/hooks/useStaffNotifications'
 import { Button } from '@/components/ui'
+import { normalizeStaffNotificationLink } from '@/utils/notificationNavigation'
 import {
   inboxNotificationsListKey,
   inboxNotificationsUnreadKey,
@@ -47,6 +48,15 @@ export function StaffNotificationsPage() {
         ? (notifications ?? []).filter((n) => !n.read)
         : (notifications ?? []).filter((n) => n.type === filter)
 
+  const normalized = filtered.map((n) => ({
+    ...n,
+    link: normalizeStaffNotificationLink({
+      link: n.link,
+      title: n.title,
+      body: n.body,
+    }) ?? n.link,
+  }))
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -73,7 +83,7 @@ export function StaffNotificationsPage() {
           </button>
         ))}
       </div>
-      <NotificationList notifications={filtered} onMarkRead={(id) => markOne.mutate(id)} />
+      <NotificationList notifications={normalized} onMarkRead={(id) => markOne.mutate(id)} />
     </div>
   )
 }

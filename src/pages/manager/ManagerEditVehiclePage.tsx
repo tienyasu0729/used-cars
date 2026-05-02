@@ -4,7 +4,7 @@ import { useForm, Controller, useFieldArray, type Resolver } from 'react-hook-fo
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ArrowLeft, Loader2, Plus, Trash2, ImageIcon, Upload, X } from 'lucide-react'
-import { Input, Button } from '@/components/ui'
+import { Input, Button, ConfirmDialog } from '@/components/ui'
 import { useCatalog } from '@/hooks/useCatalog'
 import { useVehicleRegistryLabels } from '@/hooks/useVehicleRegistryLabels'
 import { useBranches } from '@/hooks/useBranches'
@@ -12,6 +12,8 @@ import { useManagerManagedVehicle, useManagerVehicle } from '@/hooks/useManagerV
 import { useToastStore } from '@/store/toastStore'
 import { fetchMediaUploadEnabled, uploadManagerImage } from '@/services/managerMedia.service'
 import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
+import { formatPriceNumber } from '@/utils/format'
+import { MaintenanceHistoryPanel } from '@/features/manager/components'
 import type { VehicleStatus } from '@/types/vehicle.types'
 import type { UpdateVehicleRequest } from '@/types/vehicle.types'
 
@@ -72,7 +74,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 const selectClass =
-  'w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-[#1A3C6E] focus:outline-none focus:ring-1 focus:ring-[#1A3C6E] disabled:opacity-60'
+  "w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")] bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat px-4 py-3 pr-10 text-sm shadow-sm transition focus:border-[#1A3C6E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1A3C6E]/15 disabled:opacity-60"
 
 export function ManagerEditVehiclePage() {
   const { id } = useParams<{ id: string }>()
@@ -84,6 +86,8 @@ export function ManagerEditVehiclePage() {
   const [pickedImages, setPickedImages] = useState<PickedImage[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [cloudReady, setCloudReady] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingSubmitData, setPendingSubmitData] = useState<FormValues | null>(null)
   const numericId = id ? parseInt(id, 10) : NaN
   const { data: vehicle, isLoading, accessDenied } = useManagerManagedVehicle(id)
   const { updateVehicle, isSubmitting, error } = useManagerVehicle()
@@ -110,7 +114,7 @@ export function ManagerEditVehiclePage() {
     control,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
@@ -309,6 +313,7 @@ export function ManagerEditVehiclePage() {
   }
 
   const busy = isSubmitting || isUploading
+  const canSubmit = isDirty || pickedImages.length > 0
 
   if (isLoading || accessDenied) {
     return (
@@ -331,8 +336,11 @@ export function ManagerEditVehiclePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-12">
-      <nav className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-        <Link to="/manager/vehicles" className="inline-flex items-center gap-1 font-medium text-[#1A3C6E] hover:underline">
+      <nav className="fixed left-3 top-3 z-40 md:left-[17rem]">
+        <Link
+          to="/manager/vehicles"
+          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-sm font-medium text-[#1A3C6E] shadow-sm backdrop-blur hover:bg-white"
+        >
           <ArrowLeft className="h-4 w-4" />
           Quay lại danh sách xe
         </Link>
@@ -362,7 +370,14 @@ export function ManagerEditVehiclePage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={handleSubmit((data) => {
+          if (!canSubmit) return
+          setPendingSubmitData(data)
+          setConfirmOpen(true)
+        })}
+        className="space-y-6"
+      >
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-bold text-slate-900">Danh mục</h2>
           <div className="grid gap-4 md:grid-cols-2">
@@ -425,7 +440,22 @@ export function ManagerEditVehiclePage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">Giá (VNĐ) *</label>
-              <Input type="number" {...register('price', { valueAsNumber: true })} min={0} className="font-semibold" />
+              <Controller
+                name="price"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    value={Number.isFinite(field.value) && field.value > 0 ? formatPriceNumber(field.value) : ''}
+                    onChange={(e) => {
+                      const numeric = Number(e.target.value.replace(/\D/g, ''))
+                      field.onChange(Number.isFinite(numeric) ? numeric : 0)
+                    }}
+                    className="font-semibold"
+                  />
+                )}
+              />
               {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
             </div>
             <div className="space-y-2">
@@ -663,11 +693,17 @@ export function ManagerEditVehiclePage() {
           </details>
         </div>
 
+        {Number.isFinite(numericId) && <MaintenanceHistoryPanel vehicleId={numericId} />}
+
         <div className="flex flex-wrap gap-3">
           <Button type="button" variant="outline" onClick={() => navigate('/manager/vehicles')} disabled={busy}>
             Hủy
           </Button>
-          <Button type="submit" className="bg-[#1A3C6E]" disabled={busy}>
+          <Button
+            type="submit"
+            className={`bg-[#1A3C6E] ${(busy || !canSubmit) ? 'opacity-50' : ''}`}
+            disabled={busy || !canSubmit}
+          >
             {busy ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -679,6 +715,23 @@ export function ManagerEditVehiclePage() {
           </Button>
         </div>
       </form>
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        title="Xác nhận lưu thay đổi"
+        message="Bạn có chắc muốn cập nhật dữ liệu không?"
+        confirmLabel="Cập nhật"
+        cancelLabel="Hủy"
+        onClose={() => {
+          setConfirmOpen(false)
+          setPendingSubmitData(null)
+        }}
+        onConfirm={() => {
+          if (!pendingSubmitData) return
+          setConfirmOpen(false)
+          void onSubmit(pendingSubmitData)
+          setPendingSubmitData(null)
+        }}
+      />
     </div>
   )
 }

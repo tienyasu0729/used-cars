@@ -21,9 +21,13 @@ interface UseVehicleDetailReturn {
   refetchVehicle: () => void
 }
 
-export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetailReturn {
+interface UseVehicleDetailOptions {
+  preferManaged?: boolean
+}
+
+export function useVehicleDetail(vehicleId: number | undefined, options?: UseVehicleDetailOptions): UseVehicleDetailReturn {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -38,11 +42,18 @@ export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetai
     }
     setIsLoading(true)
     setError(null)
-    vehicleService
-      .getVehicleById(vehicleId)
+    const canUseManagedDetail = Boolean(
+      options?.preferManaged && isAuthenticated && (user?.role === 'BranchManager' || user?.role === 'SalesStaff' || user?.role === 'Admin'),
+    )
+    const getDetail = canUseManagedDetail
+      ? vehicleService.getManagerVehicleById(vehicleId)
+      : vehicleService.getVehicleById(vehicleId)
+    getDetail
       .then((v) => {
         setVehicle(v)
-        interactionService.recordView(vehicleId)
+        if (!canUseManagedDetail) {
+          interactionService.recordView(vehicleId)
+        }
       })
       .catch((err) => {
         const code = err?.errorCode
@@ -54,7 +65,7 @@ export function useVehicleDetail(vehicleId: number | undefined): UseVehicleDetai
         console.error('[useVehicleDetail] Lỗi:', err)
       })
       .finally(() => setIsLoading(false))
-  }, [vehicleId])
+  }, [vehicleId, options?.preferManaged, isAuthenticated, user?.role])
 
   useEffect(() => {
     refetchVehicle()

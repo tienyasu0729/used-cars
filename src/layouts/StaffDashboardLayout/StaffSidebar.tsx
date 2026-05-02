@@ -18,6 +18,8 @@ import {
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 import { useInternalStaffChatUnreadCount } from '@/hooks/useChats'
+import { usePendingInstallmentCount } from '@/hooks/usePendingInstallmentCount'
+import { useUnreadInstallmentNotificationCount } from '@/hooks/useUnreadInstallmentNotificationCount'
 import { BrandLogo } from '@/components/common/BrandLogo'
 
 const navItems = [
@@ -31,7 +33,7 @@ const navItems = [
   { to: '/staff/deposits/new', icon: Banknote, label: 'Tạo Đặt Cọc' },
   { to: '/staff/deposits', icon: ListChecks, label: 'Danh Sách Cọc' },
   { to: '/staff/chat', icon: MessageCircle, label: 'Chat Khách Hàng', badgeKey: 'chat' },
-  { to: '/staff/installments', icon: FileText, label: 'Hồ Sơ Trả Góp' },
+  { to: '/staff/installments', icon: FileText, label: 'Hồ Sơ Trả Góp', badgeKey: 'installments' },
   { to: '/staff/transfer-requests', icon: ArrowLeftRight, label: 'Yêu Cầu Điều Chuyển' },
   { to: '/staff/notifications', icon: Bell, label: 'Thông Báo', badgeKey: 'notifications' },
 ]
@@ -40,6 +42,8 @@ export function StaffSidebar() {
   const { user } = useAuthStore()
   const { data: unreadCount = 0 } = useNotificationUnreadCount()
   const chatUnread = useInternalStaffChatUnreadCount()
+  const { data: pendingInstallments = 0 } = usePendingInstallmentCount()
+  const unreadInstallmentUpdates = useUnreadInstallmentNotificationCount({ dashboardPrefix: '/staff' })
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-shrink-0 flex-col bg-slate-900 lg:flex">
@@ -48,8 +52,13 @@ export function StaffSidebar() {
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto py-4">
         {navItems.map((item) => {
-          const badge =
-            item.badgeKey === 'notifications' ? unreadCount : item.badgeKey === 'chat' ? chatUnread : 0
+          const badge = item.badgeKey === 'notifications'
+            ? unreadCount
+            : item.badgeKey === 'chat'
+              ? chatUnread
+              : item.badgeKey === 'installments'
+                ? pendingInstallments + unreadInstallmentUpdates
+                : 0
           return (
             <NavLink
               key={item.to}

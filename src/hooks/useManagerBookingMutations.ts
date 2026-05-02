@@ -48,5 +48,40 @@ export function useManagerBookingMutations(branchId: number) {
     [queryClient, branchId],
   )
 
-  return { confirmBooking, cancelBooking, assignBookingStaff, actionBookingId }
+  const completeBooking = useCallback(
+    async (bookingId: number) => {
+      setActionBookingId(bookingId)
+      try {
+        await bookingService.completeBooking(bookingId)
+        await queryClient.invalidateQueries({ queryKey: ['manager-appointments'] })
+        await queryClient.invalidateQueries({ queryKey: ['staff-bookings'] })
+      } finally {
+        setActionBookingId(null)
+      }
+    },
+    [queryClient],
+  )
+
+  const markNoShow = useCallback(
+    async (bookingId: number) => {
+      setActionBookingId(bookingId)
+      try {
+        await bookingService.markNoShow(bookingId)
+        await queryClient.invalidateQueries({ queryKey: ['manager-appointments'] })
+        await queryClient.invalidateQueries({ queryKey: ['staff-bookings'] })
+      } finally {
+        setActionBookingId(null)
+      }
+    },
+    [queryClient],
+  )
+
+  return {
+    confirmBooking,
+    cancelBooking,
+    assignBookingStaff,
+    completeBooking,
+    markNoShow,
+    actionBookingId,
+  }
 }

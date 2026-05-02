@@ -13,6 +13,7 @@ import { useToastStore } from '@/store/toastStore'
 import { useAuthStore } from '@/store/authStore'
 import { fetchMediaUploadEnabled, uploadManagerImage } from '@/services/managerMedia.service'
 import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
+import { formatPriceNumber } from '@/utils/format'
 import type { CreateVehicleRequest } from '@/types/vehicle.types'
 
 const BODY_STYLE_OPTIONS = [
@@ -398,7 +399,22 @@ export function ManagerAddVehiclePage() {
                   <label className="text-sm font-semibold text-slate-700">
                     Giá bán (VNĐ) <span className="text-red-500">*</span>
                   </label>
-                  <Input type="number" {...register('price', { valueAsNumber: true })} min={1} className="font-semibold" />
+                  <Controller
+                    name="price"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        value={Number.isFinite(field.value) && field.value > 0 ? formatPriceNumber(field.value) : ''}
+                        onChange={(e) => {
+                          const numeric = Number(e.target.value.replace(/\D/g, ''))
+                          field.onChange(Number.isFinite(numeric) ? numeric : 0)
+                        }}
+                        className="font-semibold"
+                      />
+                    )}
+                  />
                   {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
                 </div>
                 <div className="space-y-2">

@@ -2,12 +2,27 @@
  * Tier 3.2 — Booking & lái thử (khớp DB: không có NoShow)
  */
 
-export type BookingStatus = 'AwaitingContract' | 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'Rescheduled'
+export type BookingStatus =
+  | 'AwaitingContract'
+  | 'Pending'
+  | 'Confirmed'
+  | 'Completed'
+  | 'Cancelled'
+  | 'Rescheduled'
+  | 'NoShow'
+
+export type SlotUnavailableReason =
+  | 'BRANCH_CLOSED'
+  | 'OUTSIDE_WORKING_HOURS'
+  | 'FULL'
+  | 'VEHICLE_CONFLICT'
 
 export interface AvailableSlot {
   slotTime: string
   availableCount: number
   maxBookings: number
+  isBookable: boolean
+  unavailableReason?: SlotUnavailableReason | null
 }
 
 export interface BookingStatusHistoryItem {
@@ -46,6 +61,21 @@ export interface CreateBookingRequest {
   bookingDate: string
   timeSlot: string
   note?: string
+}
+
+export interface CreateManagerBookingRequest {
+  vehicleId: number
+  branchId: number
+  bookingDate: string
+  timeSlot: string
+  type: string
+  note?: string
+  customer: {
+    fullName: string
+    email: string
+    phone: string
+    address: string
+  }
 }
 
 export interface RescheduleRequest {

@@ -1,9 +1,15 @@
-import type { AvailableSlot } from '@/types/booking.types'
+import type { AvailableSlot, SlotUnavailableReason } from '@/types/booking.types'
 
 interface SlotPickerProps {
   slots: AvailableSlot[]
   selectedSlotTime: string | null
   onSelect: (slotTime: string) => void
+}
+
+function unavailableLabel(reason?: SlotUnavailableReason | null): string {
+  if (reason === 'BRANCH_CLOSED' || reason === 'OUTSIDE_WORKING_HOURS') return '(ngoài giờ làm việc)'
+  if (reason === 'VEHICLE_CONFLICT') return '(xe đã có lịch)'
+  return '(đầy)'
 }
 
 export function SlotPicker({ slots, selectedSlotTime, onSelect }: SlotPickerProps) {
@@ -14,7 +20,7 @@ export function SlotPicker({ slots, selectedSlotTime, onSelect }: SlotPickerProp
   return (
     <div className="flex flex-wrap gap-2">
       {slots.map((s) => {
-        const full = s.availableCount <= 0
+        const full = !s.isBookable || s.availableCount <= 0
         const active = selectedSlotTime === s.slotTime
         return (
           <button
@@ -30,7 +36,7 @@ export function SlotPicker({ slots, selectedSlotTime, onSelect }: SlotPickerProp
                   : 'border-slate-200 bg-white text-slate-800 hover:border-[#1A3C6E]/40'
             }`}
           >
-            {s.slotTime} {full ? '(đầy)' : `(còn ${s.availableCount} chỗ)`}
+            {s.slotTime} {full ? unavailableLabel(s.unavailableReason) : `(còn ${s.availableCount} chỗ)`}
           </button>
         )
       })}

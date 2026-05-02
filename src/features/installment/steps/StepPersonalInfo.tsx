@@ -1,6 +1,7 @@
 import { User } from 'lucide-react'
-import type { UseFormReturn } from 'react-hook-form'
+import { Controller, type UseFormReturn } from 'react-hook-form'
 import type { FullInstallmentData } from '../installmentSchema'
+import { formatDateInputDdMmYyyy } from '@/utils/dateInputMask'
 
 const inputCls = 'w-full rounded-lg border border-slate-300 px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20'
 
@@ -19,7 +20,7 @@ interface Props {
 }
 
 export function StepPersonalInfo({ form }: Props) {
-  const { register, formState: { errors } } = form
+  const { register, control, formState: { errors } } = form
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3 mb-6">
@@ -41,13 +42,39 @@ export function StepPersonalInfo({ form }: Props) {
           <input {...register('identityNumber')} className={inputCls} placeholder="001234567890" />
         </Field>
         <Field label="Ngày sinh" error={errors.dob?.message}>
-          <input type="date" {...register('dob')} className={inputCls} />
+          <Controller
+            name="dob"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                inputMode="numeric"
+                placeholder="dd/mm/yyyy"
+                className={inputCls}
+                onChange={(e) => field.onChange(formatDateInputDdMmYyyy(e.target.value))}
+              />
+            )}
+          />
         </Field>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Ngày cấp CCCD" error={errors.identityIssuedDate?.message}>
-          <input type="date" {...register('identityIssuedDate')} className={inputCls} />
+          <Controller
+            name="identityIssuedDate"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                inputMode="numeric"
+                placeholder="dd/mm/yyyy"
+                className={inputCls}
+                onChange={(e) => field.onChange(formatDateInputDdMmYyyy(e.target.value))}
+              />
+            )}
+          />
         </Field>
         <Field label="Nơi cấp" error={errors.identityIssuedPlace?.message}>
           <input {...register('identityIssuedPlace')} className={inputCls} placeholder="Cục CS QLHC về TTXH" />

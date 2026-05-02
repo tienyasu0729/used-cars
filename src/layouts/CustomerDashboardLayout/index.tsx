@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useInboxNotificationsWebSocket } from '@/hooks/useInboxNotificationsWebSocket'
 import { CustomerSidebar } from './CustomerSidebar'
@@ -12,6 +12,7 @@ const pageTitles: Record<string, string> = {
   '/dashboard/bookings': 'Lịch Lái Thử',
   '/dashboard/deposits': 'Đặt Cọc',
   '/dashboard/orders': 'Đơn Mua',
+  '/dashboard/installments': 'Lịch Sử Trả Góp',
   '/dashboard/transactions': 'Giao Dịch',
   '/dashboard/chat': 'Chat',
   '/dashboard/notifications': 'Thông Báo',
@@ -20,6 +21,7 @@ const pageTitles: Record<string, string> = {
 
 function getPageTitle(pathname: string): string {
   if (pathname.match(/^\/dashboard\/orders\/[^/]+$/)) return 'Chi Tiết Đơn Hàng'
+  if (pathname.match(/^\/dashboard\/installments\/[^/]+$/)) return 'Chi Tiết Hồ Sơ Trả Góp'
   return pageTitles[pathname] ?? 'Bảng Điều Khiển'
 }
 

@@ -6,11 +6,12 @@
  * Giá: 2 input + thanh trượt kép (đồng bộ với input)
  * TODO: Nhiên liệu, hộp số → filter client-side khi backend chưa hỗ trợ
  */
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Car, DollarSign, Calendar, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { useCatalog } from '@/hooks/useCatalog'
 import { useVehicleRegistryLabels } from '@/hooks/useVehicleRegistryLabels'
+import { formatPriceNumber, formatPriceShort } from '@/utils/format'
 import type { VehicleListingFacets } from '@/hooks/useVehicleListingFacets'
 import type { VehicleSearchParams } from '@/types/vehicle.types'
 
@@ -21,12 +22,73 @@ interface FilterPanelProps {
   facets?: VehicleListingFacets
   /** Giá trị filter ban đầu từ URL (vd. khi tìm theo giá từ trang chủ) */
   initialFilters?: Partial<VehicleSearchParams>
+  stateStorageKey?: string
 }
 
+interface FilterPanelDraft {
+  selectedBrand?: number | ''
+  selectedModel?: number | ''
+  minPrice?: string
+  maxPrice?: string
+  minYear?: string
+  maxYear?: string
+  selectedTransmission?: string
+}
+
+const PRICE_STEP = 50_000_000
+const PRICE_MAX_LIMIT = 3_000_000_000
+const MIN_VEHICLE_YEAR = 1990
+const CURRENT_YEAR_NUMBER = new Date().getFullYear()
+const CURRENT_YEAR = CURRENT_YEAR_NUMBER.toString()
+
 function parsePriceInput(s: string, fallback: number): number {
-  if (s === '') return fallback
-  const n = parseInt(s, 10)
+  const digits = s.replace(/\D/g, '')
+  if (digits === '') return fallback
+  const n = parseInt(digits, 10)
   return Number.isNaN(n) ? fallback : n
+}
+
+function normalizePriceInput(s: string): string {
+  return s.replace(/\D/g, '')
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
+function roundPriceToStep(value: number): number {
+  return Math.round(value / PRICE_STEP) * PRICE_STEP
+}
+
+function ceilPriceToStep(value: number): number {
+  return Math.ceil(value / PRICE_STEP) * PRICE_STEP
+}
+
+function normalizePriceValue(value: number, ceil: number): number {
+  return clampNumber(roundPriceToStep(value), 0, ceil)
+}
+
+function formatPriceInputValue(s: string): string {
+  if (s === '') return ''
+  return formatPriceNumber(parsePriceInput(s, 0))
+}
+
+function parseYearInput(s: string): number | undefined {
+  if (s === '') return undefined
+  const n = parseInt(s, 10)
+  if (!Number.isFinite(n)) return undefined
+  return clampNumber(n, MIN_VEHICLE_YEAR, CURRENT_YEAR_NUMBER)
+}
+
+function readFilterDraft(storageKey?: string): FilterPanelDraft | null {
+  if (!storageKey || typeof window === 'undefined') return null
+  try {
+    const raw = window.sessionStorage.getItem(storageKey)
+    if (!raw) return null
+    return JSON.parse(raw) as FilterPanelDraft
+  } catch {
+    return null
+  }
 }
 
 /** Thanh kép: luôn trượt từ 0 → ceil (VNĐ). Nút min đặt z cao hơn để dễ kéo cạnh trái. */
@@ -46,10 +108,8 @@ function PriceDualRange({
   disabled?: boolean
 }) {
   const floor = 0
-  const span = Math.max(ceil - floor, 1)
-  const step = Math.max(1_000_000, Math.round(span / 150) || 1_000_000)
-  const minThumb = Math.min(Math.max(parsePriceInput(minPrice, floor), floor), ceil)
-  const maxThumb = Math.min(Math.max(parsePriceInput(maxPrice, ceil), floor), ceil)
+  const minThumb = normalizePriceValue(parsePriceInput(minPrice, floor), ceil)
+  const maxThumb = normalizePriceValue(parsePriceInput(maxPrice, ceil), ceil)
 
   const rangeClass =
     'pointer-events-none absolute inset-x-0 top-1/2 h-8 w-full -translate-y-1/2 cursor-pointer appearance-none bg-transparent disabled:opacity-40 ' +
@@ -75,12 +135,12 @@ function PriceDualRange({
         type="range"
         min={floor}
         max={ceil}
-        step={step}
+        step={PRICE_STEP}
         value={maxThumb}
         disabled={off}
         onChange={(e) => {
-          const v = Number(e.target.value)
-          const currentMin = parsePriceInput(minPrice, floor)
+          const v = normalizePriceValue(Number(e.target.value), ceil)
+          const currentMin = normalizePriceValue(parsePriceInput(minPrice, floor), ceil)
           if (v < currentMin) onMinChange(String(v))
           onMaxChange(String(v))
         }}
@@ -92,12 +152,12 @@ function PriceDualRange({
         type="range"
         min={floor}
         max={ceil}
-        step={step}
+        step={PRICE_STEP}
         value={minThumb}
         disabled={off}
         onChange={(e) => {
-          const v = Number(e.target.value)
-          const currentMax = parsePriceInput(maxPrice, ceil)
+          const v = normalizePriceValue(Number(e.target.value), ceil)
+          const currentMax = normalizePriceValue(parsePriceInput(maxPrice, ceil), ceil)
           if (v > currentMax) onMaxChange(String(v))
           onMinChange(String(v))
         }}
@@ -108,39 +168,70 @@ function PriceDualRange({
   )
 }
 
-const CURRENT_YEAR = new Date().getFullYear().toString()
-
-export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: FilterPanelProps) {
+export function FilterPanel({ inline, onFilterChange, facets, initialFilters, stateStorageKey }: FilterPanelProps) {
   const { categories, subcategories, isLoadingCategories, fetchSubcategories } = useCatalog()
   const { transmissionOptions } = useVehicleRegistryLabels()
 
-  // Local state cho form — mặc định: Giá từ = 0, Năm đến = năm hiện tại
+  // Local state cho form — mặc định: Giá từ = 0, năm không giới hạn
   const [selectedBrand, setSelectedBrand] = useState<number | ''>('')
   const [selectedModel, setSelectedModel] = useState<number | ''>('')
   const [minPrice, setMinPrice] = useState('0')
   const [maxPrice, setMaxPrice] = useState('')
   const [minYear, setMinYear] = useState('')
-  const [maxYear, setMaxYear] = useState(CURRENT_YEAR)
+  const [maxYear, setMaxYear] = useState('')
   const [selectedTransmission, setSelectedTransmission] = useState('')
   const [initialSynced, setInitialSynced] = useState(false)
+  const skipNextModelResetRef = useRef(false)
 
   // Đồng bộ filter ban đầu từ URL (vd. mức giá chọn ở trang chủ) vào form — chỉ chạy 1 lần
   useEffect(() => {
     if (initialSynced || !initialFilters) return
     setInitialSynced(true)
-    if (initialFilters.minPrice != null) setMinPrice(String(initialFilters.minPrice))
-    if (initialFilters.maxPrice != null) setMaxPrice(String(initialFilters.maxPrice))
-    if (initialFilters.brand != null) setSelectedBrand(initialFilters.brand)
-    if (initialFilters.subcategoryId != null) setSelectedModel(initialFilters.subcategoryId)
-    if (initialFilters.yearMin != null) setMinYear(String(initialFilters.yearMin))
-    if (initialFilters.yearMax != null) setMaxYear(String(initialFilters.yearMax))
-    if (initialFilters.transmission) setSelectedTransmission(initialFilters.transmission)
-  }, [initialFilters, initialSynced])
+    const draft = readFilterDraft(stateStorageKey)
+    const source = draft ?? {
+      selectedBrand: initialFilters.brand,
+      selectedModel: initialFilters.subcategoryId,
+      minPrice: initialFilters.minPrice == null ? undefined : String(initialFilters.minPrice),
+      maxPrice: initialFilters.maxPrice == null ? undefined : String(initialFilters.maxPrice),
+      minYear: initialFilters.yearMin == null ? undefined : String(initialFilters.yearMin),
+      maxYear: initialFilters.yearMax == null ? undefined : String(initialFilters.yearMax),
+      selectedTransmission: initialFilters.transmission,
+    }
+
+    if (source.minPrice != null) setMinPrice(String(source.minPrice))
+    if (source.maxPrice != null) setMaxPrice(String(source.maxPrice))
+    if (source.selectedBrand != null) {
+      skipNextModelResetRef.current = true
+      setSelectedBrand(source.selectedBrand)
+    }
+    if (source.selectedModel != null) setSelectedModel(source.selectedModel)
+    if (source.minYear != null) setMinYear(String(source.minYear))
+    if (source.maxYear != null) setMaxYear(String(source.maxYear))
+    if (source.selectedTransmission) setSelectedTransmission(source.selectedTransmission)
+  }, [initialFilters, initialSynced, stateStorageKey])
+
+  useEffect(() => {
+    if (!stateStorageKey || !initialSynced) return
+    const draft: FilterPanelDraft = {
+      selectedBrand,
+      selectedModel,
+      minPrice,
+      maxPrice,
+      minYear,
+      maxYear,
+      selectedTransmission,
+    }
+    window.sessionStorage.setItem(stateStorageKey, JSON.stringify(draft))
+  }, [maxPrice, maxYear, minPrice, minYear, selectedBrand, selectedModel, selectedTransmission, stateStorageKey, initialSynced])
 
   // Cascade: khi chọn hãng → fetch dòng xe tương ứng; bỏ hãng → xóa dòng
   useEffect(() => {
     if (selectedBrand) {
       fetchSubcategories(selectedBrand as number)
+      if (skipNextModelResetRef.current) {
+        skipNextModelResetRef.current = false
+        return
+      }
       setSelectedModel('')
     } else {
       setSelectedModel('')
@@ -188,8 +279,19 @@ export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: 
 
   const priceSliderCeil =
     facets && !facets.error && !facets.isLoading
-      ? Math.max(facets.priceMax, 1_000_000)
-      : 50_000_000_000
+      ? clampNumber(ceilPriceToStep(Math.max(facets.priceMax, PRICE_STEP)), PRICE_STEP, PRICE_MAX_LIMIT)
+      : PRICE_MAX_LIMIT
+
+  const normalizedMinPrice = normalizePriceValue(parsePriceInput(minPrice, 0), priceSliderCeil)
+  const normalizedMaxPrice = maxPrice === '' ? priceSliderCeil : normalizePriceValue(parsePriceInput(maxPrice, priceSliderCeil), priceSliderCeil)
+  const priceRangeLabel =
+    normalizedMinPrice <= 0 && maxPrice === ''
+      ? `Tất cả giá đến ${formatPriceShort(priceSliderCeil)}`
+      : normalizedMinPrice <= 0
+        ? `Đến ${formatPriceShort(normalizedMaxPrice)}`
+        : `${formatPriceShort(normalizedMinPrice)} - ${formatPriceShort(Math.max(normalizedMinPrice, normalizedMaxPrice))}`
+
+  const isAllYears = minYear === '' && maxYear === ''
 
   const transmissionFilterChoices = useMemo(() => {
     const base = [...transmissionOptions]
@@ -198,22 +300,30 @@ export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: 
     return base
   }, [transmissionOptions, selectedTransmission])
 
-  const parseOptInt = (s: string): number | undefined => {
-    if (s === '' || s === '0') return undefined
-    const n = parseInt(s, 10)
-    return Number.isFinite(n) && n > 0 ? n : undefined
-  }
-
   const handleApply = () => {
+    const rawMinPrice = normalizePriceValue(parsePriceInput(minPrice, 0), priceSliderCeil)
+    const rawMaxPrice = maxPrice === '' ? undefined : normalizePriceValue(parsePriceInput(maxPrice, priceSliderCeil), priceSliderCeil)
+    const minPriceValue = rawMaxPrice != null && rawMinPrice > rawMaxPrice ? rawMaxPrice : rawMinPrice
+    const maxPriceValue = rawMaxPrice != null && rawMinPrice > rawMaxPrice ? rawMinPrice : rawMaxPrice
+    const rawMinYear = parseYearInput(minYear)
+    const rawMaxYear = parseYearInput(maxYear)
+    const yearMinValue = rawMinYear != null && rawMaxYear != null && rawMinYear > rawMaxYear ? rawMaxYear : rawMinYear
+    const yearMaxValue = rawMinYear != null && rawMaxYear != null && rawMinYear > rawMaxYear ? rawMinYear : rawMaxYear
+
+    setMinPrice(String(minPriceValue))
+    setMaxPrice(maxPriceValue == null ? '' : String(maxPriceValue))
+    setMinYear(yearMinValue == null ? '' : String(yearMinValue))
+    setMaxYear(yearMaxValue == null ? '' : String(yearMaxValue))
+
     const params: VehicleSearchParams = {
       page: 0,
       size: 20,
       brand: selectedBrand === '' ? undefined : (selectedBrand as number),
       subcategoryId: selectedModel === '' ? undefined : (selectedModel as number),
-      minPrice: parseOptInt(minPrice),
-      maxPrice: parseOptInt(maxPrice),
-      yearMin: parseOptInt(minYear),
-      yearMax: parseOptInt(maxYear),
+      minPrice: minPriceValue > 0 ? minPriceValue : undefined,
+      maxPrice: maxPriceValue != null && maxPriceValue > 0 ? maxPriceValue : undefined,
+      yearMin: yearMinValue,
+      yearMax: yearMaxValue,
       transmission: selectedTransmission === '' ? undefined : selectedTransmission,
     }
     onFilterChange?.(params)
@@ -225,7 +335,7 @@ export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: 
     setMinPrice('0')
     setMaxPrice('')
     setMinYear('')
-    setMaxYear(CURRENT_YEAR)
+    setMaxYear('')
     setSelectedTransmission('')
     onFilterChange?.({
       page: 0,
@@ -310,20 +420,32 @@ export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: 
               <DollarSign className="h-5 w-5 text-[#1A3C6E]" />
               Khoảng giá (VNĐ)
             </label>
+            <div className="mb-3 rounded-lg bg-[#1A3C6E]/5 px-3 py-2 text-sm font-semibold text-[#1A3C6E]">
+              Khoảng giá: {priceRangeLabel}
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 placeholder="Giá từ"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
+                value={formatPriceInputValue(minPrice)}
+                onChange={(e) => setMinPrice(normalizePriceInput(e.target.value))}
+                onBlur={() => setMinPrice(String(normalizePriceValue(parsePriceInput(minPrice, 0), priceSliderCeil)))}
                 className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                aria-label="Giá từ"
               />
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 placeholder="Giá đến"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
+                value={formatPriceInputValue(maxPrice)}
+                onChange={(e) => setMaxPrice(normalizePriceInput(e.target.value))}
+                onBlur={() => {
+                  if (maxPrice === '') return
+                  setMaxPrice(String(normalizePriceValue(parsePriceInput(maxPrice, priceSliderCeil), priceSliderCeil)))
+                }}
                 className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                aria-label="Giá đến"
               />
             </div>
             {facetActive && (
@@ -337,7 +459,7 @@ export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: 
             )}
             {facetActive && (
               <p className="mt-1 text-xs text-slate-500">
-                Kéo từ 0 đến mức tối đa (theo dữ liệu xe), hoặc nhập số trực tiếp ở trên.
+                Bước giá {formatPriceShort(PRICE_STEP)}. Tối đa {formatPriceShort(priceSliderCeil)} theo dữ liệu xe.
               </p>
             )}
           </div>
@@ -348,26 +470,55 @@ export function FilterPanel({ inline, onFilterChange, facets, initialFilters }: 
               <Calendar className="h-5 w-5 text-[#1A3C6E]" />
               Năm sản xuất
             </label>
+            <label className="mb-3 flex items-center gap-2 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                checked={isAllYears}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setMinYear('')
+                    setMaxYear('')
+                  } else {
+                    setMinYear(String(MIN_VEHICLE_YEAR))
+                    setMaxYear(CURRENT_YEAR)
+                  }
+                }}
+                className="h-4 w-4 rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]"
+              />
+              Mọi năm
+            </label>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="number"
                 placeholder="Từ"
                 value={minYear}
-                onChange={(e) => setMinYear(e.target.value)}
+                min={MIN_VEHICLE_YEAR}
+                max={CURRENT_YEAR}
+                step={1}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v === '') { setMinYear(''); return }
+                  const n = parseInt(v, 10)
+                  setMinYear(Number.isFinite(n) ? String(clampNumber(n, MIN_VEHICLE_YEAR, CURRENT_YEAR_NUMBER)) : '')
+                }}
                 className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                aria-label="Năm sản xuất từ"
               />
               <input
                 type="number"
                 placeholder="Đến"
                 value={maxYear}
+                min={MIN_VEHICLE_YEAR}
                 max={CURRENT_YEAR}
+                step={1}
                 onChange={(e) => {
                   const v = e.target.value
                   if (v === '') { setMaxYear(''); return }
                   const n = parseInt(v, 10)
-                  setMaxYear(Number.isFinite(n) && n > parseInt(CURRENT_YEAR, 10) ? CURRENT_YEAR : v)
+                  setMaxYear(Number.isFinite(n) ? String(clampNumber(n, MIN_VEHICLE_YEAR, CURRENT_YEAR_NUMBER)) : '')
                 }}
                 className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-[#1A3C6E] focus:ring-[#1A3C6E]/20"
+                aria-label="Năm sản xuất đến"
               />
             </div>
           </div>

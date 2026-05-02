@@ -8,6 +8,7 @@ import { maintenanceService, type MaintenanceRecord } from '@/services/maintenan
 
 interface Props {
   vehicleId: number
+  managedView?: boolean
 }
 
 // Format ngày dd/MM/yyyy
@@ -17,7 +18,7 @@ const fmtDate = (dateStr: string) => {
   return dateStr
 }
 
-export function MaintenanceHistoryPublic({ vehicleId }: Props) {
+export function MaintenanceHistoryPublic({ vehicleId, managedView = false }: Props) {
   const [records, setRecords] = useState<MaintenanceRecord[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -25,14 +26,16 @@ export function MaintenanceHistoryPublic({ vehicleId }: Props) {
   const loadHistory = useCallback(async () => {
     setLoading(true)
     try {
-      const page = await maintenanceService.getPublicHistory(vehicleId, 0, 50)
+      const page = managedView
+        ? await maintenanceService.getHistory(vehicleId, 0, 50)
+        : await maintenanceService.getPublicHistory(vehicleId, 0, 50)
       setRecords(page.content ?? [])
     } catch {
       setRecords([])
     } finally {
       setLoading(false)
     }
-  }, [vehicleId])
+  }, [managedView, vehicleId])
 
   useEffect(() => {
     void loadHistory()

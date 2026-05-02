@@ -5,6 +5,7 @@ import { useStaffOrManagerBasePath } from '@/hooks/useStaffOrManagerBasePath'
 import { formatPrice, formatRelativeTime } from '@/utils/format'
 import { VehicleStatusBadge, Pagination } from '@/components/ui'
 import type { VehicleStatus } from '@/types/vehicle.types'
+import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 
 const tabs = ['Tất Cả', 'Còn Hàng', 'Đã Đặt Cọc', 'Đã Bán']
 
@@ -88,7 +89,7 @@ export function StaffInventoryPage() {
                 <tr><td colSpan={8} className="px-6 py-16 text-center text-sm text-slate-400">Không có xe nào</td></tr>
               ) : paginated.map((v) => {
                 const im = v.images?.[0]
-                const thumb = typeof im === 'string' ? im : im?.url
+                const thumb = externalImageDisplayUrl(typeof im === 'string' ? im : im?.url)
                 return (
                 <tr key={v.id} className="hover:bg-slate-50/50">
                   <td className="px-6 py-4">
@@ -98,7 +99,7 @@ export function StaffInventoryPage() {
                     />
                   </td>
                   <td className="px-6 py-4 font-bold text-slate-900">
-                    <Link to={`/vehicles/${v.id}`} className="hover:text-[#1A3C6E] hover:underline">
+                    <Link to={`/vehicles/${v.id}?view=manager`} className="hover:text-[#1A3C6E] hover:underline">
                       {v.title || `${v.brand ?? ''} ${v.model ?? ''}`.trim() || 'Xe'}
                     </Link>
                   </td>
@@ -111,7 +112,7 @@ export function StaffInventoryPage() {
                   <td className="px-6 py-4 text-xs text-slate-500">{formatRelativeTime(v.updated_at)}</td>
                   <td className="px-6 py-4 text-right">
                     <Link
-                      to={`/vehicles/${v.id}`}
+                      to={`/vehicles/${v.id}?view=manager`}
                       className="mr-2 text-sm font-medium text-[#1A3C6E] hover:underline"
                     >
                       Xem

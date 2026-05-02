@@ -25,9 +25,12 @@ export interface InstallmentApplicationPayload {
   dependentsCount?: number
   vehiclePrice?: number
   prepaymentAmount?: number
+  prepaymentPercent?: number
   loanAmount?: number
   loanTermMonths?: number
   repaymentMethod?: string
+  bankCode?: string
+  requestPreDeposit?: boolean
   agreedTerms?: boolean
   agreedPrivacy?: boolean
   signatureUrl?: string
@@ -43,7 +46,9 @@ export interface InstallmentApplicationDTO {
   vehicleId: number
   vehicleTitle: string | null
   depositId: number | null
+  preDepositId: number | null
   bankLoanId: string | null
+  bankCode: string | null
   fullName: string | null
   identityNumber: string | null
   phoneNumber: string | null
@@ -67,9 +72,11 @@ export interface InstallmentApplicationDTO {
   dependentsCount: number | null
   vehiclePrice: number | null
   prepaymentAmount: number | null
+  prepaymentPercent: number | null
   loanAmount: number | null
   loanTermMonths: number | null
   repaymentMethod: string | null
+  requestPreDeposit: boolean | null
   agreedTerms: boolean | null
   agreedPrivacy: boolean | null
   signatureUrl: string | null
@@ -77,9 +84,39 @@ export interface InstallmentApplicationDTO {
   status: string
   rejectionReason: string | null
   bankPdfUrl: string | null
+  hasValidDepositForVehicle: boolean | null
+  depositProofUploaded: boolean | null
+  appliedDepositAmount: number | null
+  canSubmit: boolean | null
+  blockingReason: string | null
   documents: InstallmentDocumentDTO[]
   createdAt: string
   updatedAt: string
+}
+
+export interface InstallmentSubmitEligibilityDTO {
+  applicationId: number
+  vehicleId: number
+  hasValidDepositForVehicle: boolean
+  depositProofUploaded: boolean
+  appliedDepositAmount: number
+  canSubmit: boolean
+  blockingReason: string | null
+}
+
+export interface CreateInstallmentPreDepositPayload {
+  paymentMethod: 'cash' | 'vnpay' | 'zalopay' | string
+  note?: string
+}
+
+export interface CreateInstallmentPreDepositResult {
+  id: number
+  vehicleId: number
+  amount: string
+  status: string
+  paymentUrl: string | null
+  depositDate: string
+  expiryDate: string
 }
 
 export interface InstallmentDocumentDTO {
@@ -91,6 +128,24 @@ export interface InstallmentDocumentDTO {
 }
 
 interface ApiResponse<T> { data: T }
+interface ApiMeta { page?: number; size?: number; totalElements?: number; totalPages?: number }
+
+export interface InstallmentApplicationsQuery {
+  page?: number
+  size?: number
+  status?: string
+  q?: string
+}
+
+export interface InstallmentApplicationsPageResult {
+  items: InstallmentApplicationDTO[]
+  meta: {
+    page: number
+    size: number
+    totalElements: number
+    totalPages: number
+  }
+}
 
 export const installmentService = {
   async create(payload: InstallmentApplicationPayload): Promise<InstallmentApplicationDTO> {
@@ -107,11 +162,27 @@ export const installmentService = {
     return (res as unknown as ApiResponse<InstallmentApplicationDTO>).data
   },
 
-  async getMyApplications(): Promise<InstallmentApplicationDTO[]> {
+  async getMyApplications(query?: InstallmentApplicationsQuery): Promise<InstallmentApplicationsPageResult> {
+    const params = {
+      page: query?.page ?? 0,
+      size: query?.size ?? 10,
+      status: query?.status || undefined,
+      q: query?.q?.trim() || undefined,
+    }
     const res = await axiosInstance.get<ApiResponse<InstallmentApplicationDTO[]>>(
       '/installments/applications/me',
-    )
-    return (res as unknown as ApiResponse<InstallmentApplicationDTO[]>).data
+      { params },
+    ) as unknown as ApiResponse<InstallmentApplicationDTO[]> & { meta?: ApiMeta }
+    const meta = res.meta ?? {}
+    return {
+      items: res.data ?? [],
+      meta: {
+        page: Number(meta.page ?? params.page),
+        size: Number(meta.size ?? params.size),
+        totalElements: Number(meta.totalElements ?? (res.data?.length ?? 0)),
+        totalPages: Number(meta.totalPages ?? 1),
+      },
+    }
   },
 
   async getById(id: number): Promise<InstallmentApplicationDTO> {
@@ -130,6 +201,10 @@ export const installmentService = {
       { headers: { 'Content-Type': 'multipart/form-data' } },
     )
     return (res as unknown as ApiResponse<InstallmentDocumentDTO>).data
+  },
+
+  async uploadDepositProof(appId: number, file: File): Promise<InstallmentDocumentDTO> {
+    return installmentService.uploadDocument(appId, file, 'DEPOSIT_RECEIPT')
   },
 
   async deleteDocument(appId: number, docId: number): Promise<void> {
@@ -161,5 +236,20 @@ export const installmentService = {
       `/installments/applications/on-behalf?customerId=${customerId}`, payload,
     )
     return (res as unknown as ApiResponse<InstallmentApplicationDTO>).data
+  },
+
+  async createPreDeposit(id: number, payload: CreateInstallmentPreDepositPayload): Promise<CreateInstallmentPreDepositResult> {
+    const res = await axiosInstance.post<ApiResponse<CreateInstallmentPreDepositResult>>(
+      `/installments/applications/${id}/pre-deposit`,
+      payload,
+    )
+    return (res as unknown as ApiResponse<CreateInstallmentPreDepositResult>).data
+  },
+
+  async getSubmitEligibility(id: number): Promise<InstallmentSubmitEligibilityDTO> {
+    const res = await axiosInstance.get<ApiResponse<InstallmentSubmitEligibilityDTO>>(
+      `/installments/applications/${id}/submit-eligibility`,
+    )
+    return (res as unknown as ApiResponse<InstallmentSubmitEligibilityDTO>).data
   },
 }

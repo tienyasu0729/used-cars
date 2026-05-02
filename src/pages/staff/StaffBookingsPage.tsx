@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
-import { Check, Calendar } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Calendar, Check } from 'lucide-react'
 import { useStaffBookings } from '@/hooks/useStaffBookings'
 import { useBranches } from '@/hooks/useBranches'
 import { useVehicles } from '@/hooks/useVehicles'
@@ -9,7 +10,9 @@ import { BookingDetailModal } from '@/features/staff/components/BookingDetailMod
 import { BookingActionButtons } from '@/components/staff/BookingActionButtons'
 import { ConfirmDialog, Pagination } from '@/components/ui'
 import type { Booking } from '@/types/booking.types'
-const tabs = ['Tất Cả', 'Chờ Xác Nhận', 'Đã Xác Nhận', 'Đã Hủy']
+import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
+
+const tabs = ['Tất Cả', 'Chờ Xác Nhận', 'Đã Xác Nhận', 'Khách Không Đến', 'Đã Hủy']
 
 function formatDate(d: string) {
   const [y, m, day] = d.split('-')
@@ -23,6 +26,22 @@ function formatTime(slot: string) {
   return `${String(h - 12).padStart(2, '0')}:${String(m).padStart(2, '0')} chiều`
 }
 
+function isOverdue(booking: Booking): boolean {
+  const time = booking.timeSlot.length === 5 ? `${booking.timeSlot}:00` : booking.timeSlot
+  const appointmentAt = new Date(`${booking.bookingDate}T${time}`)
+  return !Number.isNaN(appointmentAt.getTime()) && appointmentAt.getTime() < Date.now()
+}
+
+function getStatusBadge(status: string) {
+  if (status === 'AwaitingContract') return <span className="rounded border border-violet-200 bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700">Chờ ký HĐ</span>
+  if (status === 'Pending') return <span className="rounded border border-amber-200 bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">Chờ xác nhận</span>
+  if (status === 'Rescheduled') return <span className="rounded border border-orange-200 bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-800">Đổi lịch</span>
+  if (status === 'Confirmed') return <span className="rounded border border-blue-200 bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">Đã xác nhận</span>
+  if (status === 'NoShow') return <span className="rounded border border-rose-200 bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700">Khách không đến</span>
+  if (status === 'Cancelled') return <span className="text-sm font-medium text-slate-500">Đã hủy</span>
+  return <span className="rounded bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Hoàn thành</span>
+}
+
 export function StaffBookingsPage() {
   const [activeTab, setActiveTab] = useState(0)
   const [page, setPage] = useState(1)
@@ -34,6 +53,7 @@ export function StaffBookingsPage() {
     confirmBooking,
     rescheduleBooking,
     completeBooking,
+    markNoShow,
     cancelBooking,
   } = useStaffBookings()
   const { data: branches } = useBranches()
@@ -45,10 +65,18 @@ export function StaffBookingsPage() {
       if (activeTab === 0) return true
       if (activeTab === 1) return b.status === 'Pending' || b.status === 'Rescheduled'
       if (activeTab === 2) return b.status === 'Confirmed'
-      if (activeTab === 3) return b.status === 'Cancelled'
+      if (activeTab === 3) return b.status === 'NoShow'
+      if (activeTab === 4) return b.status === 'Cancelled'
       return true
     })
-    const order: Record<string, number> = { Pending: 0, Rescheduled: 1, Confirmed: 2, Completed: 3, Cancelled: 4 }
+    const order: Record<string, number> = {
+      Pending: 0,
+      Rescheduled: 1,
+      Confirmed: 2,
+      Completed: 3,
+      NoShow: 4,
+      Cancelled: 5,
+    }
     return list.sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9))
   }, [bookings, activeTab])
 
@@ -65,15 +93,6 @@ export function StaffBookingsPage() {
   const completedCount = (bookings ?? []).filter((b) => b.status === 'Completed').length
   const totalCount = (bookings ?? []).length
   const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-
-  const getStatusBadge = (status: string) => {
-    if (status === 'AwaitingContract') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">Chờ ký HĐ</span>
-    if (status === 'Pending') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">Chờ xác nhận</span>
-    if (status === 'Rescheduled') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">Đổi lịch</span>
-    if (status === 'Confirmed') return <span className="rounded px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">Đã xác nhận</span>
-    if (status === 'Cancelled') return <span className="text-sm font-medium text-slate-500">Đã hủy</span>
-    return <span className="rounded px-2.5 py-1 text-xs font-medium bg-sky-100 text-sky-800">Hoàn thành</span>
-  }
 
   const getCustomerName = (customerId: number | undefined) => customerDisplayLabel(customerId)
 
@@ -137,11 +156,11 @@ export function StaffBookingsPage() {
           <table className="w-full text-left">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">MẪU XE</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">KHÁCH HÀNG</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">NGÀY & GIỜ</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">TRẠNG THÁI</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">THAO TÁC</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Mẫu Xe</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Khách Hàng</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Ngày & Giờ</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Trạng Thái</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -149,23 +168,28 @@ export function StaffBookingsPage() {
                 const v = vehicles?.find((x) => x.id === b.vehicleId)
                 const customerName = getCustomerName(b.customerId)
                 const detail = [v?.trim && `Bản ${v.trim}`, v?.exteriorColor].filter(Boolean).join(' - ') || '-'
+                const overdue = (b.status === 'Confirmed' || b.status === 'Rescheduled') && isOverdue(b)
+                const imageUrl = (() => {
+                  const im = v?.images?.[0]
+                  if (!im) return 'https://placehold.co/80x56'
+                  return externalImageDisplayUrl(typeof im === 'string' ? im : im.url)
+                })()
+
                 return (
-                  <tr key={b.id} className="transition-colors hover:bg-slate-50/50">
+                  <tr
+                    key={b.id}
+                    onClick={() => setDetailBooking(b)}
+                    className="cursor-pointer transition-colors hover:bg-slate-50/50"
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-200">
-                          <img
-                            src={
-                              (() => {
-                                const im = v?.images?.[0]
-                                if (!im) return 'https://placehold.co/80x56'
-                                return typeof im === 'string' ? im : im.url
-                              })()
-                            }
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
+                        <Link
+                          to={`/vehicles/${b.vehicleId}?view=manager`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-200 ring-1 ring-transparent transition hover:ring-[#1A3C6E]/30"
+                        >
+                          <img src={imageUrl} alt={b.vehicleTitle} className="h-full w-full object-cover" />
+                        </Link>
                         <div>
                           <p className="font-semibold text-slate-900">{b.vehicleTitle || `${v?.brand} ${v?.model} ${v?.year}`}</p>
                           <p className="text-xs text-slate-500">{detail}</p>
@@ -174,14 +198,23 @@ export function StaffBookingsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-medium text-slate-900">{customerName}</p>
-                      <p className="text-xs text-slate-500">SĐT: chưa có từ API</p>
+                      <p className="text-xs text-slate-500">SĐT: {b.customerPhone?.trim() || 'chưa có từ API'}</p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-slate-700">{formatDate(b.bookingDate)}</p>
                       <p className="text-xs text-slate-500">{formatTime(b.timeSlot)}</p>
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(b.status)}</td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-2">
+                        {getStatusBadge(b.status)}
+                        {overdue && (
+                          <span className="inline-flex w-fit rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
+                            Quá giờ chờ xử lý
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex flex-col items-end gap-2">
                         <div className="flex items-center justify-end gap-2">
                           {b.status === 'Pending' && (
@@ -207,7 +240,8 @@ export function StaffBookingsPage() {
                           booking={b}
                           onConfirm={(id, note) => wrap('Đã xác nhận', () => confirmBooking(id, note))}
                           onReschedule={(id, body) => wrap('Đã đổi lịch', () => rescheduleBooking(id, body))}
-                          onComplete={(id) => wrap('Đã hoàn thành', () => completeBooking(id))}
+                          onComplete={(id) => wrap('Đã ghi nhận khách đã lái thử', () => completeBooking(id))}
+                          onNoShow={(id) => wrap('Đã đánh dấu khách không đến', () => markNoShow(id))}
                           onCancel={(id) => wrap('Đã hủy', () => cancelBooking(id))}
                         />
                       </div>
@@ -218,9 +252,17 @@ export function StaffBookingsPage() {
             </tbody>
           </table>
         </div>
-
       </div>
-      <Pagination page={page} totalPages={totalPages} total={filteredBookings.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1) }} label="lịch hẹn" />
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={filteredBookings.length}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(1) }}
+        label="lịch hẹn"
+      />
 
       <BookingDetailModal
         booking={detailBooking}

@@ -1,25 +1,23 @@
 import { ShieldCheck, AlertCircle } from 'lucide-react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { FullInstallmentData } from '../installmentSchema'
-import type { InstallmentDocumentDTO } from '@/services/installment.service'
 import { formatPriceNumber } from '@/utils/format'
-
-const MIN_REQUIRED_DOCS = 4
 
 interface Props {
   form: UseFormReturn<FullInstallmentData>
-  documents: InstallmentDocumentDTO[]
+  documentsCount: number
+  hasEnoughRequiredDocs: boolean
 }
 
 function Section({ title, rows }: { title: string; rows: { label: string; value: string | undefined }[] }) {
   return (
     <div>
-      <h3 className="text-sm font-bold text-slate-700 mb-2">{title}</h3>
-      <div className="rounded-xl border border-slate-200 divide-y divide-slate-100">
+      <h3 className="mb-2 text-sm font-bold text-slate-700">{title}</h3>
+      <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
         {rows.map((r) => (
           <div key={r.label} className="flex items-center justify-between px-4 py-2.5">
             <span className="text-sm text-slate-500">{r.label}</span>
-            <span className="text-sm font-semibold text-slate-900 text-right max-w-[60%] truncate">{r.value || '—'}</span>
+            <span className="max-w-[60%] truncate text-right text-sm font-semibold text-slate-900">{r.value || '—'}</span>
           </div>
         ))}
       </div>
@@ -42,13 +40,12 @@ const REPAYMENT_LABELS: Record<string, string> = {
   DECLINING_INTEREST: 'Lãi giảm dần',
 }
 
-export function StepReview({ form, documents }: Props) {
+export function StepReview({ form, documentsCount, hasEnoughRequiredDocs }: Props) {
   const v = form.getValues()
-  const hasEnoughDocs = documents.length >= MIN_REQUIRED_DOCS
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
           <ShieldCheck className="h-5 w-5 text-emerald-600" />
         </div>
@@ -72,6 +69,7 @@ export function StepReview({ form, documents }: Props) {
 
       <Section title="Nghề nghiệp" rows={[
         { label: 'Loại hình', value: EMPLOYMENT_LABELS[v.employmentType] || v.employmentType },
+        { label: 'Nghề nghiệp cụ thể', value: v.employmentType === 'OTHER' ? v.employmentTypeOther : undefined },
         { label: 'Công ty / Doanh nghiệp', value: v.companyName || v.businessName },
         { label: 'Chức vụ', value: v.jobTitle },
         { label: 'Thâm niên', value: v.workDuration || v.businessDuration },
@@ -101,15 +99,15 @@ export function StepReview({ form, documents }: Props) {
       ]} />
 
       <Section title="Tài liệu" rows={[
-        { label: 'Số file đã upload', value: `${documents.length} file` },
+        { label: 'Số file đã upload', value: `${documentsCount} file` },
       ]} />
 
-      {!hasEnoughDocs && (
+      {!hasEnoughRequiredDocs && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <p className="font-semibold">Chưa đủ tài liệu bắt buộc</p>
-            <p className="mt-0.5">Vui lòng quay lại Bước 5 và upload ít nhất {MIN_REQUIRED_DOCS} tài liệu bắt buộc.</p>
+            <p className="mt-0.5">Vui lòng quay lại Bước 5 và upload đủ 4 loại tài liệu bắt buộc.</p>
           </div>
         </div>
       )}

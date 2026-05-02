@@ -2,6 +2,7 @@ export type NotificationType =
   | 'Booking'
   | 'Deposit'
   | 'Order'
+  | 'Installment'
   | 'PriceDrop'
   | 'System'
   | 'Consultation'

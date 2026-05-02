@@ -7,7 +7,15 @@ interface BookingActionButtonsProps {
   onConfirm: (id: number, note?: string) => Promise<void>
   onReschedule: (id: number, body: { newBookingDate: string; newTimeSlot: string; note?: string }) => Promise<void>
   onComplete: (id: number) => Promise<void>
+  onNoShow: (id: number) => Promise<void>
   onCancel: (id: number) => Promise<void>
+}
+
+function isOverdue(booking: Booking): boolean {
+  if (!booking.bookingDate || !booking.timeSlot) return false
+  const time = booking.timeSlot.length === 5 ? `${booking.timeSlot}:00` : booking.timeSlot
+  const appointmentAt = new Date(`${booking.bookingDate}T${time}`)
+  return !Number.isNaN(appointmentAt.getTime()) && appointmentAt.getTime() < Date.now()
 }
 
 export function BookingActionButtons({
@@ -15,11 +23,13 @@ export function BookingActionButtons({
   onConfirm,
   onReschedule,
   onComplete,
+  onNoShow,
   onCancel,
 }: BookingActionButtonsProps) {
   const [busy, setBusy] = useState(false)
   const [showReschedule, setShowReschedule] = useState(false)
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
+  const [noShowConfirmOpen, setNoShowConfirmOpen] = useState(false)
   const [newDate, setNewDate] = useState(booking.bookingDate)
   const [newTime, setNewTime] = useState(booking.timeSlot)
   const [resNote, setResNote] = useState('')
@@ -35,8 +45,9 @@ export function BookingActionButtons({
   }
 
   const s = booking.status
+  const overdue = isOverdue(booking)
 
-  if (s === 'Cancelled' || s === 'Completed') {
+  if (s === 'Cancelled' || s === 'Completed' || s === 'NoShow') {
     return null
   }
 
@@ -73,14 +84,24 @@ export function BookingActionButtons({
             Đổi lịch
           </button>
         )}
-        {s === 'Confirmed' && (
+        {(s === 'Confirmed' || s === 'Rescheduled') && (
           <button
             type="button"
             disabled={busy}
             onClick={() => run(() => onComplete(booking.id))}
             className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
           >
-            Hoàn thành
+            Đã lái thử
+          </button>
+        )}
+        {overdue && (s === 'Confirmed' || s === 'Rescheduled') && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setNoShowConfirmOpen(true)}
+            className="rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+          >
+            Khách không đến
           </button>
         )}
         <button
@@ -102,6 +123,18 @@ export function BookingActionButtons({
         onConfirm={async () => {
           await run(() => onCancel(booking.id))
           setCancelConfirmOpen(false)
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={noShowConfirmOpen}
+        onClose={() => setNoShowConfirmOpen(false)}
+        title="Đánh dấu khách không đến"
+        message="Xác nhận khách không đến lái thử theo lịch hẹn này?"
+        confirmLabel="Đánh dấu NoShow"
+        onConfirm={async () => {
+          await run(() => onNoShow(booking.id))
+          setNoShowConfirmOpen(false)
         }}
       />
 
@@ -139,7 +172,7 @@ export function BookingActionButtons({
                     newBookingDate: newDate,
                     newTimeSlot: newTime.trim(),
                     note: resNote.trim() || undefined,
-                  })
+                  }),
                 )
               }
               className="rounded bg-[#1A3C6E] px-3 py-1 text-sm text-white"

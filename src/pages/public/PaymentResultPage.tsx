@@ -1,7 +1,7 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
-import { getPaymentReturnVehicleIdForDeposit, paymentApi } from '@/services/paymentApi'
+import { getPaymentReturnContextForDeposit, getPaymentReturnVehicleIdForDeposit, paymentApi } from '@/services/paymentApi'
 import { depositApi } from '@/services/deposit.service'
 import { getStoredAuthToken } from '@/utils/authToken'
 import { notifyInventoryChanged } from '@/utils/inventorySync'
@@ -213,6 +213,23 @@ export function PaymentResultPage() {
     if (Number.isFinite(q) && q > 0) return q
     return getPaymentReturnVehicleIdForDeposit(mergedDepositId)
   }, [vehicleId, mergedDepositId])
+  const depositReturnContext = useMemo(
+    () => getPaymentReturnContextForDeposit(mergedDepositId),
+    [mergedDepositId],
+  )
+  const returnInstallmentVehicleId =
+    depositReturnContext?.flow === 'installment_wizard' &&
+    typeof depositReturnContext.vehicleId === 'number' &&
+    Number.isFinite(depositReturnContext.vehicleId) &&
+    depositReturnContext.vehicleId > 0
+      ? depositReturnContext.vehicleId
+      : null
+  const autoRedirectHref =
+    returnInstallmentVehicleId != null
+      ? `/dashboard/installment/${returnInstallmentVehicleId}`
+      : depositReturnContext?.flow === 'installment_status'
+        ? '/dashboard/installments'
+        : '/'
   const zaloWaitingForSync =
     isZaloReturn &&
     !mergedSuccess &&
@@ -260,13 +277,13 @@ export function PaymentResultPage() {
       if (remaining <= 0) {
         window.clearInterval(interval)
         setHomeRedirectSec(0)
-        navigate('/', { replace: true })
+        navigate(autoRedirectHref, { replace: true })
       } else {
         setHomeRedirectSec(remaining)
       }
     }, 1000)
     return () => window.clearInterval(interval)
-  }, [zaloWaitingForSync, hasPaymentOutcome, navigate])
+  }, [zaloWaitingForSync, hasPaymentOutcome, navigate, autoRedirectHref])
 
   let headline = 'Thanh toán chưa hoàn tất'
   let body =
@@ -310,10 +327,26 @@ export function PaymentResultPage() {
   }
 
   const primaryHref =
-    mergedDepositId != null ? '/dashboard/deposits' : mergedOrderId != null ? '/dashboard/orders' : '/dashboard'
+    returnInstallmentVehicleId != null
+      ? `/dashboard/installment/${returnInstallmentVehicleId}`
+      : depositReturnContext?.flow === 'installment_status'
+        ? '/dashboard/installments'
+        : mergedDepositId != null
+          ? '/dashboard/deposits'
+          : mergedOrderId != null
+            ? '/dashboard/orders'
+            : '/dashboard'
 
   const primaryLabel =
-    mergedDepositId != null ? 'Đặt cọc của tôi' : mergedOrderId != null ? 'Đơn hàng của tôi' : 'Bảng điều khiển'
+    returnInstallmentVehicleId != null
+      ? 'Tiếp tục hồ sơ trả góp'
+      : depositReturnContext?.flow === 'installment_status'
+        ? 'Hồ sơ trả góp của tôi'
+        : mergedDepositId != null
+          ? 'Đặt cọc của tôi'
+          : mergedOrderId != null
+            ? 'Đơn hàng của tôi'
+            : 'Bảng điều khiển'
 
   const retryHref =
     retryVehicleNumeric != null

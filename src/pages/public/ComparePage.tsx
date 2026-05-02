@@ -3,10 +3,11 @@
  *
  * Dùng useCompareVehicles hook + API /vehicles/compare
  */
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useCompareVehicles } from '@/hooks/useCompareVehicles'
 import { formatPrice, formatMileage } from '@/utils/format'
+import { maintenanceService, type MaintenanceRecord } from '@/services/maintenance.service'
 import { VehicleStatusBadge } from '@/components/ui'
 import { Button } from '@/components/ui'
 import { X, Plus, ArrowRight, ChevronRight } from 'lucide-react'
@@ -31,6 +32,7 @@ export function ComparePage() {
   } = useCompareVehicles()
 
   const compareIdsKey = compareList.join(',')
+  const [maintenanceByVehicle, setMaintenanceByVehicle] = useState<Record<number, MaintenanceRecord[]>>({})
 
   useEffect(() => {
     if (compareIdsKey.split(',').filter(Boolean).length < 2) return
@@ -39,6 +41,44 @@ export function ComparePage() {
 
   const vehicles = comparedData
 
+  useEffect(() => {
+    if (vehicles.length < 2) {
+      return
+    }
+
+    let cancelled = false
+    Promise.allSettled(
+      vehicles.map(async (vehicle) => {
+        const page = await maintenanceService.getPublicHistory(vehicle.id, 0, 50)
+        return [vehicle.id, page.content ?? []] as const
+      }),
+    )
+      .then((results) => {
+        if (cancelled) return
+        const next: Record<number, MaintenanceRecord[]> = {}
+        for (const result of results) {
+          if (result.status === 'fulfilled') {
+            next[result.value[0]] = result.value[1]
+          }
+        }
+        setMaintenanceByVehicle(next)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [vehicles])
+
+  const getMaintenanceRecords = (vehicleId: number) => maintenanceByVehicle[vehicleId] ?? []
+  const getLatestMaintenance = (vehicleId: number) =>
+    [...getMaintenanceRecords(vehicleId)].sort((a, b) => Date.parse(b.maintenanceDate) - Date.parse(a.maintenanceDate))[0]
+  const formatMaintenanceDate = (date: string | undefined) => {
+    if (!date) return 'Chưa có'
+    const time = Date.parse(date)
+    if (!Number.isFinite(time)) return date
+    return new Intl.DateTimeFormat('vi-VN').format(time)
+  }
+
   const specs: SpecDef[] = [
     { key: 'listing', label: 'Mã xe', get: (v) => v.listing_id || '—' },
     { key: 'year', label: 'Năm sản xuất', get: (v) => String(v.year) },
@@ -46,6 +86,26 @@ export function ComparePage() {
     { key: 'fuel', label: 'Nhiên liệu', get: (v) => v.fuel || '—' },
     { key: 'transmission', label: 'Hộp số', get: (v) => v.transmission || '—' },
     { key: 'status', label: 'Trạng thái', get: (v) => v.status },
+    {
+      key: 'maintenanceCount',
+      label: 'Số lần bảo dưỡng',
+      get: (v) => getMaintenanceRecords(v.id).length > 0 ? `${getMaintenanceRecords(v.id).length} lần` : 'Chưa có',
+    },
+    {
+      key: 'maintenanceLatestDate',
+      label: 'Bảo dưỡng gần nhất',
+      get: (v) => formatMaintenanceDate(getLatestMaintenance(v.id)?.maintenanceDate),
+    },
+    {
+      key: 'maintenancePerformedBy',
+      label: 'Đơn vị thực hiện gần nhất',
+      get: (v) => getLatestMaintenance(v.id)?.performedBy || 'Chưa có',
+    },
+    {
+      key: 'maintenanceDescription',
+      label: 'Nội dung bảo dưỡng gần nhất',
+      get: (v) => getLatestMaintenance(v.id)?.description || 'Chưa có',
+    },
   ]
 
   // Chưa đủ xe hoặc loading

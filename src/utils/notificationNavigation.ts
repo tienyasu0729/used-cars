@@ -24,3 +24,38 @@ export function normalizeCustomerNotificationLink(link?: string | null): string 
   if (L.startsWith('/')) return L
   return null
 }
+
+/**
+ * Chuẩn hóa link thông báo inbox cho staff.
+ * Trường hợp thiếu link từ backend sẽ fallback theo nội dung title/body.
+ */
+export function normalizeStaffNotificationLink(params: {
+  link?: string | null
+  title?: string | null
+  body?: string | null
+}): string | null {
+  const raw = params.link?.trim()
+  if (raw != null && raw !== '' && raw !== '#') {
+    if (raw === '/notifications' || raw === '/staff/notifications') return null
+    if (raw === '/installments') return '/staff/installments'
+    if (raw.startsWith('/staff/')) return raw
+    if (raw.startsWith('/')) return raw
+  }
+
+  const title = (params.title ?? '').toLowerCase()
+  const body = (params.body ?? '').toLowerCase()
+  const combined = `${title} ${body}`
+
+  if (
+    combined.includes('trả góp') ||
+    combined.includes('tra gop') ||
+    combined.includes('hồ sơ vay') ||
+    combined.includes('ho so vay') ||
+    combined.includes('thẩm định') ||
+    combined.includes('tham dinh')
+  ) {
+    return '/staff/installments'
+  }
+
+  return null
+}

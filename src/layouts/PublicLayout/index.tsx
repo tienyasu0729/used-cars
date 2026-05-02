@@ -6,6 +6,8 @@ import { PublicHeader } from './PublicHeader'
 import { PublicFooter } from './PublicFooter'
 import { FloatingChatWidget } from './FloatingChatWidget'
 
+const aiChatbotEnabled = import.meta.env.VITE_AI_CHATBOT_ENABLED === 'true'
+
 // Layout này quản lý 2 nút floating: Chat tư vấn + AI Chatbot
 // Chỉ cho phép 1 panel mở tại 1 thời điểm
 export function PublicLayout() {
@@ -32,10 +34,12 @@ export function PublicLayout() {
         onOpenChange={handleChatOpenChange}
         forceClose={aiOpen}
       />
-      <FloatingAIChatbot
-        onOpenChange={handleAiOpenChange}
-        forceClose={chatOpen}
-      />
+      {aiChatbotEnabled && (
+        <FloatingAIChatbot
+          onOpenChange={handleAiOpenChange}
+          forceClose={chatOpen}
+        />
+      )}
     </div>
   )
 }

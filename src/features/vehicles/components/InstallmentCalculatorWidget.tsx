@@ -4,9 +4,11 @@
  * Hiển thị tại trang chi tiết xe cho khách vãng lai.
  * Tính toán 100% client-side, không cần API.
  */
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Calculator, TrendingDown, Clock, Percent, ChevronDown, ChevronUp, CreditCard, ArrowRight } from 'lucide-react'
+import {
+  ArrowRight, Calculator, ChevronDown, ChevronUp, Clock, CreditCard, Percent, TrendingDown,
+} from 'lucide-react'
 import { formatPriceNumber } from '@/utils/format'
 
 interface Props {
@@ -18,18 +20,26 @@ const INTEREST_RATES = [6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0]
 const TERM_OPTIONS = [12, 24, 36, 48, 60, 72, 84]
 const PREPAYMENT_PERCENTS = [20, 30, 40, 50, 60, 70]
 
+const SUPPORTED_BANKS = [
+  { code: 'VCB', name: 'Vietcombank', color: '#059669' },
+  { code: 'BIDV', name: 'BIDV', color: '#1D4ED8' },
+  { code: 'TCB', name: 'Techcombank', color: '#DC2626' },
+  { code: 'MB', name: 'MB Bank', color: '#0369A1' },
+  { code: 'ACB', name: 'ACB', color: '#4338CA' },
+] as const
+
 export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [prepaymentPercent, setPrepaymentPercent] = useState(30)
   const [termMonths, setTermMonths] = useState(60)
   const [interestRate, setInterestRate] = useState(7.5)
+  const [selectedBankCode, setSelectedBankCode] = useState<string>(SUPPORTED_BANKS[0].code)
 
   const calculation = useMemo(() => {
     const prepayment = (vehiclePrice * prepaymentPercent) / 100
     const loanAmount = vehiclePrice - prepayment
     const monthlyRate = interestRate / 100 / 12
 
-    // PMT formula: M = P * [r(1+r)^n] / [(1+r)^n - 1]
     let monthlyPayment: number
     if (monthlyRate === 0) {
       monthlyPayment = loanAmount / termMonths
@@ -51,11 +61,10 @@ export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) 
   }, [vehiclePrice, prepaymentPercent, termMonths, interestRate])
 
   return (
-    <div className="rounded-xl border border-primary/10 bg-gradient-to-br from-primary/[0.03] to-white overflow-hidden transition-all duration-300">
-      {/* Header — luôn hiển thị */}
+    <div className="overflow-hidden rounded-xl border border-primary/10 bg-gradient-to-br from-primary/[0.03] to-white transition-all duration-300">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-center justify-between p-5 text-left cursor-pointer group"
+        className="group flex w-full cursor-pointer items-center justify-between p-5 text-left"
       >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
@@ -77,10 +86,8 @@ export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) 
         </div>
       </button>
 
-      {/* Body — mở rộng */}
       {isExpanded && (
-        <div className="border-t border-primary/10 px-5 pb-5 pt-4 space-y-5 animate-in slide-in-from-top-2 duration-200">
-          {/* Trả trước */}
+        <div className="animate-in slide-in-from-top-2 space-y-5 border-t border-primary/10 px-5 pb-5 pt-4 duration-200">
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
               <TrendingDown className="h-4 w-4 text-primary" />
@@ -91,7 +98,7 @@ export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) 
                 <button
                   key={p}
                   onClick={() => setPrepaymentPercent(p)}
-                  className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all cursor-pointer ${
+                  className={`cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
                     prepaymentPercent === p
                       ? 'bg-primary text-white shadow-sm shadow-primary/20'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -106,7 +113,6 @@ export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) 
             </p>
           </div>
 
-          {/* Kỳ hạn */}
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
               <Clock className="h-4 w-4 text-primary" />
@@ -117,7 +123,7 @@ export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) 
                 <button
                   key={t}
                   onClick={() => setTermMonths(t)}
-                  className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all cursor-pointer ${
+                  className={`cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
                     termMonths === t
                       ? 'bg-primary text-white shadow-sm shadow-primary/20'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -129,7 +135,6 @@ export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) 
             </div>
           </div>
 
-          {/* Lãi suất */}
           <div>
             <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
               <Percent className="h-4 w-4 text-primary" />
@@ -140,7 +145,7 @@ export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) 
                 <button
                   key={r}
                   onClick={() => setInterestRate(r)}
-                  className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all cursor-pointer ${
+                  className={`cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold transition-all ${
                     interestRate === r
                       ? 'bg-primary text-white shadow-sm shadow-primary/20'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -152,7 +157,34 @@ export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) 
             </div>
           </div>
 
-          {/* Kết quả */}
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Ngân hàng hỗ trợ</p>
+            <div className="flex flex-wrap gap-2">
+              {SUPPORTED_BANKS.map((bank) => (
+                <button
+                  type="button"
+                  key={bank.code}
+                  onClick={() => setSelectedBankCode(bank.code)}
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors ${
+                    selectedBankCode === bank.code
+                      ? 'border-primary bg-primary/10'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                  title={bank.name}
+                >
+                  <span
+                    className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white"
+                    style={{ backgroundColor: bank.color }}
+                    aria-label={bank.name}
+                  >
+                    {bank.code.slice(0, 2)}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-700">{bank.code}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="rounded-xl bg-gradient-to-br from-primary to-primary/80 p-5 text-white">
             <div className="mb-4 flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
@@ -188,8 +220,8 @@ export function InstallmentCalculatorWidget({ vehiclePrice, vehicleId }: Props) 
           </p>
 
           <Link
-            to={`/dashboard/installment/${vehicleId}`}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-3.5 text-sm font-bold text-white shadow-sm shadow-accent/20 transition-colors hover:bg-accent/90 cursor-pointer"
+            to={`/dashboard/installment/${vehicleId}?bankCode=${selectedBankCode}`}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-accent py-3.5 text-sm font-bold text-white shadow-sm shadow-accent/20 transition-colors hover:bg-accent/90"
           >
             Đăng ký trả góp
             <ArrowRight className="h-4 w-4" />

@@ -61,6 +61,14 @@ export function useStaffBookings() {
     [invalidate]
   )
 
+  const markNoShow = useCallback(
+    async (id: number) => {
+      await bookingService.markNoShow(id)
+      invalidate()
+    },
+    [invalidate]
+  )
+
   const cancelBooking = useCallback(
     async (id: number) => {
       await bookingService.cancelBooking(id)
@@ -78,6 +86,7 @@ export function useStaffBookings() {
     confirmBooking,
     rescheduleBooking,
     completeBooking,
+    markNoShow,
     cancelBooking,
     refetch: bookingsQuery.refetch,
   }

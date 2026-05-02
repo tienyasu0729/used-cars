@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
-import { Bell, ChevronDown, Menu, Settings, LogOut, Key, Home } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Bell, ChevronDown, Home, Key, LogOut, Menu, User } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 
@@ -14,6 +14,11 @@ export function StaffTopbar({ title, onMenuClick }: StaffTopbarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { user, logout } = useAuthStore()
   const { data: unreadCount = 0 } = useNotificationUnreadCount()
+  const { pathname } = useLocation()
+
+  const isEditVehiclePage = /\/staff\/vehicles\/[^/]+\/edit$/.test(pathname)
+  const topLinkTo = isEditVehiclePage ? '/staff/inventory' : '/'
+  const topLinkLabel = isEditVehiclePage ? 'Quay lại danh sách xe' : 'Trở về trang chủ'
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -44,16 +49,17 @@ export function StaffTopbar({ title, onMenuClick }: StaffTopbarProps) {
           <Menu className="h-6 w-6" />
         </button>
         <Link
-          to="/"
+          to={topLinkTo}
           className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:text-white"
         >
           <Home className="h-4 w-4" />
-          <span className="hidden sm:inline">Trở về trang chủ</span>
+          <span className="hidden sm:inline">{topLinkLabel}</span>
         </Link>
         <h2 className="text-lg font-semibold">{title}</h2>
         <span className="hidden text-white/50 sm:inline">|</span>
         <p className="hidden text-sm text-white sm:block">{dateStr}</p>
       </div>
+
       <div className="flex items-center gap-4">
         <Link
           to="/staff/notifications"
@@ -66,28 +72,56 @@ export function StaffTopbar({ title, onMenuClick }: StaffTopbarProps) {
             </span>
           )}
         </Link>
-        <div className="relative flex cursor-pointer items-center gap-2 group" ref={dropdownRef}>
+
+        <div className="group relative flex cursor-pointer items-center gap-2" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2 rounded-lg p-1 pr-2 transition-colors hover:bg-white/10"
           >
-            <Settings className="h-5 w-5 text-white group-hover:text-[#E8612A]" />
-            <span className="hidden text-sm font-medium sm:block">Cài đặt</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white">
+              {user?.name?.[0]?.toUpperCase() || 'S'}
+            </div>
+            <span className="hidden text-sm font-medium sm:block">{user?.name || 'Nhân viên'}</span>
             <ChevronDown className="h-4 w-4" />
           </button>
+
           {dropdownOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-slate-700 bg-slate-800 py-2 shadow-xl">
-              <div className="border-b border-slate-700 px-4 py-2">
+            <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-3xl border border-white/10 bg-slate-800 py-2 shadow-2xl">
+              <div className="border-b border-slate-700 px-4 py-3">
                 <p className="text-sm font-semibold text-white">{user?.name}</p>
                 <p className="text-xs text-slate-400">Nhân viên Kinh doanh</p>
               </div>
+              <Link
+                to="/staff/profile"
+                onClick={() => setDropdownOpen(false)}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700"
+              >
+                <User className="h-4 w-4" />
+                Hồ sơ
+              </Link>
+              <Link
+                to="/staff/notifications"
+                onClick={() => setDropdownOpen(false)}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700"
+              >
+                <Bell className="h-4 w-4" />
+                Thông báo
+              </Link>
               <Link
                 to="/staff/security"
                 onClick={() => setDropdownOpen(false)}
                 className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700"
               >
                 <Key className="h-4 w-4" />
-                Đổi Mật Khẩu
+                Đổi mật khẩu
+              </Link>
+              <Link
+                to="/"
+                onClick={() => setDropdownOpen(false)}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700"
+              >
+                <Home className="h-4 w-4" />
+                Về trang chủ
               </Link>
               <button
                 onClick={() => {
@@ -97,7 +131,7 @@ export function StaffTopbar({ title, onMenuClick }: StaffTopbarProps) {
                 className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-slate-700"
               >
                 <LogOut className="h-4 w-4" />
-                Đăng Xuất
+                Đăng xuất
               </button>
             </div>
           )}

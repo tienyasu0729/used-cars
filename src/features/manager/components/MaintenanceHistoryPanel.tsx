@@ -1,33 +1,33 @@
-/**
- * MaintenanceHistoryPanel — Hiển thị lịch sử bảo dưỡng xe + form tạo mới.
- * Dùng trong VehicleDetailModal hoặc trang edit xe.
- */
-import { useState, useEffect, useCallback } from 'react'
-import { maintenanceService, type MaintenanceRecord, type CreateMaintenancePayload } from '@/services/maintenance.service'
-import { Wrench, Plus, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import * as XLSX from 'xlsx'
+import { ChevronDown, ChevronUp, Plus, Upload, Wrench, X } from 'lucide-react'
+import { maintenanceService, type CreateMaintenancePayload, type MaintenanceRecord } from '@/services/maintenance.service'
 
 interface Props {
   vehicleId: number
 }
 
+type ParsedRow = CreateMaintenancePayload & { idx: number }
+
 export function MaintenanceHistoryPanel({ vehicleId }: Props) {
   const [records, setRecords] = useState<MaintenanceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [formError, setFormError] = useState('')
+  const [parsedRows, setParsedRows] = useState<ParsedRow[]>([])
 
-  // Form fields
   const [maintenanceDate, setMaintenanceDate] = useState('')
   const [description, setDescription] = useState('')
   const [cost, setCost] = useState('')
   const [performedBy, setPerformedBy] = useState('')
 
-  // B1: Load lịch sử bảo dưỡng
   const loadHistory = useCallback(async () => {
     setLoading(true)
     try {
-      const page = await maintenanceService.getHistory(vehicleId, 0, 50)
+      const page = await maintenanceService.getHistory(vehicleId, 0, 200)
       setRecords(page.content ?? [])
     } catch {
       setRecords([])
@@ -40,30 +40,31 @@ export function MaintenanceHistoryPanel({ vehicleId }: Props) {
     void loadHistory()
   }, [loadHistory])
 
-  // B2: Xử lý tạo bản ghi mới
-  const handleSubmit = async (e: React.FormEvent) => {
+  const visibleRows = useMemo(() => (expanded ? records : records.slice(0, 10)), [expanded, records])
+
+  const fmtCost = (v: number) => new Intl.NumberFormat('vi-VN').format(v)
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormError('')
-    if (!maintenanceDate || !description || !cost) {
-      setFormError('Vui lòng điền đầy đủ ngày, mô tả và chi phí.')
+    if (!maintenanceDate || !description.trim()) {
+      setFormError('Vui lòng nhập ngày và mô tả bảo dưỡng.')
       return
     }
     setSubmitting(true)
     try {
-      const payload: CreateMaintenancePayload = {
+      await maintenanceService.create(vehicleId, {
         maintenanceDate,
-        description,
-        cost: Number(cost),
-        performedBy: performedBy || undefined,
-      }
-      await maintenanceService.create(vehicleId, payload)
-      // Reset form + reload
+        description: description.trim(),
+        cost: Number(cost) || 0,
+        performedBy: performedBy.trim() || undefined,
+      })
       setMaintenanceDate('')
       setDescription('')
       setCost('')
       setPerformedBy('')
       setShowForm(false)
-      void loadHistory()
+      await loadHistory()
     } catch {
       setFormError('Lưu thất bại. Vui lòng thử lại.')
     } finally {
@@ -71,123 +72,162 @@ export function MaintenanceHistoryPanel({ vehicleId }: Props) {
     }
   }
 
-  // B3: Format currency
-  const fmtCost = (v: number) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v)
+  const onImportExcel = useCallback(async (file: File) => {
+    setFormError('')
+    try {
+      const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' })
+      const sheet = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
+      const parsed: ParsedRow[] = rows
+        .map((r, idx) => {
+          const dateRaw = String(r.ngay ?? r.Ngay ?? r.date ?? r.Date ?? '').trim()
+          const descRaw = String(r.mo_ta ?? r['Mô tả'] ?? r.moTa ?? r.description ?? '').trim()
+          const costRaw = String(r.chi_phi ?? r['Chi phí'] ?? r.cost ?? '0').trim()
+          const byRaw = String(r.nguoi_thuc_hien ?? r['Người thực hiện'] ?? r.performedBy ?? '').trim()
+          return {
+            idx: idx + 1,
+            maintenanceDate: dateRaw,
+            description: descRaw,
+            cost: Number(costRaw.replace(/[^\d.-]/g, '')) || 0,
+            performedBy: byRaw,
+          }
+        })
+        .filter((x) => x.maintenanceDate && x.description)
+      setParsedRows(parsed)
+      if (parsed.length === 0) setFormError('Không có dòng hợp lệ trong file Excel.')
+    } catch {
+      setFormError('Không đọc được file Excel.')
+    }
+  }, [])
+
+  const submitImportedRows = useCallback(async () => {
+    if (parsedRows.length === 0) return
+    setImporting(true)
+    setFormError('')
+    try {
+      await maintenanceService.bulkCreate(
+        vehicleId,
+        parsedRows.map(({ maintenanceDate, description, cost, performedBy }) => ({
+          maintenanceDate,
+          description,
+          cost,
+          performedBy,
+        })),
+      )
+      setParsedRows([])
+      await loadHistory()
+    } catch {
+      setFormError('Import bảo dưỡng thất bại.')
+    } finally {
+      setImporting(false)
+    }
+  }, [loadHistory, parsedRows, vehicleId])
 
   return (
-    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/50">
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Wrench className="h-4 w-4 text-slate-500" />
-          <h3 className="text-sm font-bold text-slate-800">Lịch sử bảo dưỡng</h3>
+          <h2 className="text-lg font-bold text-slate-900">Lịch sử bảo dưỡng</h2>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-1 rounded-lg bg-[#1A3C6E] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#1A3C6E]/90"
-        >
-          {showForm ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-          {showForm ? 'Hủy' : 'Thêm mới'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            {expanded ? 'Thu gọn' : 'Mở rộng'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowForm((v) => !v)}
+            className="inline-flex items-center gap-1 rounded-lg bg-[#1A3C6E] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1A3C6E]/90"
+          >
+            {showForm ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+            {showForm ? 'Hủy' : 'Thêm mới'}
+          </button>
+        </div>
       </div>
 
-      {/* Form tạo mới */}
+      {loading ? (
+        <div className="py-6 text-sm text-slate-500">Đang tải dữ liệu...</div>
+      ) : (
+        <>
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 text-slate-600">
+                <tr>
+                  <th className="px-3 py-2 text-left">Ngày</th>
+                  <th className="px-3 py-2 text-left">Mô tả</th>
+                  <th className="px-3 py-2 text-right">Chi phí</th>
+                  <th className="px-3 py-2 text-left">Người thực hiện</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleRows.map((r) => (
+                  <tr key={r.id} className="border-t border-slate-100">
+                    <td className="px-3 py-2">{r.maintenanceDate}</td>
+                    <td className="px-3 py-2">{r.description}</td>
+                    <td className="px-3 py-2 text-right">{fmtCost(Number(r.cost || 0))}</td>
+                    <td className="px-3 py-2">{r.performedBy || '—'}</td>
+                  </tr>
+                ))}
+                {records.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-3 py-4 text-center text-slate-500">Chưa có dữ liệu bảo dưỡng.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {records.length > 10 && !expanded && (
+            <p className="mt-2 text-xs text-slate-500">Đang hiển thị 10/{records.length} dòng.</p>
+          )}
+        </>
+      )}
+
       {showForm && (
-        <form onSubmit={(e) => void handleSubmit(e)} className="border-b border-slate-200 bg-white p-4">
+        <form onSubmit={(e) => void handleCreate(e)} className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white">
+              <Upload className="h-3.5 w-3.5" />
+              Import Excel
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) void onImportExcel(f)
+                  e.currentTarget.value = ''
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => void submitImportedRows()}
+              disabled={importing || parsedRows.length === 0}
+              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {importing ? 'Đang import...' : `Import ${parsedRows.length} dòng`}
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Ngày bảo dưỡng *</label>
-              <input
-                type="date"
-                value={maintenanceDate}
-                onChange={(e) => setMaintenanceDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-[#1A3C6E]/20"
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Chi phí (VNĐ) *</label>
-              <input
-                type="number"
-                min="0"
-                value={cost}
-                onChange={(e) => setCost(e.target.value)}
-                placeholder="0"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-[#1A3C6E]/20"
-                required
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-slate-600">Mô tả công việc *</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={2}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-[#1A3C6E]/20"
-                placeholder="Thay dầu, sửa phanh, bảo dưỡng định kỳ..."
-                required
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-slate-600">Đơn vị thực hiện</label>
-              <input
-                type="text"
-                value={performedBy}
-                onChange={(e) => setPerformedBy(e.target.value)}
-                placeholder="Garage XYZ, Toyota Đà Nẵng..."
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-[#1A3C6E]/20"
-              />
-            </div>
+            <input type="date" value={maintenanceDate} onChange={(e) => setMaintenanceDate(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+            <input type="text" inputMode="numeric" placeholder="Chi phí" value={cost} onChange={(e) => setCost(e.target.value.replace(/[^\d]/g, ''))} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+            <input type="text" placeholder="Mô tả bảo dưỡng" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm sm:col-span-2" />
+            <input type="text" placeholder="Người thực hiện" value={performedBy} onChange={(e) => setPerformedBy(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm sm:col-span-2" />
           </div>
           {formError && <p className="mt-2 text-xs text-red-500">{formError}</p>}
           <div className="mt-3 flex justify-end">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-            >
+            <button type="submit" disabled={submitting} className="rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
               {submitting ? 'Đang lưu...' : 'Lưu bản ghi'}
             </button>
           </div>
         </form>
       )}
-
-      {/* Danh sách */}
-      <div className="max-h-60 overflow-y-auto">
-        {loading ? (
-          <div className="flex items-center justify-center py-6">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#1A3C6E] border-t-transparent" />
-          </div>
-        ) : records.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-400">Chưa có bản ghi bảo dưỡng nào.</p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b bg-slate-100/60">
-                <th className="px-4 py-2 text-xs font-semibold text-slate-500">Ngày</th>
-                <th className="px-4 py-2 text-xs font-semibold text-slate-500">Mô tả</th>
-                <th className="px-4 py-2 text-xs font-semibold text-slate-500">Chi phí</th>
-                <th className="px-4 py-2 text-xs font-semibold text-slate-500">Đơn vị</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {records.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-50/50">
-                  <td className="whitespace-nowrap px-4 py-2 font-mono text-xs text-slate-700">
-                    {r.maintenanceDate}
-                  </td>
-                  <td className="px-4 py-2 text-slate-800">{r.description}</td>
-                  <td className="whitespace-nowrap px-4 py-2 font-medium text-emerald-700">
-                    {fmtCost(r.cost)}
-                  </td>
-                  <td className="px-4 py-2 text-slate-500">{r.performedBy ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
     </div>
   )
 }

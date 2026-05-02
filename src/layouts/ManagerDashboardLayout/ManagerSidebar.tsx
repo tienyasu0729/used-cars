@@ -24,9 +24,11 @@ import { useHasPermission } from '@/hooks/usePermissions'
 import { useNotificationUnreadCount } from '@/hooks/useNotificationUnreadCount'
 import { useInternalStaffChatUnreadCount } from '@/hooks/useChats'
 import { useStaffDashboardStats } from '@/hooks/useStaffDashboardStats'
+import { usePendingInstallmentCount } from '@/hooks/usePendingInstallmentCount'
+import { useUnreadInstallmentNotificationCount } from '@/hooks/useUnreadInstallmentNotificationCount'
 import { BrandLogo } from '@/components/common/BrandLogo'
 
-type BadgeKey = 'chat' | 'notifications' | 'appointments' | 'orders' | 'consultations'
+type BadgeKey = 'chat' | 'notifications' | 'appointments' | 'orders' | 'consultations' | 'installments'
 
 const navItems: Array<{
   to: string
@@ -46,7 +48,7 @@ const navItems: Array<{
   { to: '/manager/consultations', icon: FileText, label: 'Yêu Cầu Tư Vấn', badgeKey: 'consultations' },
   { to: '/manager/articles', icon: Newspaper, label: 'Bài viết', requiresCms: true },
   { to: '/manager/chat', icon: MessageSquare, label: 'Chat Khách Hàng', badgeKey: 'chat' },
-  { to: '/manager/installments', icon: FileText, label: 'Hồ Sơ Trả Góp' },
+  { to: '/manager/installments', icon: FileText, label: 'Hồ Sơ Trả Góp', badgeKey: 'installments' },
   { to: '/manager/transfers', icon: ArrowLeftRight, label: 'Yêu Cầu Điều Chuyển' },
   { to: '/manager/reports', icon: BarChart3, label: 'Báo Cáo' },
   { to: '/manager/transactions', icon: CreditCard, label: 'Lịch sử giao dịch' },
@@ -61,6 +63,8 @@ export function ManagerSidebar() {
   const { data: unreadCount = 0 } = useNotificationUnreadCount()
   const chatUnread = useInternalStaffChatUnreadCount()
   const { data: dashStats } = useStaffDashboardStats()
+  const { data: pendingInstallments = 0 } = usePendingInstallmentCount()
+  const unreadInstallmentUpdates = useUnreadInstallmentNotificationCount({ dashboardPrefix: '/manager' })
 
   const badgeCounts: Record<BadgeKey, number> = {
     notifications: unreadCount,
@@ -68,6 +72,7 @@ export function ManagerSidebar() {
     appointments: dashStats?.pendingBookings ?? 0,
     orders: dashStats?.pendingOrders ?? 0,
     consultations: dashStats?.pendingConsultations ?? 0,
+    installments: pendingInstallments + unreadInstallmentUpdates,
   }
 
   const visibleNav = navItems.filter((item) => !item.requiresCms || canManageCms)

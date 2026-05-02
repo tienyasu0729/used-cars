@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+﻿import { useState, useEffect } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   Loader2, ArrowLeft, FileText, FileImage, ExternalLink,
   CheckCircle2, Clock, XCircle, Ban, CreditCard,
@@ -7,6 +7,9 @@ import {
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { formatPriceNumber } from '@/utils/format'
 import { installmentService, type InstallmentApplicationDTO } from '@/services/installment.service'
+import { useToastStore } from '@/store/toastStore'
+import { navigateToPaymentUrl } from '@/utils/paymentNavigation'
+import { setPaymentReturnContext } from '@/services/paymentApi'
 
 const STATUS_STEPS = [
   { key: 'PENDING_DOCUMENT', label: 'Chờ hồ sơ', icon: FileText },
@@ -19,8 +22,8 @@ const STATUS_STEPS = [
 const TERMINAL_STATUSES = ['REJECTED', 'CANCELLED'] as const
 
 const DOC_TYPE_LABELS: Record<string, string> = {
-  CCCD_FRONT: 'CCCD — Mặt trước',
-  CCCD_BACK: 'CCCD — Mặt sau',
+  CCCD_FRONT: 'CCCD - Mặt trước',
+  CCCD_BACK: 'CCCD - Mặt sau',
   INCOME_PROOF: 'Xác nhận thu nhập',
   HOUSEHOLD_REG: 'Sổ hộ khẩu',
   ASSET_PROOF: 'Giấy tờ tài sản',
@@ -43,10 +46,14 @@ function getStepIndex(status: string): number {
 export function InstallmentStatusPage() {
   const { id } = useParams<{ id: string }>()
   const appId = id ? parseInt(id, 10) : 0
+  const navigate = useNavigate()
 
   const [app, setApp] = useState<InstallmentApplicationDTO | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isCreatingPreDeposit, setIsCreatingPreDeposit] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+  const addToast = useToastStore((s) => s.addToast)
 
   useDocumentTitle(app ? `Hồ sơ trả góp #${app.id}` : 'Hồ sơ trả góp')
 
@@ -74,28 +81,76 @@ export function InstallmentStatusPage() {
         <XCircle className="mx-auto h-12 w-12 text-red-400" />
         <h2 className="mt-4 text-xl font-bold text-slate-900">Lỗi</h2>
         <p className="mt-2 text-slate-500">{error || 'Không tìm thấy hồ sơ.'}</p>
-        <Link to="/dashboard" className="mt-4 inline-block text-primary font-semibold hover:underline">
-          ← Về trang quản lý
+        <Link to="/dashboard/installments" className="mt-4 inline-block text-primary font-semibold hover:underline">
+          ← Về lịch sử trả góp
         </Link>
       </div>
     )
   }
 
   const isTerminal = TERMINAL_STATUSES.includes(app.status as typeof TERMINAL_STATUSES[number])
+  const currentAppId = app.id
+  const currentVehicleId = Number(app.vehicleId)
   const currentStepIdx = getStepIndex(app.status)
   const monthly = computeMonthlyPayment(
     Number(app.loanAmount || 0),
     Number(app.loanTermMonths || 0),
   )
 
+  const shouldShowPreDepositAction =
+    app.status === 'DEPOSIT_PENDING' && Boolean(app.requestPreDeposit) && !app.preDepositId
+
+  async function handleCreatePreDeposit() {
+    try {
+      setIsCreatingPreDeposit(true)
+      const result = await installmentService.createPreDeposit(currentAppId, { paymentMethod: 'vnpay' })
+      if (result.paymentUrl) {
+        if (result.id != null && Number.isFinite(Number(result.id)) && Number(result.id) > 0) {
+          setPaymentReturnContext({
+            kind: 'deposit',
+            id: Number(result.id),
+            vehicleId: currentVehicleId,
+            flow: 'installment_status',
+          })
+        }
+        navigateToPaymentUrl(result.paymentUrl)
+        return
+      }
+      addToast('success', 'Đã tạo khoản đặt cọc. Vui lòng theo dõi trạng thái thanh toán.')
+      const latest = await installmentService.getById(currentAppId)
+      setApp(latest)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Không thể tạo đặt cọc. Vui lòng thử lại.'
+      addToast('error', msg)
+    } finally {
+      setIsCreatingPreDeposit(false)
+    }
+  }
+
+  async function handleCancelApplication() {
+    const ok = window.confirm('Bạn chắc chắn muốn hủy hồ sơ trả góp này?')
+    if (!ok) return
+    try {
+      setIsCancelling(true)
+      await installmentService.cancelApplication(currentAppId)
+      addToast('success', 'Đã hủy hồ sơ trả góp.')
+      navigate('/dashboard/installments')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Không thể hủy hồ sơ. Vui lòng thử lại.'
+      addToast('error', msg)
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 space-y-6">
       <Link
-        to="/dashboard"
+        to="/dashboard/installments"
         className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-primary transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
-        Về trang quản lý
+        Về lịch sử trả góp
       </Link>
 
       <div className="flex items-center justify-between">
@@ -103,10 +158,8 @@ export function InstallmentStatusPage() {
         <StatusBadge status={app.status} />
       </div>
 
-      {/* Timeline Stepper */}
       {!isTerminal && <TimelineStepper currentStepIdx={currentStepIdx} status={app.status} />}
 
-      {/* Terminal status banner */}
       {app.status === 'REJECTED' && (
         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-5">
           <XCircle className="h-6 w-6 text-red-500 shrink-0 mt-0.5" />
@@ -128,10 +181,24 @@ export function InstallmentStatusPage() {
         </div>
       )}
 
-      {/* Loan Summary */}
       <SummaryCard app={app} monthly={monthly} />
 
-      {/* PDF link when APPROVED */}
+      {shouldShowPreDepositAction && (
+        <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+          <p className="text-sm font-semibold text-orange-800">
+            Hồ sơ này cần đặt cọc để giữ xe trước khi tiếp tục xử lý trả góp.
+          </p>
+          <button
+            type="button"
+            onClick={handleCreatePreDeposit}
+            disabled={isCreatingPreDeposit}
+            className="mt-3 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isCreatingPreDeposit ? 'Đang tạo đặt cọc...' : 'Đặt cọc ngay'}
+          </button>
+        </div>
+      )}
+
       {app.bankPdfUrl && ['APPROVED', 'DEPOSIT_PENDING', 'DEPOSIT_PAID', 'COMPLETED'].includes(app.status) && (
         <a
           href={app.bankPdfUrl}
@@ -148,8 +215,21 @@ export function InstallmentStatusPage() {
         </a>
       )}
 
-      {/* Documents */}
       {app.documents.length > 0 && <DocumentsList documents={app.documents} />}
+
+      {!isTerminal && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+          <p className="text-sm text-red-700">Nếu bạn không muốn tiếp tục hồ sơ này, bạn có thể hủy.</p>
+          <button
+            type="button"
+            onClick={handleCancelApplication}
+            disabled={isCancelling}
+            className="mt-3 inline-flex items-center rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isCancelling ? 'Đang hủy...' : 'Hủy hồ sơ'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

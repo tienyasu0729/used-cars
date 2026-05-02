@@ -17,6 +17,7 @@ export interface ArticleListItem {
   categoryName: string | null
   categorySlug: string | null
   status: string
+  featured: boolean
   publishedAt: string | null
   createdAt: string
   viewCount: number
@@ -35,6 +36,7 @@ export interface ArticleDetail {
   categorySlug: string | null
   categoryId: number | null
   status: string
+  featured: boolean
   publishedAt: string | null
   createdAt: string
   updatedAt: string
@@ -49,6 +51,7 @@ export interface CreateArticleRequest {
   thumbnailUrl?: string
   categoryId?: number | null
   status?: string
+  featured?: boolean
 }
 
 export interface UpdateArticleRequest {
@@ -59,6 +62,7 @@ export interface UpdateArticleRequest {
   thumbnailUrl?: string
   categoryId?: number | null
   status?: string
+  featured?: boolean
 }
 
 export interface CreateCategoryRequest {

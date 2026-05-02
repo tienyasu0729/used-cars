@@ -10,7 +10,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useUsers } from '@/hooks/useUsers'
 import { formatPriceNumber } from '@/utils/format'
 import { WizardProgressBar } from '@/features/installment/WizardProgressBar'
-import { StepDocuments, type PendingDocument } from '@/features/installment/StepDocuments'
+import { StepDocuments, REQUIRED_DOCUMENT_TYPES, type PendingDocument } from '@/features/installment/StepDocuments'
 import {
   fullInstallmentSchema, WIZARD_STEPS, STEP_SCHEMAS,
   type FullInstallmentData,
@@ -54,12 +54,12 @@ export function StaffCreateInstallmentPage() {
   }, [users, customerSearch])
 
   const form = useForm<FullInstallmentData>({
-    resolver: zodResolver(fullInstallmentSchema),
+    resolver: zodResolver(fullInstallmentSchema) as any,
     mode: 'onBlur',
     defaultValues: {
       fullName: '', identityNumber: '', phoneNumber: '', email: '', dob: '',
       identityIssuedDate: '', identityIssuedPlace: '', permanentAddress: '', currentAddress: '',
-      employmentType: undefined, companyName: '', jobTitle: '', workDuration: '', salaryMethod: '',
+      employmentType: undefined, employmentTypeOther: '', companyName: '', jobTitle: '', workDuration: '', salaryMethod: '',
       businessName: '', businessType: '', businessDuration: '',
       monthlyIncome: undefined, monthlyExpenses: undefined, existingLoans: 0, dependentsCount: 0,
       vehiclePrice: vehicle?.price || 0, prepaymentAmount: 0, loanAmount: 0, loanTermMonths: undefined,
@@ -80,7 +80,19 @@ export function StaffCreateInstallmentPage() {
     setStep(1)
   }
 
+  const hasRequiredDocumentTypes = useMemo(() => {
+    const allTypes = new Set([
+      ...uploadedDocs.map((d) => d.documentType),
+      ...pendingDocs.map((d) => d.documentType),
+    ])
+    return REQUIRED_DOCUMENT_TYPES.every((type) => allTypes.has(type))
+  }, [uploadedDocs, pendingDocs])
+
   const goNext = async () => {
+    if (step === 5 && !hasRequiredDocumentTypes) {
+      setError('Vui lòng upload đủ 4 loại tài liệu bắt buộc trước khi tiếp tục.')
+      return
+    }
     const schema = STEP_SCHEMAS[step - 1]
     if (schema && 'shape' in schema) {
       const fields = Object.keys(schema.shape) as (keyof FullInstallmentData)[]
@@ -95,6 +107,11 @@ export function StaffCreateInstallmentPage() {
 
   const handleSubmit = async () => {
     if (!customerId) return
+    if (!hasRequiredDocumentTypes) {
+      setError('Vui lòng upload đủ 4 loại tài liệu bắt buộc.')
+      setStep(5)
+      return
+    }
     const valid = await form.trigger()
     if (!valid) { setStep(1); return }
     setIsSaving(true); setError(null)
@@ -206,7 +223,7 @@ export function StaffCreateInstallmentPage() {
             {step === 1 && <StepPersonalInfo form={form} />}
             {step === 2 && <StepEmployment form={form} />}
             {step === 3 && <StepFinancial form={form} />}
-            {step === 4 && <StepLoanDetails form={form} vehiclePrice={vehicle.price} />}
+            {step === 4 && <StepLoanDetails form={form} vehiclePrice={vehicle.price} appliedDepositAmount={0} />}
             {step === 5 && (
               <StepDocuments
                 uploadedDocs={uploadedDocs}
@@ -216,7 +233,13 @@ export function StaffCreateInstallmentPage() {
               />
             )}
             {step === 6 && <StepCommitment form={form} />}
-            {step === 7 && <StepReview form={form} documents={uploadedDocs} />}
+            {step === 7 && (
+              <StepReview
+                form={form}
+                documentsCount={uploadedDocs.length + pendingDocs.length}
+                hasEnoughRequiredDocs={hasRequiredDocumentTypes}
+              />
+            )}
 
             {error && <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 

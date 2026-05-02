@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Modal } from '@/components/ui'
 import { Badge } from '@/components/ui'
 import { Button } from '@/components/ui'
@@ -39,6 +40,7 @@ export function BookingDetailModal({
   onCancelBooking,
   isCancelling,
 }: BookingDetailModalProps) {
+  const navigate = useNavigate()
   const [confirmStep, setConfirmStep] = useState(false)
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -76,6 +78,7 @@ export function BookingDetailModal({
   const branchName = branch?.name ?? booking.branchName
   const showCancel = onCancelBooking && canCustomerCancel(booking.status)
   const history = booking.statusHistory ?? []
+  const showReviewNow = booking.status === 'Completed'
 
   const handleCancelClick = () => {
     if (!confirmStep) {
@@ -89,6 +92,11 @@ export function BookingDetailModal({
   const handleResetConfirm = () => {
     setConfirmStep(false)
     clearResetTimer()
+  }
+
+  const handleReviewNow = () => {
+    onClose()
+    navigate(`/vehicles/${booking.vehicleId}#reviews`)
   }
 
   return (
@@ -148,6 +156,24 @@ export function BookingDetailModal({
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {showReviewNow && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+            <p className="mb-2 text-sm font-semibold text-emerald-800">
+              Bạn đã hoàn thành buổi lái thử
+            </p>
+            <p className="mb-3 text-xs text-emerald-700/90">
+              Hãy chia sẻ trải nghiệm để giúp người mua khác có thêm thông tin tham khảo.
+            </p>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleReviewNow}
+            >
+              Đánh giá ngay
+            </Button>
           </div>
         )}
 

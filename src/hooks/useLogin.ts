@@ -8,7 +8,7 @@
  */
 
 import { useState, useCallback } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import authService from '@/services/auth.service'
 import { interactionService } from '@/services/interaction.service'
 import { useAuthStore } from '@/store/authStore'
@@ -30,30 +30,9 @@ interface UseLoginReturn {
   clearErrors: () => void
 }
 
-/**
- * Map role → đường dẫn redirect mặc định sau login.
- * Customer → /dashboard, Staff → /staff, Manager → /manager, Admin → /admin
- */
 export function getRedirectPathByRole(role: UserProfile['role']): string {
-  const roleRedirectMap: Record<UserProfile['role'], string> = {
-    Customer: '/dashboard',
-    SalesStaff: '/staff',
-    BranchManager: '/manager',
-    Admin: '/admin',
-  }
-  return roleRedirectMap[role] || '/dashboard'
-}
-
-function isPathCompatibleWithRole(path: string | undefined, role: UserProfile['role']): boolean {
-  if (!path) return false
-  const rolePathPrefixMap: Record<UserProfile['role'], string[]> = {
-    Customer: ['/dashboard', '/vehicles', '/payment'],
-    SalesStaff: ['/staff'],
-    BranchManager: ['/manager'],
-    Admin: ['/admin'],
-  }
-  const prefixes = rolePathPrefixMap[role] ?? []
-  return prefixes.some((prefix) => path.startsWith(prefix))
+  void role
+  return '/'
 }
 
 export function useLogin(): UseLoginReturn {
@@ -62,12 +41,7 @@ export function useLogin(): UseLoginReturn {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const navigate = useNavigate()
-  const location = useLocation()
   const setAuth = useAuthStore((state) => state.setAuth)
-
-  // Lấy path mà user muốn vào trước khi bị redirect về /login
-  // (ProtectedRoute lưu vào location.state.from)
-  const fromPath = (location.state as { from?: { pathname: string } })?.from?.pathname
 
   // Logic chung sau khi login thành công (dùng cho cả email/password và Google)
   const handleLoginSuccess = useCallback(async (user: UserProfile, token: string) => {
@@ -90,10 +64,8 @@ export function useLogin(): UseLoginReturn {
       return
     }
 
-    const defaultPath = getRedirectPathByRole(user.role)
-    const redirectTo = isPathCompatibleWithRole(fromPath, user.role) ? fromPath! : defaultPath
-    navigate(redirectTo, { replace: true })
-  }, [setAuth, navigate, fromPath])
+    navigate('/', { replace: true })
+  }, [setAuth, navigate])
 
   // Xử lý lỗi chung cho cả 2 flow login
   const handleLoginError = useCallback((err: unknown) => {

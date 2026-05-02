@@ -3,7 +3,10 @@ export interface ManagerAppointment {
   id: string
   customerId?: number
   customerName: string
+  vehicleId: number
+  vehicleListingId?: string
   vehicleName: string
+  thumbnailUrl?: string
   staffId?: number | null
   staffName: string
   date: string

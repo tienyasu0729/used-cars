@@ -11,6 +11,7 @@ import { customerExtrasApiEnabled } from '@/config/dataSource'
 import { createChatConversation, deleteChatConversation, listManagerChatContacts, sendChatMessage } from '@/services/chat.service'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
+import { buildVehicleAttachmentMessagePayload, VEHICLE_ATTACHMENT_MESSAGE_TYPE } from '@/utils/chatAttachment'
 import { isCustomerRole } from '@/utils/userRole'
 // Brand tokens
 const NAVY = '#1A3C6E'
@@ -49,9 +50,28 @@ interface FloatingChatWidgetProps {
   forceClose?: boolean
 }
 
+type ConsultVehicleAttachment = {
+  vehicleId: number
+  title: string
+  priceText?: string
+  imageUrl?: string
+}
+
+type OpenConsultChatDetail = {
+  conversationId: number
+  attachment: ConsultVehicleAttachment
+  participantName?: string
+  participantRole?: string
+}
+
 export function FloatingChatWidget({ onOpenChange, forceClose }: FloatingChatWidgetProps) {
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | undefined>()
+  const [composerAttachment, setComposerAttachment] = useState<ConsultVehicleAttachment | null>(null)
+  const [pendingParticipantName, setPendingParticipantName] = useState<string>('Tư vấn viên')
+  const [pendingParticipantRole, setPendingParticipantRole] = useState<string>('Đang kết nối')
+  const pendingConsultCid = useRef<string | null>(null)
+  const pendingConsultRetry = useRef(0)
   const [guestInput, setGuestInput] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [staffCustomerModalOpen, setStaffCustomerModalOpen] = useState(false)
@@ -100,6 +120,23 @@ export function FloatingChatWidget({ onOpenChange, forceClose }: FloatingChatWid
     () => conversations.reduce((s, c) => s + (c.unreadCount ?? 0), 0),
     [conversations],
   )
+  const displayConversations = useMemo(() => {
+    const cid = pendingConsultCid.current
+    if (!cid) return conversations
+    const found = conversations.some((c) => c.id === cid)
+    if (found) return conversations
+    return [
+      {
+        id: cid,
+        participantName: pendingParticipantName || 'Tư vấn viên',
+        participantRole: pendingParticipantRole || 'Đang kết nối',
+        lastMessage: '',
+        lastMessageAt: new Date().toISOString(),
+        unreadCount: 0,
+      },
+      ...conversations,
+    ]
+  }, [conversations, pendingParticipantName, pendingParticipantRole])
 
   const filteredStaffCustomers = useMemo(() => {
     const q = staffCustomerSearch.trim().toLowerCase()
@@ -133,10 +170,30 @@ export function FloatingChatWidget({ onOpenChange, forceClose }: FloatingChatWid
   // Auto-select first conversation when opening
   useEffect(() => {
     if (!open || !canUseFloatingChat) return
+    if (pendingConsultCid.current) return
     if (!selectedId && conversations.length > 0) {
       setSelectedId(conversations[0].id)
     }
   }, [open, canUseFloatingChat, selectedId, conversations])
+
+  // Nếu mở từ nút "Tư vấn" nhưng list chưa kịp có conversation, thử refetch ngắn 2 vòng.
+  useEffect(() => {
+    const cid = pendingConsultCid.current
+    if (!cid || !open) return
+    const found = conversations.some((c) => c.id === cid)
+    if (found) {
+      setSelectedId(cid)
+      pendingConsultCid.current = null
+      pendingConsultRetry.current = 0
+      setPendingParticipantName('Tư vấn viên')
+      setPendingParticipantRole('Đang kết nối')
+      return
+    }
+    if (!isLoading && pendingConsultRetry.current < 2) {
+      pendingConsultRetry.current += 1
+      void refetch()
+    }
+  }, [conversations, isLoading, open, refetch])
 
   // Click-outside to close (exclude the trigger button itself)
   useEffect(() => {
@@ -160,14 +217,46 @@ export function FloatingChatWidget({ onOpenChange, forceClose }: FloatingChatWid
     if (!selectedId) return
     const cid = parseInt(selectedId, 10)
     if (!Number.isFinite(cid)) return
+    const payload = composerAttachment
+      ? `Xe đính kèm: ${composerAttachment.title} (Mã: ${composerAttachment.vehicleId})\n${composerAttachment.priceText ? `Giá: ${composerAttachment.priceText}\n` : ''}\nNội dung: ${content}`
+      : content
     try {
-      await sendChatMessage(cid, content)
+      if (composerAttachment) {
+        await sendChatMessage(
+          cid,
+          buildVehicleAttachmentMessagePayload(composerAttachment, content),
+          VEHICLE_ATTACHMENT_MESSAGE_TYPE,
+        )
+      } else {
+        await sendChatMessage(cid, payload, 'text')
+      }
       void refetchMessages()
       void refetch()
+      if (composerAttachment) {
+        setComposerAttachment(null)
+      }
     } catch {
       toast.addToast('error', 'Không gửi được tin nhắn.')
     }
   }
+
+  useEffect(() => {
+    const handler = (ev: Event) => {
+      const detail = (ev as CustomEvent<OpenConsultChatDetail>).detail
+      if (!detail || typeof detail.conversationId !== 'number') return
+      setOpen(true)
+      const cid = String(detail.conversationId)
+      pendingConsultCid.current = cid
+      pendingConsultRetry.current = 0
+      setSelectedId(cid)
+      setComposerAttachment(detail.attachment ?? null)
+      setPendingParticipantName(detail.participantName?.trim() || 'Tư vấn viên')
+      setPendingParticipantRole(detail.participantRole?.trim() || 'Đang kết nối')
+      void refetch()
+    }
+    window.addEventListener('scudn:open-consult-chat', handler as EventListener)
+    return () => window.removeEventListener('scudn:open-consult-chat', handler as EventListener)
+  }, [refetch])
 
   const handleDeleteConversation = async (id: string) => {
     const cid = parseInt(id, 10)
@@ -322,12 +411,23 @@ export function FloatingChatWidget({ onOpenChange, forceClose }: FloatingChatWid
               <ChatLayout
                 compact
                 showListFilter={internalStaff}
-                conversations={conversations}
+                conversations={displayConversations}
                 messages={messages}
                 selectedId={selectedId}
                 onSelectConversation={setSelectedId}
                 onSendMessage={handleSendMessage}
                 onDeleteConversation={handleDeleteConversation}
+                composerAttachment={
+                  composerAttachment
+                    ? {
+                        vehicleId: composerAttachment.vehicleId,
+                        title: composerAttachment.title,
+                        price: composerAttachment.priceText,
+                        imageUrl: composerAttachment.imageUrl,
+                        onClear: () => setComposerAttachment(null),
+                      }
+                    : null
+                }
               />
             )
           ) : (

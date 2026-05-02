@@ -20,6 +20,7 @@ export interface ChatMessageApiRow {
   senderId: number
   senderName: string
   content: string
+  messageType?: string
   sentAt: string
   isRead: boolean
 }
@@ -105,6 +106,28 @@ export async function sendChatMessage(conversationId: number, content: string, m
   const id = res?.data?.messageId
   if (typeof id !== 'number') throw new Error('Invalid send message response')
   return id
+}
+
+export interface StartVehicleConsultationChatResult {
+  conversationId: number
+  receiverUserId: number
+  receiverDisplayName: string
+  reusedConversation: boolean
+}
+
+export async function startVehicleConsultationChat(
+  vehicleId: number,
+  message?: string,
+): Promise<StartVehicleConsultationChatResult> {
+  const res = (await axiosInstance.post('/chat/consultations/vehicle', {
+    vehicleId,
+    message: message?.trim() || undefined,
+  })) as ApiResponse<StartVehicleConsultationChatResult>
+  const data = res?.data
+  if (!data || typeof data.conversationId !== 'number') {
+    throw new Error('Invalid start consultation chat response')
+  }
+  return data
 }
 
 export const TRANSFER_GROUP_SAME_BRANCH_SALES = 'SAME_BRANCH_SALES' as const

@@ -9,6 +9,7 @@ import {
 } from '@/services/chat.service'
 import { useAuthStore } from '@/store/authStore'
 import type { ChatConversation, ChatMessage } from '@/types/chat'
+import { getConversationLastMessagePreview } from '@/utils/chatAttachment'
 
 const convKey = ['chat', 'conversations'] as const
 
@@ -29,7 +30,7 @@ function mapConversation(row: ChatConversationApiRow): ChatConversation {
     id: String(row.id),
     participantName: row.participantName,
     participantRole: row.participantRole,
-    lastMessage: row.lastMessage ?? '',
+    lastMessage: getConversationLastMessagePreview(row.lastMessage ?? ''),
     lastMessageAt: row.lastMessageAt ?? '',
     unreadCount: row.unreadCount ?? 0,
     vehicleInfo: row.vehicleInfo ?? undefined,
@@ -46,6 +47,7 @@ function mapMessages(rows: ChatMessageApiRow[], conversationId: string, selfId: 
     conversationId,
     senderType: m.senderId === selfId ? 'self' : 'other',
     content: m.content,
+    messageType: m.messageType,
     createdAt: m.sentAt,
   }))
 }

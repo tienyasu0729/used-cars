@@ -5,6 +5,7 @@ import type {
   AvailableSlot,
   Booking,
   CreateBookingRequest,
+  CreateManagerBookingRequest,
   RescheduleRequest,
   ScheduleGroup,
 } from '@/types/booking.types'
@@ -44,10 +45,20 @@ export const bookingService = {
       params: { branchId, date, ...(vehicleId != null ? { vehicleId } : {}) },
     })) as unknown as ApiResponse<AvailableSlot[]>
     const rows = res.data ?? []
-    return rows.map((s) => ({
-      ...s,
-      slotTime: normalizeTimeSlot(s.slotTime),
-    }))
+    return rows.map((s) => {
+      const raw = s as AvailableSlot & { bookable?: boolean; unavailable_reason?: string | null }
+      const normalizedReason = raw.unavailableReason ?? raw.unavailable_reason ?? null
+      const normalizedBookable =
+        (typeof raw.isBookable === 'boolean' ? raw.isBookable : undefined)
+        ?? (typeof raw.bookable === 'boolean' ? raw.bookable : undefined)
+        ?? (raw.availableCount > 0)
+      return {
+        ...raw,
+        slotTime: normalizeTimeSlot(raw.slotTime),
+        unavailableReason: normalizedReason as AvailableSlot['unavailableReason'],
+        isBookable: Boolean(normalizedBookable) && raw.availableCount > 0,
+      }
+    })
   },
 
   async createBooking(data: CreateBookingRequest): Promise<Booking> {
@@ -59,6 +70,9 @@ export const bookingService = {
       if (err.errorCode === 'SLOT_FULLY_BOOKED') {
         throw { ...err, message: err.message || 'Giờ này đã đầy, vui lòng chọn giờ khác' }
       }
+      if (err.errorCode === 'SLOT_NOT_FOUND') {
+        throw { ...err, message: err.message || 'Chi nhánh không làm việc khung giờ đã chọn.' }
+      }
       if (err.errorCode === 'VEHICLE_SLOT_TAKEN') {
         throw e
       }
@@ -67,6 +81,11 @@ export const bookingService = {
       }
       throw e
     }
+  },
+
+  async createManagerBooking(data: CreateManagerBookingRequest): Promise<Booking> {
+    const res = (await axiosInstance.post('/manager/bookings', data)) as unknown as ApiResponse<Booking>
+    return mapBooking(res.data as unknown as Record<string, unknown>)
   },
 
   async getMyBookings(params: {
@@ -163,6 +182,11 @@ export const bookingService = {
 
   async completeBooking(id: number): Promise<Booking> {
     const res = (await axiosInstance.patch(`/bookings/${id}/complete`)) as unknown as ApiResponse<Booking>
+    return mapBooking(res.data as unknown as Record<string, unknown>)
+  },
+
+  async markNoShow(id: number): Promise<Booking> {
+    const res = (await axiosInstance.patch(`/bookings/${id}/no-show`)) as unknown as ApiResponse<Booking>
     return mapBooking(res.data as unknown as Record<string, unknown>)
   },
 }

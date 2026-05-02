@@ -14,6 +14,7 @@ import {
   LogOut,
   User,
   Camera,
+  FileText,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
@@ -32,6 +33,7 @@ const navItems = [
   { to: '/dashboard/bookings', icon: Calendar, label: 'Lịch Lái Thử', badgeKey: 'bookings' },
   { to: '/dashboard/deposits', icon: Shield, label: 'Đặt Cọc', badgeKey: 'deposits' },
   { to: '/dashboard/orders', icon: ShoppingBag, label: 'Đơn Mua', badgeKey: 'orders' },
+  { to: '/dashboard/installments', icon: FileText, label: 'Trả Góp' },
   { to: '/dashboard/transactions', icon: CreditCard, label: 'Giao Dịch' },
   { to: '/dashboard/chat', icon: MessageCircle, label: 'Chat', badgeKey: 'chat' },
   { to: '/dashboard/notifications', icon: Bell, label: 'Thông Báo', badgeKey: 'notifications' },

@@ -5,7 +5,7 @@
  * Hiển thị gallery, thông số, save button, booking placeholder
  */
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useVehicleDetail } from '@/hooks/useVehicleDetail'
 import { useSavedVehicles } from '@/hooks/useSavedVehicles'
 import { useVehicles } from '@/hooks/useVehicles'
@@ -14,13 +14,25 @@ import { VehicleDetailGallery } from '@/features/vehicles/components/VehicleDeta
 import { DepositWizardModal } from '@/features/vehicles/components/DepositWizardModal'
 import { formatPrice, formatMileage } from '@/utils/format'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
-import { Phone, Calendar, Shield } from 'lucide-react'
+import { ChevronLeft, Phone, Calendar, Shield, MessageCircle } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { BookingForm } from '@/components/booking/BookingForm'
 import { VehicleReviewSection } from '@/components/vehicles/VehicleReviewSection'
 import type { UserRole } from '@/types/auth.types'
 import { isCustomerRole } from '@/utils/userRole'
 import { InstallmentCalculatorWidget } from '@/features/vehicles/components/InstallmentCalculatorWidget'
+import { startVehicleConsultationChat } from '@/services/chat.service'
+import { useToastStore } from '@/store/toastStore'
+
+const VEHICLE_LISTING_STATE_KEY = 'vehicle-listing-state'
+const VEHICLE_LISTING_FILTER_DRAFT_KEY = 'vehicle-listing-filter-draft'
+const VEHICLE_LISTING_SCROLL_KEY = 'vehicle-listing-scroll-y'
+
+function clearVehicleListingState() {
+  window.sessionStorage.removeItem(VEHICLE_LISTING_STATE_KEY)
+  window.sessionStorage.removeItem(VEHICLE_LISTING_FILTER_DRAFT_KEY)
+  window.sessionStorage.removeItem(VEHICLE_LISTING_SCROLL_KEY)
+}
 
 const STAFF_ROLE_HINT: Partial<Record<UserRole, string>> = {
   BranchManager: 'quản lý chi nhánh',
@@ -30,8 +42,13 @@ const STAFF_ROLE_HINT: Partial<Record<UserRole, string>> = {
 
 export function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const vehicleId = id ? parseInt(id, 10) : undefined
-  const { vehicle, isLoading, error, isSaved, toggleSave, refetchVehicle } = useVehicleDetail(vehicleId)
+  const managerView = searchParams.get('view') === 'manager'
+  const { vehicle, isLoading, error, isSaved, toggleSave, refetchVehicle } = useVehicleDetail(vehicleId, {
+    preferManaged: managerView,
+  })
   const { savedIds } = useSavedVehicles()
   const { isAuthenticated, user } = useAuthStore()
   const isCustomer = Boolean(user && isCustomerRole(user.role))
@@ -58,6 +75,47 @@ export function VehicleDetailPage() {
 
   const [activeTab, setActiveTab] = useState('specs')
   const [depositOpen, setDepositOpen] = useState(false)
+  const [consultSending, setConsultSending] = useState(false)
+  const toast = useToastStore()
+
+  const handleConsultClick = async () => {
+    if (!isAuthenticated) {
+      navigate(`/login?redirect=${encodeURIComponent(`/vehicles/${vehicle.id}`)}`)
+      return
+    }
+    if (!isCustomer) {
+      const roleHint = staffRoleHint ? `Bạn đang đăng nhập vai trò ${staffRoleHint}.` : 'Bạn không phải khách hàng.'
+      toast.addToast('error', `${roleHint} Vui lòng dùng tài khoản khách hàng để gửi tư vấn.`)
+      return
+    }
+    setConsultSending(true)
+    try {
+      const res = await startVehicleConsultationChat(vehicle.id)
+      const imageUrl =
+        (typeof vehicle.imageUrl === 'string' && vehicle.imageUrl) ||
+        (Array.isArray(vehicle.images) && vehicle.images.length > 0 && typeof vehicle.images[0]?.url === 'string'
+          ? vehicle.images[0].url
+          : undefined)
+      window.dispatchEvent(new CustomEvent('scudn:open-consult-chat', {
+        detail: {
+          conversationId: res.conversationId,
+          participantName: res.receiverDisplayName,
+          participantRole: 'ConsultationStaff',
+          attachment: {
+            vehicleId: vehicle.id,
+            title: vehicle.title,
+            priceText: formatPrice(vehicle.price),
+            imageUrl,
+          },
+        },
+      }))
+    } catch (err: unknown) {
+      const m = err && typeof err === 'object' && 'message' in err ? String((err as { message: string }).message) : 'Không gửi được yêu cầu tư vấn.'
+      toast.addToast('error', m)
+    } finally {
+      setConsultSending(false)
+    }
+  }
 
 
   // Loading state
@@ -107,6 +165,23 @@ export function VehicleDetailPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mb-5 flex flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-[#1A3C6E]/30 hover:text-[#1A3C6E]"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Quay lại
+        </button>
+        <Link
+          to="/vehicles"
+          onClick={clearVehicleListingState}
+          className="inline-flex items-center justify-center rounded-lg bg-[#1A3C6E] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#15325A]"
+        >
+          Xem tất cả xe
+        </Link>
+      </div>
       <div className="grid gap-8 lg:grid-cols-12">
         {/* Gallery + Tabs */}
         <VehicleDetailGallery
@@ -114,6 +189,7 @@ export function VehicleDetailPage() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           similarContent={similarContent}
+          managerView={managerView}
         />
 
         {/* Sidebar thông tin */}
@@ -274,12 +350,15 @@ export function VehicleDetailPage() {
           {/* Contact box */}
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="mb-3 font-bold text-slate-900">Liên hệ tư vấn</h3>
-            <Link
-              to={`/contact?vehicleId=${encodeURIComponent(String(vehicle.id))}`}
-              className="mb-3 flex items-center justify-center gap-2 rounded-lg bg-[#1A3C6E] py-3 font-bold text-white hover:bg-[#15325A]"
+            <button
+              type="button"
+              onClick={handleConsultClick}
+              disabled={consultSending}
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#1A3C6E] py-3 font-bold text-white hover:bg-[#15325A] disabled:opacity-60"
             >
-              Gửi phiếu tư vấn xe này
-            </Link>
+              <MessageCircle className="h-4 w-4" />
+              {consultSending ? 'Đang mở chat...' : 'Tư vấn'}
+            </button>
             <a
               href="tel:19006868"
               className="flex items-center gap-3 rounded-lg bg-[#1A3C6E]/5 p-3 font-bold text-[#1A3C6E] hover:bg-[#1A3C6E]/10"

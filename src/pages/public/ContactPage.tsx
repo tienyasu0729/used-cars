@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { useBranches } from '@/hooks/useBranches'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { Button } from '@/components/ui'
@@ -10,9 +9,6 @@ import { useToastStore } from '@/store/toastStore'
 export function ContactPage() {
   useDocumentTitle('Liên hệ')
   const { data: branches } = useBranches()
-  const [searchParams] = useSearchParams()
-  const vehicleIdParam = searchParams.get('vehicleId')
-  const vehicleIdNum = vehicleIdParam ? parseInt(vehicleIdParam, 10) : NaN
   const toast = useToastStore()
 
   const [form, setForm] = useState({
@@ -36,7 +32,6 @@ export function ContactPage() {
       await createConsultation({
         customerName: form.name.trim(),
         customerPhone: form.phone.trim(),
-        vehicleId: Number.isFinite(vehicleIdNum) ? vehicleIdNum : undefined,
         message,
         priority: 'medium',
       })
@@ -57,11 +52,6 @@ export function ContactPage() {
     <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
       <h1 className="text-2xl font-semibold text-gray-900">Liên Hệ / Tư Vấn</h1>
       <p className="mt-2 text-gray-500">Gửi yêu cầu tư vấn, chúng tôi sẽ phản hồi trong 24h</p>
-      {Number.isFinite(vehicleIdNum) && (
-        <p className="mt-2 text-sm text-[#1A3C6E]">
-          Bạn đang gửi tư vấn từ trang chi tiết xe. Phiếu sẽ kèm thông tin xe đó để showroom tiếp nhận và chuyển tới chi nhánh phù hợp.
-        </p>
-      )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <div className="rounded-xl border border-gray-200 bg-white p-6">

@@ -124,6 +124,7 @@ export function AdminArticlesPage({ scope = 'admin' }: { scope?: 'admin' | 'mana
                     <th className="px-4 py-3 font-medium text-gray-600">Tiêu đề</th>
                     <th className="px-4 py-3 font-medium text-gray-600">Danh mục</th>
                     <th className="px-4 py-3 font-medium text-gray-600">Trạng thái</th>
+                    <th className="px-4 py-3 font-medium text-gray-600">Nổi bật</th>
                     <th className="px-4 py-3 font-medium text-gray-600">Lượt xem</th>
                     <th className="px-4 py-3 font-medium text-gray-600">Ngày tạo</th>
                     <th className="px-4 py-3 font-medium text-gray-600">Thao tác</th>
@@ -137,6 +138,9 @@ export function AdminArticlesPage({ scope = 'admin' }: { scope?: 'admin' | 'mana
                         <td className="max-w-xs truncate px-4 py-3 font-medium text-gray-900">{a.title}</td>
                         <td className="px-4 py-3 text-gray-500">{a.categoryName ?? '—'}</td>
                         <td className="px-4 py-3"><Badge variant={s.variant}>{s.label}</Badge></td>
+                        <td className="px-4 py-3">
+                          {a.featured ? <Badge variant="warning">Nổi bật</Badge> : <span className="text-gray-400">—</span>}
+                        </td>
                         <td className="px-4 py-3 text-gray-500">{a.viewCount}</td>
                         <td className="px-4 py-3 text-gray-500">{new Date(a.createdAt).toLocaleDateString('vi-VN')}</td>
                         <td className="px-4 py-3">
@@ -212,7 +216,7 @@ export function AdminArticlesPage({ scope = 'admin' }: { scope?: 'admin' | 'mana
           if (deleteTarget) await deleteArticle.mutateAsync(deleteTarget)
           setDeleteTarget(null)
         }}
-        onCancel={() => setDeleteTarget(null)}
+        onClose={() => setDeleteTarget(null)}
       />
 
       {showCatModal && (
@@ -239,7 +243,7 @@ export function AdminArticlesPage({ scope = 'admin' }: { scope?: 'admin' | 'mana
           if (deleteCatTarget) await deleteCategory.mutateAsync(deleteCatTarget)
           setDeleteCatTarget(null)
         }}
-        onCancel={() => setDeleteCatTarget(null)}
+        onClose={() => setDeleteCatTarget(null)}
       />
     </div>
   )
@@ -315,6 +319,7 @@ function ArticleFormModal({
   const [uploadingOnSave, setUploadingOnSave] = useState(false)
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined)
   const [status, setStatus] = useState(article?.status ?? 'draft')
+  const [featured, setFeatured] = useState(article?.featured ?? false)
   const [cloudinaryReady, setCloudinaryReady] = useState(false)
   const detailAppliedRef = useRef<number | null>(null)
 
@@ -355,6 +360,7 @@ function ArticleFormModal({
     clearLocalThumbnail()
     setCategoryId(articleDetail.categoryId ?? undefined)
     setStatus(articleDetail.status)
+    setFeatured(articleDetail.featured)
   }, [articleDetail, clearLocalThumbnail])
 
   const onPickThumbnail = useCallback(
@@ -396,6 +402,7 @@ function ArticleFormModal({
         thumbnailUrl: finalThumb || undefined,
         categoryId,
         status,
+        featured,
       })
     } catch (e) {
       toast.addToast('error', (e as Error)?.message || 'Lưu hoặc tải ảnh thất bại.')
@@ -508,6 +515,15 @@ function ArticleFormModal({
             </select>
           </div>
         </div>
+        <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(e) => setFeatured(e.target.checked)}
+            className="rounded border-gray-300 text-[#1A3C6E]"
+          />
+          Đánh dấu bài viết nổi bật
+        </label>
       </div>
     </Modal>
   )

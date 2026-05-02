@@ -104,6 +104,7 @@ export function VehicleDetailModal({
 
   // Xác định đường dẫn chat dựa theo role (manager hoặc staff)
   const chatBasePath = pathname.startsWith('/manager') ? '/manager/chat' : '/staff/chat'
+  const detailHref = pathname.startsWith('/manager') ? `/vehicles/${vehicle.id}?view=manager` : `/vehicles/${vehicle.id}`
 
   // B1: Gọi API tạo (hoặc lấy lại) hội thoại với khách
   // B2: Xóa cache conversations cũ để trang chat fetch lại list mới nhất
@@ -147,7 +148,7 @@ export function VehicleDetailModal({
             Chỉnh sửa
           </Link>
           <Link
-            to={`/vehicles/${vehicle.id}`}
+            to={detailHref}
             onClick={onClose}
             className="rounded-lg border border-[#1A3C6E] px-4 py-2 text-sm font-medium text-[#1A3C6E]"
           >

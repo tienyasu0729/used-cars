@@ -19,7 +19,10 @@ export function GoogleLoginButton({ isLoading, onGoogleLogin }: GoogleLoginButto
   if (!clientId) return null
 
   return (
-    <div className="mt-4 flex justify-center">
+    <div
+      className={`mt-4 flex justify-center ${isLoading ? 'pointer-events-none opacity-60' : ''}`}
+      aria-disabled={isLoading}
+    >
       <GoogleLogin
         onSuccess={(response) => {
           if (response.credential) {
@@ -32,8 +35,6 @@ export function GoogleLoginButton({ isLoading, onGoogleLogin }: GoogleLoginButto
         text="continue_with"
         shape="rectangular"
         width={360}
-        locale="vi"
-        disabled={isLoading}
       />
     </div>
   )

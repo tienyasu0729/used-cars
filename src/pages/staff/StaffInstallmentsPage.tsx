@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+﻿import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Search, Eye, Send, XCircle, CheckCircle, Loader2, PlusCircle } from 'lucide-react'
+import { FileText, Search, Eye, Send, XCircle, CheckCircle, Loader2, PlusCircle, ChevronDown, Check } from 'lucide-react'
 import { installmentService, type InstallmentApplicationDTO } from '@/services/installment.service'
 import { useToastStore } from '@/store/toastStore'
 import { formatPriceNumber } from '@/utils/format'
@@ -28,6 +28,17 @@ const TABS = [
   { key: 'COMPLETED', label: 'Hoàn tất' },
 ]
 
+const BANK_META: Record<string, { name: string; mark: string; markClass: string }> = {
+  VCB: { name: 'Vietcombank', mark: 'VC', markClass: 'bg-emerald-500 text-white' },
+  TCB: { name: 'Techcombank', mark: 'TC', markClass: 'bg-red-500 text-white' },
+  BIDV: { name: 'BIDV', mark: 'BI', markClass: 'bg-blue-600 text-white' },
+  VPB: { name: 'VPBank', mark: 'VP', markClass: 'bg-green-700 text-white' },
+  ACB: { name: 'ACB', mark: 'AC', markClass: 'bg-indigo-600 text-white' },
+  MB: { name: 'MB Bank', mark: 'MB', markClass: 'bg-sky-700 text-white' },
+  VIB: { name: 'VIB', mark: 'VI', markClass: 'bg-amber-500 text-white' },
+  SACOMBANK: { name: 'Sacombank', mark: 'SB', markClass: 'bg-blue-500 text-white' },
+}
+
 function StatusBadge({ status }: { status: string }) {
   const s = STATUS_MAP[status] ?? { label: status, cls: 'bg-slate-100 text-slate-600' }
   return <span className={`rounded px-2.5 py-1 text-xs font-medium border ${s.cls}`}>{s.label}</span>
@@ -47,6 +58,8 @@ export function StaffInstallmentsPage() {
   const [showVehiclePicker, setShowVehiclePicker] = useState(false)
   const toast = useToastStore()
 
+  const supportedBanks = ['VCB', 'TCB', 'BIDV', 'VPB', 'ACB', 'MB', 'VIB', 'SACOMBANK']
+
   const fetchApps = useCallback(async () => {
     setLoading(true)
     try {
@@ -59,16 +72,18 @@ export function StaffInstallmentsPage() {
     }
   }, [activeTab, toast])
 
-  useEffect(() => { fetchApps() }, [fetchApps])
+  useEffect(() => {
+    void fetchApps()
+  }, [fetchApps])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return apps
     const q = search.toLowerCase()
     return apps.filter((a) =>
-      (a.fullName ?? '').toLowerCase().includes(q) ||
-      (a.customerName ?? '').toLowerCase().includes(q) ||
-      (a.vehicleTitle ?? '').toLowerCase().includes(q) ||
-      String(a.id).includes(q),
+      (a.fullName ?? '').toLowerCase().includes(q)
+      || (a.customerName ?? '').toLowerCase().includes(q)
+      || (a.vehicleTitle ?? '').toLowerCase().includes(q)
+      || String(a.id).includes(q),
     )
   }, [apps, search])
 
@@ -85,7 +100,7 @@ export function StaffInstallmentsPage() {
     try {
       if (confirmAction.type === 'appraise') {
         await installmentService.appraiseApplication(confirmAction.id)
-        toast.addToast('success', 'Đã gửi ngân hàng thẩm định')
+        toast.addToast('success', 'Đã gửi thẩm định thành công')
       } else if (confirmAction.type === 'cancel') {
         await installmentService.cancelApplication(confirmAction.id)
         toast.addToast('success', 'Đã hủy hồ sơ')
@@ -95,13 +110,13 @@ export function StaffInstallmentsPage() {
       }
       setConfirmAction(null)
       setSelectedApp(null)
-      fetchApps()
+      void fetchApps()
     } catch (err: unknown) {
       const apiErr = err as { errorCode?: string; message?: string }
       if (apiErr?.errorCode === 'BANK_CONNECTION_ERROR') {
-        toast.addToast('error', 'Không thể kết nối ngân hàng. Vui lòng thử lại sau.')
+        toast.addToast('error', 'Không thể kết nối hệ thống thẩm định. Vui lòng thử lại sau.')
       } else if (apiErr?.errorCode === 'BANK_API_ERROR') {
-        toast.addToast('error', 'Ngân hàng trả về lỗi. Vui lòng liên hệ quản trị.')
+        toast.addToast('error', 'Hệ thống thẩm định trả về lỗi. Vui lòng kiểm tra cấu hình API.')
       } else {
         toast.addToast('error', apiErr?.message || 'Thao tác thất bại')
       }
@@ -121,18 +136,23 @@ export function StaffInstallmentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Hồ Sơ Trả Góp</h2>
+          <h2 className="text-xl font-bold text-slate-900">Hồ sơ trả góp</h2>
           <p className="text-sm text-slate-500">Quản lý hồ sơ mua xe trả góp từ khách hàng</p>
         </div>
-        <button onClick={() => setShowVehiclePicker(true)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-colors cursor-pointer">
+        <button
+          onClick={() => setShowVehiclePicker(true)}
+          className="flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary/90"
+        >
           <PlusCircle className="h-4 w-4" /> Tạo hồ sơ mới
         </button>
       </div>
 
       {showVehiclePicker && (
         <VehiclePickerModal
-          onSelect={(vId) => { setShowVehiclePicker(false); navigate(`/staff/installments/create/${vId}`) }}
+          onSelect={(vId) => {
+            setShowVehiclePicker(false)
+            navigate(`/staff/installments/create/${vId}`)
+          }}
           onClose={() => setShowVehiclePicker(false)}
         />
       )}
@@ -157,22 +177,30 @@ export function StaffInstallmentsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex gap-2 overflow-x-auto border-b border-slate-200 flex-1">
+        <div className="flex flex-1 gap-2 overflow-x-auto border-b border-slate-200">
           {TABS.map((t) => (
             <button
               key={t.key}
-              onClick={() => { setActiveTab(t.key); setPage(1) }}
+              onClick={() => {
+                setActiveTab(t.key)
+                setPage(1)
+              }}
               className={`border-b-2 px-4 py-3 text-sm font-bold whitespace-nowrap ${
                 activeTab === t.key ? 'border-[#1A3C6E] text-[#1A3C6E]' : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
-            >{t.label}</button>
+            >
+              {t.label}
+            </button>
           ))}
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1)
+            }}
             placeholder="Tìm tên KH, xe, mã..."
             className="rounded-lg border border-slate-300 py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
@@ -190,13 +218,13 @@ export function StaffInstallmentsPage() {
             <table className="w-full text-left">
               <thead className="border-b border-slate-200 bg-slate-50">
                 <tr>
-                  <th className="px-5 py-3 text-xs font-bold uppercase text-slate-500">MÃ</th>
-                  <th className="px-5 py-3 text-xs font-bold uppercase text-slate-500">KHÁCH HÀNG</th>
-                  <th className="px-5 py-3 text-xs font-bold uppercase text-slate-500">XE</th>
-                  <th className="px-5 py-3 text-xs font-bold uppercase text-slate-500">SỐ TIỀN VAY</th>
-                  <th className="px-5 py-3 text-xs font-bold uppercase text-slate-500">TRẠNG THÁI</th>
-                  <th className="px-5 py-3 text-xs font-bold uppercase text-slate-500">NGÀY TẠO</th>
-                  <th className="px-5 py-3 text-xs font-bold uppercase text-slate-500 text-right">THAO TÁC</th>
+                  <th className="px-5 py-3 text-xs font-bold text-slate-500 uppercase">Mã</th>
+                  <th className="px-5 py-3 text-xs font-bold text-slate-500 uppercase">Khách hàng</th>
+                  <th className="px-5 py-3 text-xs font-bold text-slate-500 uppercase">Xe</th>
+                  <th className="px-5 py-3 text-xs font-bold text-slate-500 uppercase">Số tiền vay</th>
+                  <th className="px-5 py-3 text-xs font-bold text-slate-500 uppercase">Trạng thái</th>
+                  <th className="px-5 py-3 text-xs font-bold text-slate-500 uppercase">Ngày tạo</th>
+                  <th className="px-5 py-3 text-xs font-bold text-right text-slate-500 uppercase">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -209,7 +237,7 @@ export function StaffInstallmentsPage() {
                       <p className="text-sm font-medium text-slate-900">{a.customerName || a.fullName || '—'}</p>
                       <p className="text-xs text-slate-500">{a.customerPhone || a.phoneNumber || ''}</p>
                     </td>
-                    <td className="px-5 py-3 text-sm text-slate-700 max-w-[200px] truncate">{a.vehicleTitle || `Xe #${a.vehicleId}`}</td>
+                    <td className="max-w-[200px] truncate px-5 py-3 text-sm text-slate-700">{a.vehicleTitle || `Xe #${a.vehicleId}`}</td>
                     <td className="px-5 py-3 text-sm font-semibold text-slate-900">
                       {a.loanAmount ? `${formatPriceNumber(a.loanAmount)} đ` : '—'}
                     </td>
@@ -233,6 +261,10 @@ export function StaffInstallmentsPage() {
       {selectedApp && (
         <DetailModal
           app={selectedApp}
+          supportedBanks={supportedBanks}
+          onBankCodeChange={(code) => {
+            setSelectedApp((prev) => (prev ? { ...prev, bankCode: code } : prev))
+          }}
           onClose={() => setSelectedApp(null)}
           onAppraise={(id) => setConfirmAction({ type: 'appraise', id })}
           onCancel={(id) => setConfirmAction({ type: 'cancel', id })}
@@ -243,10 +275,10 @@ export function StaffInstallmentsPage() {
       <ConfirmDialog
         isOpen={!!confirmAction}
         onClose={() => setConfirmAction(null)}
-        title={confirmAction?.type === 'appraise' ? 'Gửi ngân hàng thẩm định' : confirmAction?.type === 'cancel' ? 'Hủy hồ sơ' : 'Xác nhận hoàn tất'}
+        title={confirmAction?.type === 'appraise' ? 'Gửi thẩm định' : confirmAction?.type === 'cancel' ? 'Hủy hồ sơ' : 'Xác nhận hoàn tất'}
         message={
           confirmAction?.type === 'appraise'
-            ? 'Gửi hồ sơ này đến ngân hàng để thẩm định tín dụng?'
+            ? 'Gửi hồ sơ này đến hệ thống thẩm định tín dụng?'
             : confirmAction?.type === 'cancel'
               ? 'Hủy hồ sơ trả góp này? Thao tác không thể hoàn tác.'
               : 'Xác nhận hồ sơ đã hoàn tất, xe sẽ chuyển sang Sold?'
@@ -260,38 +292,63 @@ export function StaffInstallmentsPage() {
 }
 
 function DetailModal({
-  app, onClose, onAppraise, onCancel, onComplete,
+  app, onClose, onAppraise, onCancel, onComplete, supportedBanks, onBankCodeChange,
 }: {
   app: InstallmentApplicationDTO
   onClose: () => void
   onAppraise: (id: number) => void
   onCancel: (id: number) => void
   onComplete: (id: number) => void
+  supportedBanks: string[]
+  onBankCodeChange: (code: string) => void
 }) {
+  const [bankMenuOpen, setBankMenuOpen] = useState(false)
+  const selectedBank = app.bankCode ? BANK_META[app.bankCode] : null
+
   const sections = [
-    { title: 'Thông tin cá nhân', rows: [
-      { label: 'Họ tên', value: app.fullName },
-      { label: 'CCCD/CMND', value: app.identityNumber },
-      { label: 'Ngày sinh', value: app.dob },
-      { label: 'SĐT', value: app.phoneNumber },
-      { label: 'Email', value: app.email },
-    ]},
-    { title: 'Nghề nghiệp', rows: [
-      { label: 'Loại hình', value: app.employmentType },
-      { label: 'Công ty', value: app.companyName },
-      { label: 'Thu nhập/tháng', value: app.monthlyIncome ? `${formatPriceNumber(app.monthlyIncome)} đ` : null },
-    ]},
-    { title: 'Khoản vay', rows: [
-      { label: 'Giá xe', value: app.vehiclePrice ? `${formatPriceNumber(app.vehiclePrice)} đ` : null },
-      { label: 'Trả trước', value: app.prepaymentAmount ? `${formatPriceNumber(app.prepaymentAmount)} đ` : null },
-      { label: 'Số tiền vay', value: app.loanAmount ? `${formatPriceNumber(app.loanAmount)} đ` : null },
-      { label: 'Kỳ hạn', value: app.loanTermMonths ? `${app.loanTermMonths} tháng` : null },
-    ]},
+    {
+      title: 'Thông tin cá nhân', rows: [
+        { label: 'Họ tên', value: app.fullName },
+        { label: 'CCCD/CMND', value: app.identityNumber },
+        { label: 'Ngày sinh', value: app.dob },
+        { label: 'SĐT', value: app.phoneNumber },
+        { label: 'Email', value: app.email },
+      ],
+    },
+    {
+      title: 'Nghề nghiệp', rows: [
+        { label: 'Loại hình', value: app.employmentType },
+        { label: 'Công ty', value: app.companyName },
+        { label: 'Thu nhập/tháng', value: app.monthlyIncome ? `${formatPriceNumber(app.monthlyIncome)} đ` : null },
+      ],
+    },
+    {
+      title: 'Khoản vay', rows: [
+        { label: 'Giá xe', value: app.vehiclePrice ? `${formatPriceNumber(app.vehiclePrice)} đ` : null },
+        { label: 'Trả trước', value: app.prepaymentAmount ? `${formatPriceNumber(app.prepaymentAmount)} đ` : null },
+        { label: 'Số tiền vay', value: app.loanAmount ? `${formatPriceNumber(app.loanAmount)} đ` : null },
+        { label: 'Kỳ hạn', value: app.loanTermMonths ? `${app.loanTermMonths} tháng` : null },
+      ],
+    },
   ]
 
   const showAppraise = app.status === 'PENDING_DOCUMENT' || app.status === 'DRAFT'
   const showCancel = app.status !== 'COMPLETED' && app.status !== 'CANCELLED'
-  const showComplete = app.status === 'APPROVED' || app.status === 'DEPOSIT_PAID'
+  const showComplete = Boolean(app.requestPreDeposit)
+    ? app.status === 'DEPOSIT_PAID'
+    : (app.status === 'APPROVED' || app.status === 'DEPOSIT_PAID')
+
+  useEffect(() => {
+    if (!bankMenuOpen) return
+    const onDocClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      if (!target) return
+      if (target.closest('[data-bank-select-root=\"true\"]')) return
+      setBankMenuOpen(false)
+    }
+    document.addEventListener('click', onDocClick)
+    return () => document.removeEventListener('click', onDocClick)
+  }, [bankMenuOpen])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
@@ -309,7 +366,7 @@ function DetailModal({
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm text-slate-500">Xe</p>
             <p className="text-base font-bold text-slate-900">{app.vehicleTitle || `Xe #${app.vehicleId}`}</p>
-            <p className="text-sm text-slate-500 mt-1">Khách: {app.customerName || app.fullName || '—'} · {app.customerPhone || app.phoneNumber || ''}</p>
+            <p className="mt-1 text-sm text-slate-500">Khách: {app.customerName || app.fullName || '—'} · {app.customerPhone || app.phoneNumber || ''}</p>
           </div>
 
           {app.bankLoanId && (
@@ -333,7 +390,7 @@ function DetailModal({
           {sections.map((s) => (
             <div key={s.title}>
               <h4 className="mb-3 text-sm font-bold text-slate-700">{s.title}</h4>
-              <div className="rounded-xl border border-slate-200 divide-y divide-slate-100">
+              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
                 {s.rows.map((r) => (
                   <div key={r.label} className="flex items-center justify-between px-4 py-2.5">
                     <span className="text-sm text-slate-500">{r.label}</span>
@@ -343,6 +400,64 @@ function DetailModal({
               </div>
             </div>
           ))}
+
+          {showAppraise && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-bold text-slate-800">Ngân hàng thẩm định</h4>
+              <div data-bank-select-root="true" className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBankMenuOpen((v) => !v)}
+                  className="flex w-full items-center justify-between rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-left shadow-sm transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none"
+                >
+                  {selectedBank ? (
+                    <span className="flex items-center gap-3">
+                      <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${selectedBank.markClass}`}>
+                        {selectedBank.mark}
+                      </span>
+                      <span className="flex flex-col leading-tight">
+                        <span className="text-sm font-semibold text-slate-900">{app.bankCode}</span>
+                        <span className="text-xs text-slate-500">{selectedBank.name}</span>
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-sm font-medium text-slate-500">-- Chọn ngân hàng --</span>
+                  )}
+                  <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${bankMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {bankMenuOpen && (
+                  <div className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                    {supportedBanks.map((code) => {
+                      const info = BANK_META[code]
+                      const active = app.bankCode === code
+                      return (
+                        <button
+                          key={code}
+                          type="button"
+                          onClick={() => {
+                            onBankCodeChange(code)
+                            setBankMenuOpen(false)
+                          }}
+                          className={`flex w-full items-center gap-3 px-3 py-2 text-left transition-colors ${active ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                        >
+                          <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${info.markClass}`}>
+                            {info.mark}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-semibold text-slate-900">{code}</span>
+                            <span className="block text-xs text-slate-500">{info.name}</span>
+                          </span>
+                          {active && <Check className="h-4 w-4 text-blue-600" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-slate-500"></p>
+            </div>
+          )}
 
           {app.documents && app.documents.length > 0 && (
             <div>
@@ -387,24 +502,32 @@ function VehiclePickerModal({ onSelect, onClose }: { onSelect: (id: number) => v
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="mx-4 max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl" onClick={e => e.stopPropagation()}>
+      <div className="mx-4 max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="border-b border-slate-200 p-5">
           <h3 className="text-lg font-bold text-slate-900">Chọn xe để tạo hồ sơ trả góp</h3>
           <div className="relative mt-3">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Tìm tên xe..."
-              className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <Search className="absolute top-3 left-3 h-4 w-4 text-slate-400" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Tìm tên xe..."
+              className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
           </div>
         </div>
-        <div className="max-h-[50vh] overflow-y-auto divide-y divide-slate-100">
+        <div className="max-h-[50vh] divide-y divide-slate-100 overflow-y-auto">
           {isLoading && <div className="py-8 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" /></div>}
           {!isLoading && vehicles.length === 0 && <p className="py-8 text-center text-sm text-slate-400">Không tìm thấy xe</p>}
-          {vehicles.map(v => (
-            <button key={v.id} type="button" onClick={() => onSelect(v.id)}
-              className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-primary/5 transition-colors cursor-pointer">
+          {vehicles.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => onSelect(v.id)}
+              className="flex w-full cursor-pointer items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-primary/5"
+            >
               {v.thumbnail && <img src={v.thumbnail} alt={v.title} className="h-12 w-18 rounded-lg object-cover" />}
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-900 truncate">{v.title}</p>
+                <p className="truncate text-sm font-semibold text-slate-900">{v.title}</p>
                 <p className="text-xs text-slate-500">{formatPriceNumber(v.price)} VNĐ</p>
               </div>
             </button>

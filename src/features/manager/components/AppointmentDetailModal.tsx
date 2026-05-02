@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Modal, Badge, ConfirmDialog } from '@/components/ui'
+import { contractService } from '@/services/contract.service'
+import type { ContractPreview } from '@/types/contract.types'
 import type { ManagerAppointment } from '@/types/managerAppointment.types'
 import { formatBookingDateTimeVi } from '@/utils/bookingDisplay'
 
@@ -20,6 +22,31 @@ function canManagerCancel(status: string): boolean {
   return status === 'Pending' || status === 'Confirmed' || status === 'Rescheduled'
 }
 
+function splitContractUrls(value: string | null | undefined): string[] {
+  if (!value) return []
+  return value
+    .split('|')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function isImageUrl(value: string): boolean {
+  return value.startsWith('data:image/') || /\.(png|jpe?g|webp|gif)(\?|#|$)/i.test(value)
+}
+
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return 'Chưa có'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export function AppointmentDetailModal({
   appointment,
   isOpen,
@@ -29,15 +56,67 @@ export function AppointmentDetailModal({
   actionBookingId,
 }: AppointmentDetailModalProps) {
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
+  const [contractPreview, setContractPreview] = useState<ContractPreview | null>(null)
+  const [contractLoading, setContractLoading] = useState(false)
+  const [contractError, setContractError] = useState<string | null>(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   useEffect(() => {
     if (!isOpen) setCancelConfirmOpen(false)
   }, [isOpen])
 
+  useEffect(() => {
+    if (!isOpen || !appointment) {
+      setContractPreview(null)
+      setContractError(null)
+      setContractLoading(false)
+      return
+    }
+
+    let cancelled = false
+    const bookingId = Number(appointment.id)
+    setContractLoading(true)
+    setContractError(null)
+    setContractPreview(null)
+
+    contractService
+      .getStaffContractPreview(bookingId)
+      .then((preview) => {
+        if (!cancelled) setContractPreview(preview)
+      })
+      .catch(() => {
+        if (!cancelled) setContractError('Không tải được thông tin hợp đồng.')
+      })
+      .finally(() => {
+        if (!cancelled) setContractLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, appointment])
+
   if (!appointment) return null
 
   const numericId = Number(appointment.id)
   const isBusy = actionBookingId === numericId
+  const isContractSigned = contractPreview?.contractStatus === 'SIGNED'
+  const signatureUrls = splitContractUrls(contractPreview?.signatureUrl)
+  const idCardUrls = splitContractUrls(contractPreview?.idCardUrl)
+  const licenseUrls = splitContractUrls(contractPreview?.licenseUrl)
+
+  async function handleOpenContractPdf() {
+    if (!isContractSigned) return
+    setPdfLoading(true)
+    try {
+      const blob = await contractService.downloadStaffContractPdf(numericId)
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } finally {
+      setPdfLoading(false)
+    }
+  }
 
   const statusVariant =
     appointment.status === 'Confirmed'
@@ -53,6 +132,7 @@ export function AppointmentDetailModal({
     Rescheduled: 'Đổi Lịch',
     Completed: 'Hoàn Thành',
     Cancelled: 'Đã Hủy',
+    NoShow: 'Khách không đến',
   }
   const typeLabels: Record<string, string> = {
     test_drive: 'Lái Thử',
@@ -160,6 +240,119 @@ export function AppointmentDetailModal({
             </p>
           </div>
         )}
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Hợp đồng lái thử</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {contractLoading
+                  ? 'Đang tải hợp đồng...'
+                  : isContractSigned
+                    ? 'Khách hàng đã ký hợp đồng'
+                    : 'Chưa có hợp đồng đã ký'}
+              </p>
+            </div>
+            {isContractSigned ? (
+              <button
+                type="button"
+                disabled={pdfLoading}
+                onClick={() => void handleOpenContractPdf()}
+                className="rounded-lg border border-[#1A3C6E]/20 bg-white px-3 py-2 text-xs font-semibold text-[#1A3C6E] hover:bg-[#1A3C6E]/5 disabled:opacity-50"
+              >
+                {pdfLoading ? 'Đang mở...' : 'Xem PDF'}
+              </button>
+            ) : null}
+          </div>
+
+          {contractError ? (
+            <p className="text-sm text-red-600">{contractError}</p>
+          ) : contractPreview ? (
+            <div className="space-y-3 text-sm">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Trạng thái</p>
+                  <p className="font-medium text-slate-800">
+                    {isContractSigned ? 'Đã ký' : contractPreview.contractStatus}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Thời điểm ký</p>
+                  <p className="font-medium text-slate-800">{formatDateTime(contractPreview.signedAt)}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Phiên bản điều khoản</p>
+                  <p className="font-medium text-slate-800">{contractPreview.termsVersion}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Mã xác thực nội dung</p>
+                  <p className="break-all font-mono text-xs text-slate-700">
+                    {contractPreview.contentSha256 ?? 'Chưa có'}
+                  </p>
+                </div>
+              </div>
+
+              {signatureUrls.length > 0 ? (
+                <div>
+                  <p className="mb-2 text-xs font-medium text-slate-500">Chữ ký khách hàng</p>
+                  {signatureUrls[0] && isImageUrl(signatureUrls[0]) ? (
+                    <img
+                      src={signatureUrls[0]}
+                      alt="Chữ ký khách hàng"
+                      className="max-h-28 rounded-lg border border-slate-200 bg-white object-contain p-2"
+                    />
+                  ) : (
+                    <p className="rounded-lg border border-slate-200 bg-white px-3 py-2 font-medium text-slate-800">
+                      {signatureUrls[0]}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
+              {(idCardUrls.length > 0 || licenseUrls.length > 0) && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {idCardUrls.length > 0 ? (
+                    <div>
+                      <p className="mb-2 text-xs font-medium text-slate-500">CCCD/CMND</p>
+                      <div className="flex flex-wrap gap-2">
+                        {idCardUrls.map((url, index) => (
+                          <a
+                            key={url}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1A3C6E] ring-1 ring-[#1A3C6E]/15 hover:bg-[#1A3C6E]/5"
+                          >
+                            Mở ảnh {index + 1}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {licenseUrls.length > 0 ? (
+                    <div>
+                      <p className="mb-2 text-xs font-medium text-slate-500">Giấy phép lái xe</p>
+                      <div className="flex flex-wrap gap-2">
+                        {licenseUrls.map((url, index) => (
+                          <a
+                            key={url}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1A3C6E] ring-1 ring-[#1A3C6E]/15 hover:bg-[#1A3C6E]/5"
+                          >
+                            Mở ảnh {index + 1}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">Chưa có dữ liệu hợp đồng.</p>
+          )}
+        </div>
         {appointment.notes ? (
           <div>
             <p className="text-xs font-medium text-slate-500">Ghi chú khách</p>

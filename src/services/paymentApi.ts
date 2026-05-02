@@ -9,6 +9,7 @@ export function setPaymentReturnContext(ctx: {
   kind: 'order' | 'deposit'
   id: number
   vehicleId?: number
+  flow?: 'default' | 'installment_wizard' | 'installment_status'
 }) {
   sessionStorage.setItem(
     PAYMENT_RETURN_CONTEXT_KEY,
@@ -16,24 +17,41 @@ export function setPaymentReturnContext(ctx: {
   )
 }
 
-export function getPaymentReturnVehicleIdForDeposit(depositId: string | number | null | undefined): number | null {
-  if (depositId == null || depositId === '') return null
+export interface PaymentReturnContext {
+  kind: 'order' | 'deposit'
+  id: number
+  vehicleId?: number
+  flow?: 'default' | 'installment_wizard' | 'installment_status'
+  at?: number
+}
+
+function readPaymentReturnContext(): PaymentReturnContext | null {
   try {
     const raw = sessionStorage.getItem(PAYMENT_RETURN_CONTEXT_KEY)
     if (!raw) return null
-    const o = JSON.parse(raw) as {
-      kind?: string
-      id?: number
-      vehicleId?: number
-      at?: number
-    }
-    if (o.kind !== 'deposit' || o.id == null || String(o.id) !== String(depositId)) return null
-    if (o.at != null && Date.now() - o.at > PAYMENT_RETURN_MAX_AGE_MS) return null
-    const v = o.vehicleId
-    return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null
+    return JSON.parse(raw) as PaymentReturnContext
   } catch {
     return null
   }
+}
+
+export function getPaymentReturnVehicleIdForDeposit(depositId: string | number | null | undefined): number | null {
+  if (depositId == null || depositId === '') return null
+  const o = readPaymentReturnContext()
+  if (!o) return null
+  if (o.kind !== 'deposit' || o.id == null || String(o.id) !== String(depositId)) return null
+  if (o.at != null && Date.now() - o.at > PAYMENT_RETURN_MAX_AGE_MS) return null
+  const v = o.vehicleId
+  return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null
+}
+
+export function getPaymentReturnContextForDeposit(depositId: string | number | null | undefined): PaymentReturnContext | null {
+  if (depositId == null || depositId === '') return null
+  const o = readPaymentReturnContext()
+  if (!o) return null
+  if (o.kind !== 'deposit' || o.id == null || String(o.id) !== String(depositId)) return null
+  if (o.at != null && Date.now() - o.at > PAYMENT_RETURN_MAX_AGE_MS) return null
+  return o
 }
 
 export function paymentInitErrorMessage(err: unknown): string {

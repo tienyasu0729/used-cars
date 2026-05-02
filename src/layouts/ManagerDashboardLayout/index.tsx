@@ -43,8 +43,10 @@ export function ManagerDashboardLayout() {
       <ManagerSidebar />
       <ManagerMobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden lg:pl-[220px]">
-        <ManagerTopbar title={title} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 overflow-y-auto bg-[#F6F7F8] p-8">
+        <div className="fixed left-0 right-0 top-0 z-50 lg:left-[220px]">
+          <ManagerTopbar title={title} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+        </div>
+        <main className="flex-1 overflow-y-auto bg-[#F6F7F8] p-8 pt-24">
           <Outlet />
         </main>
       </div>

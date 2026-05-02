@@ -10,9 +10,11 @@ export function useCreateBooking() {
   const queryClient = useQueryClient()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState<string | null>(null)
 
   const createBooking = async (data: CreateBookingRequest) => {
     setError(null)
+    setErrorCode(null)
     setIsSubmitting(true)
     try {
       const booking = await bookingService.createBooking(data)
@@ -24,8 +26,11 @@ export function useCreateBooking() {
       }
     } catch (e) {
       const err = e as ApiErrorResponse & { message?: string }
+      setErrorCode(err.errorCode ?? null)
       if (err.errorCode === 'SLOT_FULLY_BOOKED') {
         setError(err.message ?? 'Giờ này đã đầy, vui lòng chọn giờ khác')
+      } else if (err.errorCode === 'SLOT_NOT_FOUND') {
+        setError(err.message ?? 'Chi nhánh không làm việc khung giờ đã chọn.')
       } else if (err.errorCode === 'VEHICLE_SLOT_TAKEN') {
         setError(err.message ?? 'Xe này đã có lịch trong khung giờ này. Vui lòng chọn giờ khác.')
       } else if (err.errorCode === 'LISTING_ID_CONFLICT') {
@@ -40,5 +45,5 @@ export function useCreateBooking() {
     }
   }
 
-  return { createBooking, isSubmitting, error, setError }
+  return { createBooking, isSubmitting, error, errorCode, setError }
 }

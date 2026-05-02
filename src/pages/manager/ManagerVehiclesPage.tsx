@@ -166,7 +166,7 @@ function vehicleInventoryTableRow(v: Vehicle, ctx: RowCtx) {
                 <Eye className="h-5 w-5" />
               </button>
             ) : (
-              <Link to={`/vehicles/${v.id}`}>
+              <Link to={`/vehicles/${v.id}?view=manager`}>
                 <button type="button" className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100" title="Xem trang công khai">
                   <Eye className="h-5 w-5" />
                 </button>
@@ -240,20 +240,6 @@ export function ManagerVehiclesPage() {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
-      return next
-    })
-  }, [])
-
-  const toggleSelectAll = useCallback(() => {
-    const pageIds = paginated.map((v) => v.id)
-    setSelectedIds((prev) => {
-      const allSelected = pageIds.every((id) => prev.has(id))
-      const next = new Set(prev)
-      if (allSelected) {
-        pageIds.forEach((id) => next.delete(id))
-      } else {
-        pageIds.forEach((id) => next.add(id))
-      }
       return next
     })
   }, [])
@@ -337,6 +323,20 @@ export function ManagerVehiclesPage() {
   const totalPages = Math.ceil(paginateSource.length / pageSize) || 1
   const paginated = paginateSource.slice((page - 1) * pageSize, page * pageSize)
 
+  const toggleSelectAll = useCallback(() => {
+    const pageIds = paginated.map((v) => v.id)
+    setSelectedIds((prev) => {
+      const allSelected = pageIds.every((id) => prev.has(id))
+      const next = new Set(prev)
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id))
+      } else {
+        pageIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }, [paginated])
+
   const toggleExportSelect = useCallback((id: number) => {
     setExportSelectedIds((prev) => {
       const next = new Set(prev)
@@ -418,23 +418,25 @@ export function ManagerVehiclesPage() {
 
       {/* Tabs — chỉ hiện khi không phải Admin (Admin đã thấy toàn bộ) */}
       {!isAdmin && (
-        <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
+        <div className="relative grid grid-cols-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
+          <div
+            aria-hidden
+            className={`pointer-events-none absolute bottom-1 top-1 w-[calc(50%-0.25rem)] rounded-md bg-white shadow-sm transition-transform duration-300 ease-out ${
+              activeTab === 'NETWORK' ? 'translate-x-[calc(100%+0.25rem)]' : 'translate-x-0'
+            }`}
+          />
           <button
             onClick={() => handleTabChange('MINE')}
-            className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition-all ${
-              activeTab === 'MINE'
-                ? 'bg-white text-[#1A3C6E] shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
+            className={`relative z-10 rounded-md px-4 py-2 text-sm font-semibold transition-colors duration-200 ${
+              activeTab === 'MINE' ? 'text-[#1A3C6E]' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             Kho xe chi nhánh
           </button>
           <button
             onClick={() => handleTabChange('NETWORK')}
-            className={`flex-1 rounded-md px-4 py-2 text-sm font-semibold transition-all ${
-              activeTab === 'NETWORK'
-                ? 'bg-white text-[#1A3C6E] shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
+            className={`relative z-10 rounded-md px-4 py-2 text-sm font-semibold transition-colors duration-200 ${
+              activeTab === 'NETWORK' ? 'text-[#1A3C6E]' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
@@ -444,7 +446,6 @@ export function ManagerVehiclesPage() {
           </button>
         </div>
       )}
-
       {activeTab === 'NETWORK' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           Chọn xe và bấm <strong>Yêu cầu điều chuyển</strong> để đưa về chi nhánh của bạn.

@@ -2,7 +2,8 @@ import { useMemo, useState, type CSSProperties } from 'react'
 import type { ChatConversation, ChatMessage } from '@/types'
 import { formatChatSidebarTime } from '@/utils/format'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { Send, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { Send, ChevronLeft, ChevronRight, Trash2, X } from 'lucide-react'
+import { parseVehicleAttachmentMessagePayload, VEHICLE_ATTACHMENT_MESSAGE_TYPE } from '@/utils/chatAttachment'
 
 const NAVY = '#1A3C6E'
 const ORANGE = '#E8612A'
@@ -14,6 +15,13 @@ interface ChatLayoutProps {
   onSelectConversation: (id: string) => void
   onSendMessage?: (content: string) => void
   onDeleteConversation?: (id: string) => void
+  composerAttachment?: {
+    vehicleId?: number
+    title: string
+    price?: string
+    imageUrl?: string | null
+    onClear?: () => void
+  } | null
   /** Sidebar + thread gọn (widget nổi) */
   compact?: boolean
   showListFilter?: boolean
@@ -26,6 +34,7 @@ export function ChatLayout({
   onSelectConversation,
   onSendMessage,
   onDeleteConversation,
+  composerAttachment,
   compact = false,
   showListFilter,
 }: ChatLayoutProps) {
@@ -37,6 +46,7 @@ export function ChatLayout({
 
   const filterBar = showListFilter ?? compact
   const selected = conversations.find((c) => c.id === selectedId)
+  const hasSelectedThread = Boolean(selected)
 
   const filteredConversations = useMemo(() => {
     let list = conversations
@@ -45,6 +55,44 @@ export function ChatLayout({
     if (listFilter === 'unread') list = list.filter((c) => c.unreadCount > 0)
     return list
   }, [conversations, search, listFilter])
+
+  const renderMessageContent = (m: ChatMessage) => {
+    if (m.messageType !== VEHICLE_ATTACHMENT_MESSAGE_TYPE) {
+      return <p>{m.content}</p>
+    }
+    const parsed = parseVehicleAttachmentMessagePayload(m.content)
+    if (!parsed) {
+      return <p>{m.content}</p>
+    }
+    return (
+      <div className="space-y-2">
+        <div className="rounded-lg border border-white/30 bg-white/90 p-2 text-slate-900">
+          <div className="flex items-start gap-2">
+            {parsed.attachment.imageUrl ? (
+              <img
+                src={parsed.attachment.imageUrl}
+                alt={parsed.attachment.title}
+                className="h-12 w-12 rounded-md object-cover"
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-md bg-slate-200" />
+            )}
+            <a
+              href={`/vehicles/${parsed.attachment.vehicleId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="min-w-0 hover:underline"
+              title="Mở chi tiết xe"
+            >
+              <p className="line-clamp-2 text-xs font-semibold">{parsed.attachment.title}</p>
+              {parsed.attachment.priceText && <p className="text-xs text-[#E8612A]">{parsed.attachment.priceText}</p>}
+            </a>
+          </div>
+        </div>
+        {parsed.text && parsed.text.trim() && <p>{parsed.text.trim()}</p>}
+      </div>
+    )
+  }
 
   const handleSend = () => {
     if (input.trim() && onSendMessage) {
@@ -223,7 +271,7 @@ export function ChatLayout({
 
       {/* ══ MAIN CHAT AREA ══ */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {selected ? (
+        {hasSelectedThread ? (
           <>
             {/* Conversation header */}
             <div
@@ -240,13 +288,13 @@ export function ChatLayout({
                   color: NAVY,
                 }}
               >
-                {selected.participantName[0]?.toUpperCase() ?? '?'}
+                {selected?.participantName?.[0]?.toUpperCase() ?? 'T'}
               </div>
               <div className="min-w-0">
                 <p className={`font-semibold text-slate-900 ${compact ? 'text-sm' : ''}`}>
-                  {selected.participantName}
+                  {selected?.participantName ?? 'Tư vấn viên'}
                 </p>
-                <p className="text-xs text-slate-400">{selected.participantRole}</p>
+                <p className="text-xs text-slate-400">{selected?.participantRole ?? 'Đang kết nối'}</p>
               </div>
             </div>
 
@@ -269,7 +317,7 @@ export function ChatLayout({
                         : { background: '#e8edf5', color: '#1e293b', borderBottomLeftRadius: '0.25rem' }),
                     }}
                   >
-                    <p>{m.content}</p>
+                    {renderMessageContent(m)}
                     <p className="mt-1 text-[10px] opacity-60">
                       {new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                     </p>
@@ -280,30 +328,67 @@ export function ChatLayout({
 
             {/* Input bar */}
             <div
-              className="flex shrink-0 gap-2 border-t border-slate-200"
-              style={{ padding: compact ? '0.5rem' : '1rem' }}
+              className="shrink-0 border-t border-slate-200"
+              style={{ padding: compact ? '0.5rem' : '1rem', background: '#fff' }}
             >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Nhập tin nhắn..."
-                className="flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                style={{ borderColor: 'rgba(26,60,110,0.15)' } as CSSProperties}
-              />
-              <button
-                type="button"
-                onClick={handleSend}
-                className="flex shrink-0 items-center justify-center rounded-lg text-white transition-opacity hover:opacity-80"
-                style={{
-                  background: NAVY,
-                  width: compact ? '2.25rem' : '2.5rem',
-                  height: compact ? '2.25rem' : '2.5rem',
-                }}
-              >
-                <Send className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
-              </button>
+              {composerAttachment && (
+                <div className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
+                  <div className="flex items-start gap-2">
+                    {composerAttachment.imageUrl ? (
+                      <img
+                        src={composerAttachment.imageUrl}
+                        alt={composerAttachment.title}
+                        className="h-12 w-12 rounded-md object-cover"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-md bg-slate-200" />
+                    )}
+                    <a
+                      href={composerAttachment.vehicleId ? `/vehicles/${composerAttachment.vehicleId}` : undefined}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="min-w-0 flex-1 hover:underline"
+                      title={composerAttachment.vehicleId ? 'Mở chi tiết xe' : undefined}
+                    >
+                      <p className="truncate text-xs font-semibold text-slate-900">{composerAttachment.title}</p>
+                      {composerAttachment.price && <p className="text-xs text-[#E8612A]">{composerAttachment.price}</p>}
+                    </a>
+                    {composerAttachment.onClear && (
+                      <button
+                        type="button"
+                        onClick={composerAttachment.onClear}
+                        className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                        title="Bỏ đính kèm"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                  placeholder="Nhập tin nhắn..."
+                  className="flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                  style={{ borderColor: 'rgba(26,60,110,0.15)' } as CSSProperties}
+                />
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  className="flex shrink-0 items-center justify-center rounded-lg text-white transition-opacity hover:opacity-80"
+                  style={{
+                    background: NAVY,
+                    width: compact ? '2.25rem' : '2.5rem',
+                    height: compact ? '2.25rem' : '2.5rem',
+                  }}
+                >
+                  <Send className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
+                </button>
+              </div>
             </div>
           </>
         ) : (

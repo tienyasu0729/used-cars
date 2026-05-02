@@ -10,6 +10,7 @@ const NOTIFICATION_TYPES: NotificationType[] = [
   'Booking',
   'Deposit',
   'Order',
+  'Installment',
   'PriceDrop',
   'System',
   'Consultation',

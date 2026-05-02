@@ -69,4 +69,13 @@ export const maintenanceService = {
     const apiRes = res as unknown as { data: MaintenanceRecord }
     return apiRes.data ?? (res as unknown as MaintenanceRecord)
   },
+
+  bulkCreate: async (vehicleId: number, data: CreateMaintenancePayload[]): Promise<MaintenanceRecord[]> => {
+    const res = await axiosInstance.post<{ data: MaintenanceRecord[] }>(
+      `/manager/vehicles/${vehicleId}/maintenance/bulk`,
+      data,
+    )
+    const apiRes = res as unknown as { data: MaintenanceRecord[] }
+    return apiRes.data ?? (res as unknown as MaintenanceRecord[])
+  },
 }

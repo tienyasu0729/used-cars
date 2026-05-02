@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, ChevronDown, User, LayoutDashboard, LogOut, GitCompare } from 'lucide-react'
+import { Menu, X, ChevronDown, User, LayoutDashboard, LogOut, GitCompare, Heart, CalendarDays, Bell, Shield } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useCompareStore } from '@/store/compareStore'
 import { BrandLogo } from '@/components/common/BrandLogo'
@@ -27,8 +27,16 @@ function getProfilePath(role: UserRole | string): string {
   return '/dashboard/profile'
 }
 
+function getSecurityPath(role: UserRole | string): string | null {
+  const r = String(role)
+  if (r === 'Customer' || r === 'customer') return '/dashboard/security'
+  if (r === 'SalesStaff' || r === 'staff') return '/staff/security'
+  if (r === 'BranchManager' || r === 'manager') return '/manager/security'
+  return null
+}
+
 const navLinks = [
-  { to: '/vehicles', label: 'Mua Xe' },
+  { to: '/vehicles', label: 'Xe đang bán' },
   { to: '/branches', label: 'Chi Nhánh' },
   { to: '/news', label: 'Tin Tức' },
   { to: '/contact', label: 'Liên Hệ' },
@@ -60,12 +68,7 @@ export function PublicHeader() {
     return () => document.removeEventListener('click', handleClickOutside)
   }, [])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    doSearch(searchQuery)
-  }
-
-  const doSearch = useCallback((keyword: string) => {
+  const doSearch = (keyword: string) => {
     const trimmed = keyword.trim()
     if (trimmed) {
       navigate(`/vehicles?q=${encodeURIComponent(trimmed)}`)
@@ -73,7 +76,7 @@ export function PublicHeader() {
       navigate('/vehicles')
     }
     setMobileOpen(false)
-  }, [navigate])
+  }
 
   const handleLogout = () => {
     logout()
@@ -187,26 +190,70 @@ export function PublicHeader() {
                 <ChevronDown className="h-4 w-4 text-white" />
               </button>
               {avatarOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-white/20 bg-[#1A3C6E] py-2 shadow-xl">
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-3xl border border-white/20 bg-[#15325A] shadow-2xl backdrop-blur">
+                  <div className="border-b border-white/10 bg-white/5 px-5 py-4">
+                    <p className="text-sm font-semibold text-white">{user.name}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-white/55">{user.role}</p>
+                  </div>
                   <Link
                     to={getProfilePath(user.role)}
                     onClick={() => setAvatarOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10"
+                    className="flex items-center gap-3 px-5 py-3 text-sm text-white hover:bg-white/10"
                   >
                     <User className="h-4 w-4" />
                     Hồ sơ
                   </Link>
+                  {String(user.role) === 'Customer' ? (
+                    <>
+                      <Link
+                        to="/dashboard/saved"
+                        onClick={() => setAvatarOpen(false)}
+                        className="flex items-center gap-3 px-5 py-3 text-sm text-white hover:bg-white/10"
+                      >
+                        <Heart className="h-4 w-4" />
+                        Xe đã lưu
+                      </Link>
+                      <Link
+                        to="/dashboard/bookings"
+                        onClick={() => setAvatarOpen(false)}
+                        className="flex items-center gap-3 px-5 py-3 text-sm text-white hover:bg-white/10"
+                      >
+                        <CalendarDays className="h-4 w-4" />
+                        Lịch hẹn của tôi
+                      </Link>
+                    </>
+                  ) : null}
                   <Link
                     to={getDashboardPath(user.role)}
                     onClick={() => setAvatarOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10"
+                    className="flex items-center gap-3 px-5 py-3 text-sm text-white hover:bg-white/10"
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     Bảng điều khiển
                   </Link>
+                  {String(user.role) === 'Customer' ? (
+                    <Link
+                      to="/dashboard/notifications"
+                      onClick={() => setAvatarOpen(false)}
+                      className="flex items-center gap-3 px-5 py-3 text-sm text-white hover:bg-white/10"
+                    >
+                      <Bell className="h-4 w-4" />
+                      Thông báo
+                    </Link>
+                  ) : null}
+                  {getSecurityPath(user.role) ? (
+                    <Link
+                      to={getSecurityPath(user.role)!}
+                      onClick={() => setAvatarOpen(false)}
+                      className="flex items-center gap-3 px-5 py-3 text-sm text-white hover:bg-white/10"
+                    >
+                      <Shield className="h-4 w-4" />
+                      Đổi mật khẩu
+                    </Link>
+                  ) : null}
                   <button
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10"
+                    className="flex w-full items-center gap-3 px-5 py-3 text-sm text-white hover:bg-white/10"
                   >
                     <LogOut className="h-4 w-4" />
                     Đăng xuất
@@ -315,8 +362,21 @@ export function PublicHeader() {
           </nav>
           <div className="mt-4 flex gap-2 px-4">
             {user ? (
-              <>
-                <Link to={getDashboardPath(user.role)} className="flex-1" onClick={() => setMobileOpen(false)}>
+              <div className="w-full space-y-2">
+                <Link to={getProfilePath(user.role)} className="block" onClick={() => setMobileOpen(false)}>
+                  <button className="w-full rounded-lg border border-white/30 py-2 text-white">Hồ sơ</button>
+                </Link>
+                {String(user.role) === 'Customer' ? (
+                  <>
+                    <Link to="/dashboard/saved" className="block" onClick={() => setMobileOpen(false)}>
+                      <button className="w-full rounded-lg border border-white/30 py-2 text-white">Xe đã lưu</button>
+                    </Link>
+                    <Link to="/dashboard/bookings" className="block" onClick={() => setMobileOpen(false)}>
+                      <button className="w-full rounded-lg border border-white/30 py-2 text-white">Lịch hẹn của tôi</button>
+                    </Link>
+                  </>
+                ) : null}
+                <Link to={getDashboardPath(user.role)} className="block" onClick={() => setMobileOpen(false)}>
                   <button className="w-full rounded-lg border border-white py-2 text-white">Bảng điều khiển</button>
                 </Link>
                 <button
@@ -324,11 +384,11 @@ export function PublicHeader() {
                     handleLogout()
                     setMobileOpen(false)
                   }}
-                  className="flex-1 rounded-lg bg-white/20 py-2 text-white"
+                  className="w-full rounded-lg bg-white/20 py-2 text-white"
                 >
                   Đăng xuất
                 </button>
-              </>
+              </div>
             ) : (
               <>
                 <Link to="/login" className="flex-1" onClick={() => setMobileOpen(false)}>

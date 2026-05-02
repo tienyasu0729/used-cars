@@ -20,8 +20,14 @@ export default defineConfig(({ mode }) => {
   const aiChatOrigin = `http://${aiChatHost}:${aiChatPort}`
 
   const devPort = Number(env.VITE_DEV_PORT) || 5173
+  const googleAuthOrigin = (
+    env.VITE_GOOGLE_AUTH_ORIGIN || `http://localhost:${devPort}`
+  ).trim().replace(/\/$/, '')
   const disableHmr =
     env.VITE_DISABLE_HMR === 'true' || env.VITE_DISABLE_HMR === '1'
+  const headers = {
+    'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+  }
 
   const proxy = {
     '/api': {
@@ -49,7 +55,38 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [react()],
+    plugins: [
+      {
+        name: 'canonical-google-auth-origin',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const requestHost = req.headers.host
+            if (!requestHost) {
+              next()
+              return
+            }
+
+            const canonical = new URL(googleAuthOrigin)
+            const requestHostname = requestHost.startsWith('[')
+              ? requestHost.slice(0, requestHost.indexOf(']') + 1)
+              : requestHost.split(':')[0]
+            const isLoopbackAlias =
+              requestHostname === '127.0.0.1' || requestHostname === '[::1]'
+
+            if (isLoopbackAlias && canonical.hostname === 'localhost') {
+              const path = req.originalUrl || req.url || '/'
+              res.statusCode = 307
+              res.setHeader('Location', `${googleAuthOrigin}${path}`)
+              res.end()
+              return
+            }
+
+            next()
+          })
+        },
+      },
+      react(),
+    ],
     resolve: {
       alias: {
         '@': resolve(__dirname, './src'),
@@ -58,6 +95,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: devPort,
       strictPort: true,
+      headers,
       hmr: disableHmr ? false : {
         protocol: 'ws',
         host: 'localhost',
@@ -66,6 +104,7 @@ export default defineConfig(({ mode }) => {
       proxy: { ...proxy },
     },
     preview: {
+      headers,
       proxy: { ...proxy },
     },
   }

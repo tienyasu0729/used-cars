@@ -36,10 +36,11 @@ export function StepEmployment({ form }: Props) {
   const { register, watch, formState: { errors } } = form
   const empType = watch('employmentType')
   const isSelfEmployed = empType === 'SELF_EMPLOYED'
+  const isOther = empType === 'OTHER'
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="mb-6 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
           <Briefcase className="h-5 w-5 text-primary" />
         </div>
@@ -57,6 +58,12 @@ export function StepEmployment({ form }: Props) {
           ))}
         </select>
       </Field>
+
+      {isOther && (
+        <Field label="Mô tả nghề nghiệp" error={errors.employmentTypeOther?.message}>
+          <input {...register('employmentTypeOther')} className={inputCls} placeholder="Ví dụ: Lao động thời vụ, nghề tự do khác..." />
+        </Field>
+      )}
 
       {isSelfEmployed ? (
         <>

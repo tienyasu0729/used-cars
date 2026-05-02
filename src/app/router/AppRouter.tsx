@@ -50,6 +50,7 @@ const NotificationsPage = lazy(() => import('@/pages/customer/NotificationsPage'
 const SecurityPage = lazy(() => import('@/pages/customer/SecurityPage').then((m) => ({ default: m.SecurityPage })))
 const RecentlyViewedPage = lazy(() => import('@/pages/customer/RecentlyViewedPage').then((m) => ({ default: m.RecentlyViewedPage })))
 const InstallmentWizardPage = lazy(() => import('@/pages/customer/InstallmentWizardPage').then((m) => ({ default: m.InstallmentWizardPage })))
+const InstallmentApplicationsPage = lazy(() => import('@/pages/customer/InstallmentApplicationsPage').then((m) => ({ default: m.InstallmentApplicationsPage })))
 const InstallmentStatusPage = lazy(() => import('@/pages/customer/InstallmentStatusPage').then((m) => ({ default: m.InstallmentStatusPage })))
 
 const StaffDashboardPage = lazy(() => import('@/pages/staff/StaffDashboardPage').then((m) => ({ default: m.StaffDashboardPage })))
@@ -166,6 +167,7 @@ const router = createBrowserRouter([
       { path: 'security', element: <Suspense fallback={<Fallback />}><SecurityPage /></Suspense> },
       { path: 'recently-viewed', element: <Suspense fallback={<Fallback />}><RecentlyViewedPage /></Suspense> },
       { path: 'installment/:vehicleId', element: <Suspense fallback={<Fallback />}><InstallmentWizardPage /></Suspense> },
+      { path: 'installments', element: <Suspense fallback={<Fallback />}><InstallmentApplicationsPage /></Suspense> },
       { path: 'installments/:id', element: <Suspense fallback={<Fallback />}><InstallmentStatusPage /></Suspense> },
     ],
   },

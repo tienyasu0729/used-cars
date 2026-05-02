@@ -28,13 +28,7 @@ export function LoginPage() {
         navigate('/login/set-new-password', { replace: true })
         return
       }
-      const redirectMap: Record<string, string> = {
-        Customer: '/dashboard',
-        SalesStaff: '/staff',
-        BranchManager: '/manager',
-        Admin: '/admin',
-      }
-      navigate(redirectMap[user.role] || '/dashboard', { replace: true })
+      navigate('/', { replace: true })
     }
   }, [isAuthenticated, user, navigate])
 

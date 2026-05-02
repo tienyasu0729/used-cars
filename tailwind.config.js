@@ -8,7 +8,7 @@ export default {
         accent: '#E8612A',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Noto Sans', 'system-ui', 'Segoe UI', 'Arial', 'sans-serif'],
       },
     },
   },

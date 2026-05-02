@@ -5,7 +5,7 @@
  * Hiển thị: ảnh, listing_id, title, giá VNĐ, km, badge status, save button
  */
 import { Link } from 'react-router-dom'
-import { MapPin, GitCompare, Gauge, Calendar, Fuel, Cog } from 'lucide-react'
+import { GitCompare, Gauge, Calendar, Fuel, Cog } from 'lucide-react'
 import { formatPrice, formatMileage } from '@/utils/format'
 import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import { VehicleStatusBadge } from '@/components/ui'
@@ -121,6 +121,12 @@ export function VehicleCard({
             </span>
           </div>
         </div>
+
+        {vehicle.engine?.trim() && (
+          <p className="mb-4 line-clamp-1 rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+            Động cơ: {vehicle.engine.trim()}
+          </p>
+        )}
 
         <div className={`flex gap-2 ${compact ? 'mt-2' : ''}`}>
           <Link to={`/vehicles/${vehicle.id}`} className="flex-1">

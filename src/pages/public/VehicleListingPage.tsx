@@ -4,7 +4,7 @@
  * Dùng useVehicles hook (API-backed) với filter + pagination thật
  * Query `?branch=<id>` đồng bộ lọc theo chi nhánh (giữ khi bấm Tìm kiếm trong panel).
  */
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { VehicleCard } from '@/features/vehicles/components/VehicleCard'
@@ -17,15 +17,40 @@ import { Car, LayoutGrid, List, ChevronLeft, ChevronRight, SlidersHorizontal } f
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import type { VehicleSearchParams } from '@/types/vehicle.types'
 
+const VEHICLE_LISTING_STATE_KEY = 'vehicle-listing-state'
+const VEHICLE_LISTING_FILTER_DRAFT_KEY = 'vehicle-listing-filter-draft'
+const VEHICLE_LISTING_SCROLL_KEY = 'vehicle-listing-scroll-y'
+
+interface VehicleListingState {
+  filters?: Partial<VehicleSearchParams>
+  sortUi?: string
+  viewMode?: 'grid' | 'list'
+}
+
+function readVehicleListingState(): VehicleListingState | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.sessionStorage.getItem(VEHICLE_LISTING_STATE_KEY)
+    return raw ? (JSON.parse(raw) as VehicleListingState) : null
+  } catch {
+    return null
+  }
+}
+
 export function VehicleListingPage() {
   useDocumentTitle('Danh sách xe')
   const [searchParams] = useSearchParams()
-  const { vehicles, totalPages, currentPage, totalElements, isLoading, error, setFilters, setPage } = useVehicles({ size: 12 })
+  const [restoredState] = useState(() => readVehicleListingState())
+  const { vehicles, totalPages, currentPage, totalElements, isLoading, error, filters, setFilters, setPage } = useVehicles({
+    size: 12,
+    ...restoredState?.filters,
+  })
   const { savedIds } = useSavedVehicles()
   const listingFacets = useVehicleListingFacets()
-  const [sortUi, setSortUi] = useState('newest')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [sortUi, setSortUi] = useState(restoredState?.sortUi ?? 'newest')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(restoredState?.viewMode ?? 'grid')
   const [filterOpen, setFilterOpen] = useState(false)
+  const scrollRestoredRef = useRef(false)
 
   const sortToApi = (s: string): string => {
     switch (s) {
@@ -68,6 +93,8 @@ export function VehicleListingPage() {
   }, []) // Chỉ tính 1 lần khi mount (URL lúc vào trang)
 
   useEffect(() => {
+    if (!searchParams.toString() && restoredState?.filters) return
+
     const partial: Partial<VehicleSearchParams> = { page: 0 }
 
     // Từ khóa tìm kiếm (q)
@@ -101,7 +128,42 @@ export function VehicleListingPage() {
     }
 
     setFilters(partial)
-  }, [searchParams, setFilters])
+  }, [searchParams, setFilters, restoredState])
+
+  useEffect(() => {
+    window.sessionStorage.setItem(
+      VEHICLE_LISTING_STATE_KEY,
+      JSON.stringify({
+        filters,
+        sortUi,
+        viewMode,
+      } satisfies VehicleListingState),
+    )
+  }, [filters, sortUi, viewMode])
+
+  useEffect(() => {
+    const saveScroll = () => {
+      window.sessionStorage.setItem(VEHICLE_LISTING_SCROLL_KEY, String(window.scrollY))
+    }
+
+    window.addEventListener('scroll', saveScroll, { passive: true })
+    window.addEventListener('pagehide', saveScroll)
+    return () => {
+      saveScroll()
+      window.removeEventListener('scroll', saveScroll)
+      window.removeEventListener('pagehide', saveScroll)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (scrollRestoredRef.current || isLoading) return
+    const raw = window.sessionStorage.getItem(VEHICLE_LISTING_SCROLL_KEY)
+    if (!raw) return
+    const y = parseInt(raw, 10)
+    if (!Number.isFinite(y) || y <= 0) return
+    scrollRestoredRef.current = true
+    window.requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'auto' }))
+  }, [isLoading, vehicles.length])
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -118,7 +180,13 @@ export function VehicleListingPage() {
         style={{ transform: filterOpen ? 'translateX(0)' : 'translateX(-100%)' }}
       >
         <div className="p-4 pt-16">
-          <FilterPanel inline facets={listingFacets} onFilterChange={handleFilterChange} initialFilters={urlInitialFilters} />
+          <FilterPanel
+            inline
+            facets={listingFacets}
+            onFilterChange={handleFilterChange}
+            initialFilters={urlInitialFilters}
+            stateStorageKey={VEHICLE_LISTING_FILTER_DRAFT_KEY}
+          />
         </div>
       </div>
 
@@ -183,7 +251,12 @@ export function VehicleListingPage() {
 
       {/* Content */}
       <div className="flex flex-col gap-8 lg:flex-row">
-        <FilterPanel facets={listingFacets} onFilterChange={handleFilterChange} initialFilters={urlInitialFilters} />
+        <FilterPanel
+          facets={listingFacets}
+          onFilterChange={handleFilterChange}
+          initialFilters={urlInitialFilters}
+          stateStorageKey={VEHICLE_LISTING_FILTER_DRAFT_KEY}
+        />
         <section className="flex-1">
           {isLoading ? (
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">

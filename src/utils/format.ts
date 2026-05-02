@@ -9,6 +9,20 @@ export function formatPriceNumber(price: number): string {
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(price)
 }
 
+export function formatPriceShort(price: number): string {
+  if (!Number.isFinite(price) || price <= 0) return '0'
+
+  if (price >= 1_000_000_000) {
+    return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(price / 1_000_000_000)} tỷ`
+  }
+
+  if (price >= 1_000_000) {
+    return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(price / 1_000_000)} triệu`
+  }
+
+  return `${formatPriceNumber(price)} VNĐ`
+}
+
 export function formatMileage(km: number | null | undefined): string {
   if (km == null || Number.isNaN(km)) return '—'
   return new Intl.NumberFormat('vi-VN').format(km) + ' km'

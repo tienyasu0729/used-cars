@@ -55,7 +55,7 @@ export function VehicleReviewSection({ vehicleId }: { vehicleId: number }) {
   const meta = reviewsData?.meta
 
   return (
-    <section className="mt-10 rounded-xl border border-gray-200 bg-white p-6">
+    <section id="reviews" className="mt-10 rounded-xl border border-gray-200 bg-white p-6">
       <h2 className="mb-6 text-xl font-bold text-gray-900">Đánh giá từ khách hàng</h2>
 
       {summary && (
@@ -82,7 +82,13 @@ export function VehicleReviewSection({ vehicleId }: { vehicleId: number }) {
         </div>
       )}
 
-      {canReviewData?.canReview && <ReviewForm vehicleId={vehicleId} />}
+      {canReviewData?.canReview ? (
+        <ReviewForm vehicleId={vehicleId} />
+      ) : canReviewData?.reason ? (
+        <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
+          {canReviewData.reason}
+        </div>
+      ) : null}
 
       {isLoading ? (
         <div className="flex justify-center py-8"><Spinner /></div>
@@ -134,7 +140,6 @@ function ReviewForm({ vehicleId }: { vehicleId: number }) {
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
   const [anonymous, setAnonymous] = useState(false)
-  const [selectedBookingId, setSelectedBookingId] = useState<number | undefined>()
 
   const { data: bookings } = useBookings()
   const submitReview = useSubmitReview(vehicleId)
@@ -142,15 +147,22 @@ function ReviewForm({ vehicleId }: { vehicleId: number }) {
   const completedBookings = (bookings ?? []).filter(
     (b) => b.status === 'Completed' && b.vehicleId === vehicleId
   )
+  const latestCompletedBooking = completedBookings
+    .slice()
+    .sort((a, b) => {
+      const aTs = new Date(`${a.bookingDate}T${a.timeSlot}`).getTime()
+      const bTs = new Date(`${b.bookingDate}T${b.timeSlot}`).getTime()
+      return bTs - aTs
+    })[0]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!rating || !selectedBookingId) return
+    if (!rating || !latestCompletedBooking) return
     await submitReview.mutateAsync({
       rating,
       comment: comment || undefined,
       anonymous,
-      bookingId: selectedBookingId,
+      bookingId: latestCompletedBooking.id,
     })
     setRating(0)
     setComment('')
@@ -168,23 +180,6 @@ function ReviewForm({ vehicleId }: { vehicleId: number }) {
   return (
     <form onSubmit={handleSubmit} className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
       <h3 className="mb-3 text-sm font-semibold text-gray-800">Gửi đánh giá của bạn</h3>
-
-      <div className="mb-3">
-        <label className="mb-1 block text-xs text-gray-500">Chọn lịch hẹn lái thử</label>
-        <select
-          value={selectedBookingId ?? ''}
-          onChange={(e) => setSelectedBookingId(Number(e.target.value))}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-          required
-        >
-          <option value="">-- Chọn --</option>
-          {completedBookings.map((b) => (
-            <option key={b.id} value={b.id}>
-              #{b.id} — {new Date(b.bookingDate).toLocaleDateString('vi-VN')}
-            </option>
-          ))}
-        </select>
-      </div>
 
       <div className="mb-3 flex items-center gap-2">
         <span className="text-sm text-gray-600">Đánh giá:</span>
@@ -212,7 +207,7 @@ function ReviewForm({ vehicleId }: { vehicleId: number }) {
 
       <button
         type="submit"
-        disabled={!rating || !selectedBookingId || submitReview.isPending}
+        disabled={!rating || !latestCompletedBooking || submitReview.isPending}
         className="rounded-lg bg-[#1A3C6E] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#15325A] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitReview.isPending ? 'Đang gửi...' : 'Gửi đánh giá'}

@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Search } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Search, ArrowRight } from 'lucide-react'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { usePublishedArticles, useArticleCategories } from '@/hooks/useArticles'
 import { Pagination, Spinner } from '@/components/ui'
@@ -8,138 +8,238 @@ import { Pagination, Spinner } from '@/components/ui'
 export function BlogListingPage() {
   useDocumentTitle('Tin tức & Bài viết')
 
-  const [keyword, setKeyword] = useState('')
-  const [searchInput, setSearchInput] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>()
-  const [page, setPage] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialKeyword = searchParams.get('keyword') ?? ''
+  const initialCategory = searchParams.get('category') ?? undefined
+  const initialPage = Math.max(0, Number(searchParams.get('page') ?? '1') - 1)
+
+  const [searchInput, setSearchInput] = useState(initialKeyword)
 
   const { data: categories } = useArticleCategories()
   const { data, isLoading } = usePublishedArticles({
-    keyword: keyword || undefined,
-    category: selectedCategory,
-    page,
+    keyword: initialKeyword || undefined,
+    category: initialCategory,
+    page: initialPage,
     size: 12,
   })
 
-  const articles = data?.items ?? []
+  const articles = useMemo(() => data?.items ?? [], [data])
   const meta = data?.meta
+
+  const featuredArticles = useMemo(
+    () => articles.filter((article) => article.featured),
+    [articles],
+  )
+  const heroArticle = featuredArticles[0] ?? articles[0]
+  const spotlightArticles = (featuredArticles[0] ? featuredArticles.slice(1, 3) : articles.slice(1, 3)).filter(
+    (article) => article.id !== heroArticle?.id,
+  )
+  const regularArticles = articles.filter((article) => article.id !== heroArticle?.id && !spotlightArticles.some((spot) => spot.id === article.id))
+
+  const updateParams = (next: { keyword?: string; category?: string; page?: number }) => {
+    const params = new URLSearchParams(searchParams)
+    if (next.keyword !== undefined) {
+      if (next.keyword) params.set('keyword', next.keyword)
+      else params.delete('keyword')
+    }
+    if (next.category !== undefined) {
+      if (next.category) params.set('category', next.category)
+      else params.delete('category')
+    }
+    if (next.page !== undefined) {
+      if (next.page > 1) params.set('page', String(next.page))
+      else params.delete('page')
+    }
+    setSearchParams(params)
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    setKeyword(searchInput)
-    setPage(0)
+    updateParams({ keyword: searchInput.trim(), page: 1 })
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Tin tức & Bài viết</h1>
-        <p className="mt-2 text-gray-500">Cập nhật tin tức mới nhất về xe ô tô đã qua sử dụng</p>
-      </div>
-
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <form onSubmit={handleSearch} className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Tìm kiếm bài viết..."
-            className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm focus:border-[#1A3C6E] focus:outline-none focus:ring-1 focus:ring-[#1A3C6E]"
-          />
-        </form>
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => { setSelectedCategory(undefined); setPage(0) }}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              !selectedCategory ? 'bg-[#1A3C6E] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Tất cả
-          </button>
-          {categories?.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => { setSelectedCategory(cat.slug); setPage(0) }}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                selectedCategory === cat.slug ? 'bg-[#1A3C6E] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-20"><Spinner size="lg" /></div>
-      ) : articles.length === 0 ? (
-        <div className="py-20 text-center text-gray-500">
-          {keyword ? `Không tìm thấy bài viết cho "${keyword}"` : 'Chưa có bài viết nào.'}
-        </div>
-      ) : (
-        <>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article) => (
-              <Link
-                key={article.id}
-                to={`/news/${article.slug}`}
-                className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:shadow-lg"
-              >
-                <div className="aspect-[16/9] overflow-hidden bg-gray-100">
-                  {article.thumbnailUrl ? (
-                    <img
-                      src={article.thumbnailUrl}
-                      alt={article.title}
-                      className="h-full w-full object-cover transition group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-gray-300">
-                      <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  )}
+    <div className="bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_24%,#fff7ed_100%)]">
+      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">
+        <section className="mb-8 overflow-hidden rounded-[28px] border border-slate-200 bg-[#0f2748] px-6 py-8 text-white shadow-[0_30px_80px_-40px_rgba(15,39,72,0.8)] lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[1.3fr,0.7fr]">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-orange-300">Tạp chí xe cũ</p>
+              <h1 className="mt-4 max-w-3xl text-3xl font-black tracking-tight sm:text-4xl">
+                Tin tức, kinh nghiệm và xu hướng dành cho người mua xe đã qua sử dụng
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
+                Từ đánh giá động cơ, so sánh hãng xe, đến mẹo lái thử và bảo dưỡng thực tế tại showroom.
+              </p>
+              <form onSubmit={handleSearch} className="mt-6 flex max-w-xl flex-col gap-3 sm:flex-row">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Tìm bài viết, mẫu xe, chủ đề..."
+                    className="w-full rounded-2xl border border-white/10 bg-white px-10 py-3 text-sm text-slate-900 outline-none ring-0 placeholder:text-slate-400 focus:border-orange-300"
+                  />
                 </div>
-                <div className="p-4">
-                  {article.categoryName && (
-                    <span className="mb-2 inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-[#1A3C6E]">
-                      {article.categoryName}
-                    </span>
-                  )}
-                  <h3 className="mb-2 line-clamp-2 text-base font-semibold text-gray-900 group-hover:text-[#1A3C6E]">
-                    {article.title}
-                  </h3>
-                  {article.summary && (
-                    <p className="mb-3 line-clamp-2 text-sm text-gray-500">{article.summary}</p>
-                  )}
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
-                    {article.authorName && <span>{article.authorName}</span>}
-                    {article.publishedAt && (
-                      <time>{new Date(article.publishedAt).toLocaleDateString('vi-VN')}</time>
-                    )}
-                    <span>{article.viewCount} lượt xem</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {meta && meta.totalPages > 1 && (
-            <div className="mt-8">
-              <Pagination
-                page={meta.page + 1}
-                totalPages={meta.totalPages}
-                total={meta.totalElements}
-                pageSize={meta.size}
-                onPageChange={(p) => setPage(p - 1)}
-                label="bài viết"
-              />
+                <button
+                  type="submit"
+                  className="rounded-2xl bg-[#E8612A] px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-500"
+                >
+                  Tìm kiếm
+                </button>
+              </form>
             </div>
-          )}
-        </>
-      )}
+
+            <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 backdrop-blur">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Chủ đề tin tức</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => updateParams({ category: '', page: 1 })}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    !initialCategory ? 'bg-white text-[#0f2748]' : 'bg-white/10 text-white hover:bg-white/15'
+                  }`}
+                >
+                  Tất cả
+                </button>
+                {categories?.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => updateParams({ category: cat.slug, page: 1 })}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                      initialCategory === cat.slug ? 'bg-white text-[#0f2748]' : 'bg-white/10 text-white hover:bg-white/15'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-20"><Spinner size="lg" /></div>
+        ) : articles.length === 0 ? (
+          <div className="rounded-3xl border border-slate-200 bg-white py-20 text-center text-slate-500">
+            {initialKeyword ? `Không tìm thấy bài viết cho "${initialKeyword}"` : 'Chưa có bài viết nào.'}
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {heroArticle ? (
+              <section className="grid gap-6 lg:grid-cols-[1.4fr,0.6fr]">
+                <Link
+                  to={`/news/${heroArticle.slug}`}
+                  className="group overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  <div className="aspect-[16/9] overflow-hidden bg-slate-100">
+                    {heroArticle.thumbnailUrl ? (
+                      <img src={heroArticle.thumbnailUrl} alt={heroArticle.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    ) : null}
+                  </div>
+                  <div className="space-y-3 p-6">
+                    <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+                      Bài nổi bật
+                    </span>
+                    <h2 className="text-2xl font-black leading-tight text-slate-900">{heroArticle.title}</h2>
+                    {heroArticle.summary ? <p className="line-clamp-3 text-sm leading-7 text-slate-600">{heroArticle.summary}</p> : null}
+                    <div className="flex items-center gap-3 text-sm text-slate-400">
+                      {heroArticle.categoryName ? <span>{heroArticle.categoryName}</span> : null}
+                      {heroArticle.publishedAt ? <time>{new Date(heroArticle.publishedAt).toLocaleDateString('vi-VN')}</time> : null}
+                      <span>{heroArticle.viewCount} lượt xem</span>
+                    </div>
+                  </div>
+                </Link>
+
+                <div className="space-y-4">
+                  {spotlightArticles.map((article) => (
+                    <Link
+                      key={article.id}
+                      to={`/news/${article.slug}`}
+                      className="group flex gap-4 rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                    >
+                      <div className="h-24 w-28 shrink-0 overflow-hidden rounded-2xl bg-slate-100">
+                        {article.thumbnailUrl ? (
+                          <img src={article.thumbnailUrl} alt={article.title} className="h-full w-full object-cover transition group-hover:scale-105" />
+                        ) : null}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Nổi bật</span>
+                        <h3 className="mt-2 line-clamp-2 text-base font-bold text-slate-900 group-hover:text-[#1A3C6E]">{article.title}</h3>
+                        {article.summary ? <p className="mt-2 line-clamp-2 text-sm text-slate-500">{article.summary}</p> : null}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            <section className="grid gap-6 lg:grid-cols-[260px,1fr]">
+              <aside className="h-fit rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-700">Mục lục tin tức</p>
+                <div className="mt-4 space-y-2">
+                  {categories?.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => updateParams({ category: cat.slug, page: 1 })}
+                      className={`flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm font-semibold transition ${
+                        initialCategory === cat.slug
+                          ? 'bg-[#1A3C6E] text-white'
+                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>{cat.name}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+              </aside>
+
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {regularArticles.map((article) => (
+                  <Link
+                    key={article.id}
+                    to={`/news/${article.slug}`}
+                    className="group overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                  >
+                    <div className="aspect-[16/10] overflow-hidden bg-slate-100">
+                      {article.thumbnailUrl ? (
+                        <img src={article.thumbnailUrl} alt={article.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                      ) : null}
+                    </div>
+                    <div className="p-5">
+                      {article.categoryName ? (
+                        <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-[#1A3C6E]">
+                          {article.categoryName}
+                        </span>
+                      ) : null}
+                      <h3 className="mt-3 line-clamp-2 text-lg font-bold text-slate-900 group-hover:text-[#1A3C6E]">{article.title}</h3>
+                      {article.summary ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{article.summary}</p> : null}
+                      <div className="mt-4 flex items-center gap-3 text-xs text-slate-400">
+                        {article.publishedAt ? <time>{new Date(article.publishedAt).toLocaleDateString('vi-VN')}</time> : null}
+                        <span>{article.viewCount} lượt xem</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            {meta && meta.totalPages > 1 ? (
+              <div className="mt-8">
+                <Pagination
+                  page={meta.page + 1}
+                  totalPages={meta.totalPages}
+                  total={meta.totalElements}
+                  pageSize={meta.size}
+                  onPageChange={(p) => updateParams({ page: p })}
+                  label="bài viết"
+                />
+              </div>
+            ) : null}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

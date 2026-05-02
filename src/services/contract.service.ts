@@ -15,6 +15,13 @@ export const contractService = {
     return res.data as ContractPreview
   },
 
+  async getStaffContractPreview(bookingId: number): Promise<ContractPreview> {
+    const res = (await axiosInstance.get(
+      `/staff/bookings/${bookingId}/contract`,
+    )) as unknown as ApiResponse<ContractPreview>
+    return res.data as ContractPreview
+  },
+
   async getSignatureUploadUrls(
     bookingId: number,
   ): Promise<Record<string, CloudinarySignedUpload>> {
@@ -37,6 +44,13 @@ export const contractService = {
 
   getContractPdfUrl(bookingId: number): string {
     return `/bookings/${bookingId}/contract/pdf`
+  },
+
+  async downloadStaffContractPdf(bookingId: number): Promise<Blob> {
+    return (await axiosInstance.get(
+      `/staff/bookings/${bookingId}/contract/pdf`,
+      { responseType: 'blob' },
+    )) as unknown as Blob
   },
 
   async createDocumentSession(
