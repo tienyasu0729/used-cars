@@ -139,13 +139,13 @@ export function AdminReviewsPage() {
 
       <ConfirmDialog
         isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
         title="Xóa đánh giá"
         message="Bạn có chắc chắn muốn xóa đánh giá này?"
         onConfirm={async () => {
           if (deleteTarget) await deleteReview.mutateAsync(deleteTarget)
           setDeleteTarget(null)
         }}
-        onCancel={() => setDeleteTarget(null)}
       />
     </div>
   )

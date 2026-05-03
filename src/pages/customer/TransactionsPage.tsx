@@ -20,7 +20,7 @@ export function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { data: transactions, isLoading } = useTransactions()
 
   const allItems = transactions ?? []
@@ -38,7 +38,7 @@ export function TransactionsPage() {
     return list
   }, [allItems, typeFilter, searchQuery])
 
-  const toggleId = (id: number) => {
+  const toggleId = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)

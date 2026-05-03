@@ -132,15 +132,16 @@ export function useManagerVehicle(): UseManagerVehicleReturn {
  * useManagerVehicles — Danh sách xe trong phạm vi chi nhánh user quản lý (GET /manager/vehicles).
  * scope='NETWORK' → xem xe toàn hệ thống (read-only cho yêu cầu điều chuyển).
  */
-export function useManagerVehicles(options?: { scope?: string }) {
+export function useManagerVehicles(options?: { scope?: string; fetchAll?: boolean }) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const scope = options?.scope
+  const fetchAll = options?.fetchAll === true
 
   const fetchVehicles = useCallback(async () => {
     setIsLoading(true)
     try {
-      if (scope === 'NETWORK') {
+      if (scope === 'NETWORK' || fetchAll) {
         // Lấy hết trang: backend tối đa 500/trang — gom đến hết totalPages
         const pageSize = 500
         const acc: Vehicle[] = []
@@ -163,7 +164,7 @@ export function useManagerVehicles(options?: { scope?: string }) {
     } finally {
       setIsLoading(false)
     }
-  }, [scope])
+  }, [fetchAll, scope])
 
   useEffect(() => {
     void fetchVehicles()

@@ -79,8 +79,10 @@ export function VehicleDetailPage() {
   const toast = useToastStore()
 
   const handleConsultClick = async () => {
+    if (!vehicle) return
+    const currentVehicle = vehicle
     if (!isAuthenticated) {
-      navigate(`/login?redirect=${encodeURIComponent(`/vehicles/${vehicle.id}`)}`)
+      navigate(`/login?redirect=${encodeURIComponent(`/vehicles/${currentVehicle.id}`)}`)
       return
     }
     if (!isCustomer) {
@@ -90,11 +92,12 @@ export function VehicleDetailPage() {
     }
     setConsultSending(true)
     try {
-      const res = await startVehicleConsultationChat(vehicle.id)
+      const res = await startVehicleConsultationChat(currentVehicle.id)
       const imageUrl =
-        (typeof vehicle.imageUrl === 'string' && vehicle.imageUrl) ||
-        (Array.isArray(vehicle.images) && vehicle.images.length > 0 && typeof vehicle.images[0]?.url === 'string'
-          ? vehicle.images[0].url
+        (Array.isArray(currentVehicle.images) &&
+        currentVehicle.images.length > 0 &&
+        typeof currentVehicle.images[0]?.url === 'string'
+          ? currentVehicle.images[0].url
           : undefined)
       window.dispatchEvent(new CustomEvent('scudn:open-consult-chat', {
         detail: {
@@ -102,9 +105,9 @@ export function VehicleDetailPage() {
           participantName: res.receiverDisplayName,
           participantRole: 'ConsultationStaff',
           attachment: {
-            vehicleId: vehicle.id,
-            title: vehicle.title,
-            priceText: formatPrice(vehicle.price),
+            vehicleId: currentVehicle.id,
+            title: currentVehicle.title,
+            priceText: formatPrice(currentVehicle.price),
             imageUrl,
           },
         },

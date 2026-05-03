@@ -6,6 +6,7 @@
  */
 
 import { useAuthStore } from '@/store/authStore'
+import { isAdminRole } from '@/utils/userRole'
 
 /**
  * Kiểm tra user hiện tại có quyền cụ thể không.
@@ -16,7 +17,7 @@ export function useHasPermission(module: string, action: string): boolean {
   const user = useAuthStore((s) => s.user)
 
   // Admin luôn có toàn bộ quyền
-  if (user?.role === 'Admin') return true
+  if (isAdminRole(user?.role)) return true
 
   // So khớp không phân biệt hoa thường: API /me/permissions format module dạng PascalCase
   // (VD: PERMISSION_CMS_MANAGE → Cms.manage) trong khi catalog/UI dùng CMS.manage

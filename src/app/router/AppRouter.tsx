@@ -82,6 +82,9 @@ const ManagerNotificationsPage = lazy(() => import('@/pages/manager').then((m) =
 const ManagerChatPage = lazy(() => import('@/pages/manager').then((m) => ({ default: m.ManagerChatPage })))
 
 const AdminDashboardPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminDashboardPage })))
+const AdminVehiclesPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminVehiclesPage })))
+const AdminAddVehiclePage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminAddVehiclePage })))
+const AdminEditVehiclePage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminEditVehiclePage })))
 const AdminUsersPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminUsersPage })))
 const AdminRolesPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminRolesPage })))
 const AdminBranchesPage = lazy(() => import('@/pages/admin').then((m) => ({ default: m.AdminBranchesPage })))
@@ -254,6 +257,9 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Suspense fallback={<Fallback />}><AdminDashboardPage /></Suspense> },
       { path: 'dashboard', element: <Suspense fallback={<Fallback />}><AdminDashboardPage /></Suspense> },
+      { path: 'vehicles', element: <Suspense fallback={<Fallback />}><AdminVehiclesPage /></Suspense> },
+      { path: 'vehicles/new', element: <ProtectedRoute requiredPermission={{ module: 'Vehicles', action: 'create' }}><Suspense fallback={<Fallback />}><AdminAddVehiclePage /></Suspense></ProtectedRoute> },
+      { path: 'vehicles/:id/edit', element: <ProtectedRoute requiredPermission={{ module: 'Vehicles', action: 'update' }}><Suspense fallback={<Fallback />}><AdminEditVehiclePage /></Suspense></ProtectedRoute> },
       { path: 'users', element: <Suspense fallback={<Fallback />}><AdminUsersPage /></Suspense> },
       { path: 'roles', element: <Suspense fallback={<Fallback />}><AdminRolesPage /></Suspense> },
       { path: 'branches', element: <Suspense fallback={<Fallback />}><AdminBranchesPage /></Suspense> },

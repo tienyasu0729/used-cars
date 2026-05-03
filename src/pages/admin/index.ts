@@ -1,4 +1,7 @@
 export { AdminDashboardPage } from './AdminDashboardPage'
+export { AdminVehiclesPage } from './AdminVehiclesPage'
+export { AdminAddVehiclePage } from './AdminAddVehiclePage'
+export { AdminEditVehiclePage } from './AdminEditVehiclePage'
 export { AdminUsersPage } from './AdminUsersPage'
 export { AdminRolesPage } from './AdminRolesPage'
 export { AdminBranchesPage } from './AdminBranchesPage'

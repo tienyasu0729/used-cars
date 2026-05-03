@@ -181,7 +181,7 @@ export function StaffCreateInstallmentPage() {
       </button>
 
       <div className="mb-8 flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        {vehicle.thumbnail && <img src={vehicle.thumbnail} alt={vehicle.title} className="h-16 w-24 rounded-lg object-cover" />}
+        {vehicle.images?.[0]?.url && <img src={vehicle.images[0].url} alt={vehicle.title} className="h-16 w-24 rounded-lg object-cover" />}
         <div>
           <h1 className="font-bold text-slate-900">{vehicle.title}</h1>
           <p className="text-lg font-black text-accent">{formatPriceNumber(vehicle.price)} VNĐ</p>

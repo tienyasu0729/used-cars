@@ -199,6 +199,7 @@ export function AdminCatalogPage() {
     if (!n) return
     try {
       await createBrand.mutateAsync({ name: n, status: newBrandStatus })
+      await Promise.all([brandsQ.refetch(), brandOptionsQ.refetch()])
       toast.addToast('success', 'Đã tạo hãng.')
       setNewBrandName('')
       setPageBrand(0)
@@ -213,6 +214,7 @@ export function AdminCatalogPage() {
     if (!n || !cid) return
     try {
       await createModel.mutateAsync({ categoryId: cid, name: n, status: newModelStatus })
+      await modelsQ.refetch()
       toast.addToast('success', 'Đã tạo dòng xe.')
       setNewModelName('')
       setPageModel(0)
@@ -226,6 +228,7 @@ export function AdminCatalogPage() {
     if (!n) return
     try {
       await createFuel.mutateAsync(n)
+      await fuelsQ.refetch()
       toast.addToast('success', 'Đã thêm nhiên liệu.')
       setNewFuelName('')
     } catch (e) {
@@ -238,6 +241,7 @@ export function AdminCatalogPage() {
     if (!n) return
     try {
       await createTrans.mutateAsync(n)
+      await transQ.refetch()
       toast.addToast('success', 'Đã thêm hộp số.')
       setNewTransName('')
     } catch (e) {
@@ -252,6 +256,11 @@ export function AdminCatalogPage() {
     if (tab === 'transmissions' && transQ.isError) return (transQ.error as Error)?.message
     return null
   }, [tab, brandsQ.isError, brandsQ.error, modelsQ.isError, modelsQ.error, fuelsQ.isError, fuelsQ.error, transQ.isError, transQ.error])
+
+  const canSubmitBrand = newBrandName.trim().length > 0 && !createBrand.isPending
+  const canSubmitModel = newModelName.trim().length > 0 && Number(newModelCat) > 0 && !createModel.isPending
+  const canSubmitFuel = newFuelName.trim().length > 0 && !createFuel.isPending
+  const canSubmitTrans = newTransName.trim().length > 0 && !createTrans.isPending
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -324,7 +333,14 @@ export function AdminCatalogPage() {
               <option value="active">Hoạt động</option>
               <option value="inactive">Ẩn</option>
             </select>
-            <Button variant="primary" onClick={submitNewBrand} loading={createBrand.isPending}>Tạo hãng</Button>
+            <Button
+              variant="primary"
+              onClick={() => void submitNewBrand()}
+              loading={createBrand.isPending}
+              disabled={!canSubmitBrand}
+            >
+              Tạo hãng
+            </Button>
           </div>
         </div>
       )}
@@ -388,7 +404,14 @@ export function AdminCatalogPage() {
               <option value="active">Hoạt động</option>
               <option value="inactive">Ẩn</option>
             </select>
-            <Button variant="primary" onClick={submitNewModel} loading={createModel.isPending}>Tạo dòng</Button>
+            <Button
+              variant="primary"
+              onClick={() => void submitNewModel()}
+              loading={createModel.isPending}
+              disabled={!canSubmitModel}
+            >
+              Tạo dòng
+            </Button>
           </div>
         </div>
       )}
@@ -407,8 +430,9 @@ export function AdminCatalogPage() {
           </div>
           <Button
             variant="primary"
-            onClick={tab === 'fuelTypes' ? submitFuel : submitTrans}
+            onClick={() => void (tab === 'fuelTypes' ? submitFuel() : submitTrans())}
             loading={tab === 'fuelTypes' ? createFuel.isPending : createTrans.isPending}
+            disabled={tab === 'fuelTypes' ? !canSubmitFuel : !canSubmitTrans}
           >
             Thêm
           </Button>

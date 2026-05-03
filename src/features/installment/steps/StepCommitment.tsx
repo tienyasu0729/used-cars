@@ -8,7 +8,7 @@ import { isoDateToDdMmYyyy } from '@/utils/dateDdMmYyyy'
 const inputCls = 'w-full rounded-lg border border-slate-300 px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20'
 
 interface Props {
-  form: UseFormReturn<FullInstallmentData>
+  form: UseFormReturn<FullInstallmentData, any, any>
 }
 
 export function StepCommitment({ form }: Props) {

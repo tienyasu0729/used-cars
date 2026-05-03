@@ -28,7 +28,7 @@ export function OrdersPage() {
   const [pageSize, setPageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { data: ordData, isLoading } = useOrders({ size: 500 })
   const orders = ordData?.orders ?? []
   const { vehicles } = useVehicles()
@@ -49,7 +49,7 @@ export function OrdersPage() {
   const start = (page - 1) * pageSize
   const paginated = filtered.slice(start, start + pageSize)
 
-  const toggleId = (id: number) => {
+  const toggleId = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)

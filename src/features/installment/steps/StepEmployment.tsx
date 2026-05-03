@@ -29,7 +29,7 @@ const SALARY_METHODS = [
 ]
 
 interface Props {
-  form: UseFormReturn<FullInstallmentData>
+  form: UseFormReturn<FullInstallmentData, any, any>
 }
 
 export function StepEmployment({ form }: Props) {

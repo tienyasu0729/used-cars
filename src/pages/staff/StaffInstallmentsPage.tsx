@@ -525,7 +525,7 @@ function VehiclePickerModal({ onSelect, onClose }: { onSelect: (id: number) => v
               onClick={() => onSelect(v.id)}
               className="flex w-full cursor-pointer items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-primary/5"
             >
-              {v.thumbnail && <img src={v.thumbnail} alt={v.title} className="h-12 w-18 rounded-lg object-cover" />}
+              {v.images?.[0]?.url && <img src={v.images[0].url} alt={v.title} className="h-12 w-18 rounded-lg object-cover" />}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-900">{v.title}</p>
                 <p className="text-xs text-slate-500">{formatPriceNumber(v.price)} VNĐ</p>

@@ -416,6 +416,9 @@ function ArticleFormModal({
       isOpen
       onClose={onClose}
       title={article ? 'Sửa bài viết' : 'Thêm bài viết mới'}
+      viewportClassName="lg:justify-center lg:pl-[270px] lg:pr-6"
+      panelClassName="max-w-[min(1180px,calc(100vw-4.5rem))] px-7"
+      bodyClassName="max-h-[calc(100vh-20rem)] overflow-y-auto pr-1"
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Hủy</Button>
@@ -427,103 +430,182 @@ function ArticleFormModal({
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         {Boolean(article?.id) && loadingDetail && (
           <p className="text-sm text-gray-500">Đang tải nội dung bài viết…</p>
         )}
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Tiêu đề *</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Mô tả ngắn</label>
-          <input value={summary} onChange={(e) => setSummary(e.target.value)} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Nội dung *</label>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={8} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Ảnh đại diện</label>
-          <p className="mb-2 text-xs text-gray-500">
-            Chọn ảnh từ máy — ảnh chỉ được tải lên Cloudinary khi bạn nhấn <strong>Lưu</strong>. Hoặc dán URL ảnh công khai (HTTPS).
-          </p>
-          {cloudinaryReady && (
-            <label className="mb-3 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-gray-200 py-4 hover:bg-gray-50">
-              <Upload className="h-6 w-6 text-[#1A3C6E]" />
-              <span className="text-xs font-medium text-gray-600">Chọn ảnh từ máy</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                disabled={pending || uploadingOnSave}
-                onChange={(e) => {
-                  onPickThumbnail(e.target.files)
-                  e.target.value = ''
-                }}
-              />
-            </label>
-          )}
-          {!cloudinaryReady && (
-            <p className="mb-2 rounded-lg bg-amber-50 px-2 py-1.5 text-xs text-amber-900">
-              Máy chủ chưa bật Cloudinary — chỉ có thể dán URL ảnh bên dưới.
-            </p>
-          )}
-          {previewSrc && (
-            <div className="relative mb-2 inline-block max-w-full rounded-lg border border-gray-200 bg-gray-50">
-              <button
-                type="button"
-                onClick={removeThumbnail}
-                className="absolute right-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-gray-900/70 text-white shadow hover:bg-gray-900"
-                title="Xóa ảnh"
-                aria-label="Xóa ảnh"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <div className="max-h-40 overflow-hidden px-2 py-2">
-                <img src={previewSrc} alt="" className="mx-auto max-h-40 w-auto object-contain" onError={() => { /* invalid url */ }} />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(420px,1fr)]">
+          <div className="space-y-6">
+            <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
+              <div className="mb-4">
+                <h3 className="text-base font-semibold text-slate-900">Thông tin cơ bản</h3>
+                <p className="mt-1 text-sm text-slate-500">Nhóm các trường nhận diện chính để quản lý bài viết nhanh hơn.</p>
               </div>
-            </div>
-          )}
-          <label className="mb-1 block text-xs text-gray-500">Hoặc dán URL ảnh</label>
-          <input
-            value={thumbnailUrlInput}
-            onChange={(e) => {
-              setThumbnailUrlInput(e.target.value)
-              if (pendingThumbnailFile || localPreviewObjectUrl) {
-                clearLocalThumbnail()
-              }
-            }}
-            placeholder="https://…"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Danh mục</label>
-            <select value={categoryId ?? ''} onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : undefined)} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm">
-              <option value="">Không có</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Tiêu đề *</label>
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#1A3C6E] focus:ring-4 focus:ring-[#1A3C6E]/10"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Mô tả ngắn</label>
+                  <input
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#1A3C6E] focus:ring-4 focus:ring-[#1A3C6E]/10"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-4">
+                <h3 className="text-base font-semibold text-slate-900">Nội dung bài viết</h3>
+                <p className="mt-1 text-sm text-slate-500">Khu vực soạn thảo được mở rộng để đọc và quản lý nội dung dễ hơn.</p>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Nội dung *</label>
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={18}
+                  className="min-h-[420px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 shadow-sm outline-none transition focus:border-[#1A3C6E] focus:ring-4 focus:ring-[#1A3C6E]/10"
+                />
+              </div>
+            </section>
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Trạng thái</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm">
-              <option value="draft">Nháp</option>
-              <option value="published">Xuất bản</option>
-              <option value="hidden">Ẩn</option>
-            </select>
+
+          <div className="space-y-6 lg:min-w-[420px]">
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-4">
+                <h3 className="text-base font-semibold text-slate-900">Ảnh đại diện</h3>
+                <p className="mt-1 text-sm text-slate-500">Xem trước theo khung lớn, thao tác tải ảnh và dán URL ở cùng một khu vực.</p>
+              </div>
+
+              {previewSrc ? (
+                <div className="relative mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-inner">
+                  <button
+                    type="button"
+                    onClick={removeThumbnail}
+                    className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/80 text-white shadow-lg hover:bg-slate-950"
+                    title="Xóa ảnh"
+                    aria-label="Xóa ảnh"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <div className="aspect-[4/3] w-full bg-[radial-gradient(circle_at_top,#1e293b,transparent_60%)] p-3">
+                    <img src={previewSrc} alt="" className="h-full w-full rounded-xl object-cover" onError={() => { /* invalid url */ }} />
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-4 flex aspect-[4/3] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-center">
+                  <div className="space-y-2 px-6">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-[#1A3C6E]">
+                      <Upload className="h-6 w-6" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-700">Chưa có ảnh đại diện</p>
+                    <p className="text-xs leading-5 text-slate-500">Khung xem trước sẽ hiển thị ở đây sau khi bạn chọn ảnh hoặc dán URL.</p>
+                  </div>
+                </div>
+              )}
+
+              <p className="mb-3 text-xs leading-5 text-slate-500">
+                Chọn ảnh từ máy, hệ thống sẽ chỉ tải lên Cloudinary khi bạn nhấn <strong>Lưu</strong>. Hoặc dán URL ảnh công khai (HTTPS).
+              </p>
+
+              {cloudinaryReady && (
+                <label className="mb-4 flex cursor-pointer items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 transition hover:border-[#1A3C6E]/40 hover:bg-slate-100">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#1A3C6E] shadow-sm">
+                    <Upload className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <span className="block text-sm font-semibold text-slate-700">Chọn ảnh từ máy</span>
+                    <span className="block text-xs text-slate-500">Khuyến nghị ảnh ngang để khung preview đầy hơn.</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={pending || uploadingOnSave}
+                    onChange={(e) => {
+                      onPickThumbnail(e.target.files)
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
+              )}
+
+              {!cloudinaryReady && (
+                <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+                  Máy chủ chưa bật Cloudinary, hiện chỉ có thể dán URL ảnh bên dưới.
+                </p>
+              )}
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">URL ảnh công khai</label>
+                <input
+                  value={thumbnailUrlInput}
+                  onChange={(e) => {
+                    setThumbnailUrlInput(e.target.value)
+                    if (pendingThumbnailFile || localPreviewObjectUrl) {
+                      clearLocalThumbnail()
+                    }
+                  }}
+                  placeholder="https://…"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-[#1A3C6E] focus:ring-4 focus:ring-[#1A3C6E]/10"
+                />
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-[#0f172a] p-5 text-white shadow-sm">
+              <div className="mb-4">
+                <h3 className="text-base font-semibold">Thiết lập xuất bản</h3>
+                <p className="mt-1 text-sm text-slate-300">Quản lý trạng thái, danh mục và mức độ ưu tiên hiển thị tại cùng một chỗ.</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-200">Danh mục</label>
+                  <select
+                    value={categoryId ?? ''}
+                    onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : undefined)}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-[#60a5fa] focus:ring-4 focus:ring-[#60a5fa]/15"
+                  >
+                    <option value="">Không có</option>
+                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-200">Trạng thái</label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-[#60a5fa] focus:ring-4 focus:ring-[#60a5fa]/15"
+                  >
+                    <option value="draft">Nháp</option>
+                    <option value="published">Xuất bản</option>
+                    <option value="hidden">Ẩn</option>
+                  </select>
+                </div>
+                <label className="flex items-start gap-3 rounded-2xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-sm text-slate-100">
+                  <input
+                    type="checkbox"
+                    checked={featured}
+                    onChange={(e) => setFeatured(e.target.checked)}
+                    className="mt-1 rounded border-slate-500 bg-slate-900 text-[#60a5fa]"
+                  />
+                  <span>
+                    <span className="block font-medium">Đánh dấu bài viết nổi bật</span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-400">Bài viết nổi bật sẽ dễ được ưu tiên hiển thị ở khu vực tin tức.</span>
+                  </span>
+                </label>
+              </div>
+            </section>
           </div>
         </div>
-        <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
-          <input
-            type="checkbox"
-            checked={featured}
-            onChange={(e) => setFeatured(e.target.checked)}
-            className="rounded border-gray-300 text-[#1A3C6E]"
-          />
-          Đánh dấu bài viết nổi bật
-        </label>
       </div>
     </Modal>
   )

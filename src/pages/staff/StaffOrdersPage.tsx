@@ -237,7 +237,7 @@ function OrderDetailModal({
 
 export function StaffOrdersPage() {
   const { orders: ordersPath } = useStaffOrManagerBasePath()
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(12)
   const { data: orders, refetch } = useStaffOrders()

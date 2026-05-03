@@ -1,5 +1,24 @@
 import { NavLink } from 'react-router-dom'
-import { X, LayoutDashboard, Users, Shield, Building2, BookOpen, ArrowLeftRight, FileText, Settings, BarChart3, ScrollText, Bell, User, CreditCard, MessageCircle, Newspaper, Star } from 'lucide-react'
+import {
+  X,
+  LayoutDashboard,
+  Users,
+  Shield,
+  Building2,
+  CarFront,
+  BookOpen,
+  ArrowLeftRight,
+  FileText,
+  Settings,
+  BarChart3,
+  ScrollText,
+  Bell,
+  User,
+  CreditCard,
+  MessageCircle,
+  Newspaper,
+  Star,
+} from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { getRoleLabel } from '@/utils/roleLabels'
 import { useTransfersAdmin } from '@/hooks/useTransfersAdmin'
@@ -14,6 +33,7 @@ const navItems = [
   { to: '/admin/users', icon: Users, label: 'Người dùng' },
   { to: '/admin/roles', icon: Shield, label: 'Vai trò & Quyền' },
   { to: '/admin/branches', icon: Building2, label: 'Chi nhánh' },
+  { to: '/admin/vehicles', icon: CarFront, label: 'Quản lý xe' },
   { to: '/admin/catalog', icon: BookOpen, label: 'Danh mục xe' },
   { to: '/admin/transfers', icon: ArrowLeftRight, label: 'Điều chuyển', badgeKey: 'transfers' },
   { to: '/admin/home-banners', icon: FileText, label: 'Banner trang chủ' },

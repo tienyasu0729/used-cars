@@ -12,9 +12,11 @@ const pageTitles: Record<string, string> = {
   '/admin/roles': 'Vai Trò & Quyền',
   '/admin/branches': 'Quản Lý Chi Nhánh',
   '/admin/branches/new': 'Thêm Chi Nhánh',
+  '/admin/vehicles': 'Quản Lý Xe',
+  '/admin/vehicles/new': 'Thêm Xe Mới',
   '/admin/catalog': 'Danh Mục Xe',
   '/admin/transfers': 'Duyệt Điều Chuyển',
-  '/admin/home-banners': 'Banner trang chủ',
+  '/admin/home-banners': 'Banner Trang Chủ',
   '/admin/config': 'Cấu Hình Hệ Thống',
   '/admin/reports': 'Báo Cáo Tổng',
   '/admin/transactions': 'Lịch Sử Giao Dịch',
@@ -24,6 +26,7 @@ const pageTitles: Record<string, string> = {
 }
 
 function getPageTitle(pathname: string): string {
+  if (/^\/admin\/vehicles\/\d+\/edit$/.test(pathname)) return 'Chỉnh Sửa Xe'
   return pageTitles[pathname] ?? 'Admin Dashboard'
 }
 

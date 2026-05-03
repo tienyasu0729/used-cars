@@ -18,7 +18,9 @@ import { useInstallmentDraft } from '@/features/installment/useInstallmentDraft'
 import { StepDocuments, REQUIRED_DOCUMENT_TYPES, type PendingDocument } from '@/features/installment/StepDocuments'
 import {
   fullInstallmentSchema, WIZARD_STEPS, STEP_SCHEMAS,
+  BANK_CODES,
   type FullInstallmentData,
+  type SupportedBankCode,
 } from '@/features/installment/installmentSchema'
 import {
   installmentService,
@@ -44,11 +46,17 @@ const ALL_FIELDS: (keyof FullInstallmentData)[] = [
 
 const DEPOSIT_REQUIRED_REASONS = new Set(['DEPOSIT_REQUIRED', 'PRE_DEPOSIT_REQUIRED', 'PRE_DEPOSIT_PAYMENT_REQUIRED'])
 
+function normalizeBankCode(value: string | null): SupportedBankCode | undefined {
+  if (!value) return undefined
+  const upper = value.trim().toUpperCase()
+  return BANK_CODES.find((code) => code === upper)
+}
+
 export function InstallmentWizardPage() {
   const { vehicleId: paramId } = useParams<{ vehicleId: string }>()
   const [searchParams] = useSearchParams()
   const vehicleId = paramId ? parseInt(paramId, 10) : 0
-  const bankCodeFromQuery = (searchParams.get('bankCode') || '').trim().toUpperCase()
+  const bankCodeFromQuery = normalizeBankCode(searchParams.get('bankCode'))
   const navigate = useNavigate()
   const { vehicle, isLoading: vehicleLoading } = useVehicleDetail(vehicleId || undefined)
   const user = useAuthStore((s) => s.user)
@@ -99,7 +107,7 @@ export function InstallmentWizardPage() {
       businessName: '', businessType: '', businessDuration: '',
       monthlyIncome: undefined, monthlyExpenses: undefined, existingLoans: 0, dependentsCount: 0,
       vehiclePrice: vehicle?.price || 0, prepaymentAmount: 0, loanAmount: 0, loanTermMonths: undefined,
-      repaymentMethod: '', bankCode: bankCodeFromQuery || 'VCB', agreedTerms: undefined as unknown as true,
+      repaymentMethod: '', bankCode: bankCodeFromQuery ?? 'VCB', agreedTerms: undefined as unknown as true,
       agreedPrivacy: undefined as unknown as true, signatureUrl: '', signedDate: '',
     },
   })

@@ -8,8 +8,8 @@ interface TransactionTableProps {
   transactions: Transaction[]
   isLoading?: boolean
   selectMode?: boolean
-  selectedIds?: Set<number>
-  onToggleId?: (id: number) => void
+  selectedIds?: Set<string>
+  onToggleId?: (id: string) => void
 }
 
 const typeConfig: Record<string, { label: string; icon: typeof Wallet; className: string }> = {

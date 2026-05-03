@@ -4,7 +4,7 @@ import type { FullInstallmentData } from '../installmentSchema'
 import { formatPriceNumber } from '@/utils/format'
 
 interface Props {
-  form: UseFormReturn<FullInstallmentData>
+  form: UseFormReturn<FullInstallmentData, any, any>
   documentsCount: number
   hasEnoughRequiredDocs: boolean
 }

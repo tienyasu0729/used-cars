@@ -33,7 +33,7 @@ const SUPPORTED_BANKS = [
 ] as const
 
 interface Props {
-  form: UseFormReturn<FullInstallmentData>
+  form: UseFormReturn<FullInstallmentData, any, any>
   vehiclePrice: number
   appliedDepositAmount: number
 }

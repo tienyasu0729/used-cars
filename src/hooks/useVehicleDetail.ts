@@ -11,6 +11,7 @@ import { interactionService } from '@/services/interaction.service'
 import { useAuthStore } from '@/store/authStore'
 import type { Vehicle } from '@/types/vehicle.types'
 import { INVENTORY_CHANGED_EVENT } from '@/utils/inventorySync'
+import { canUseManagedVehicleView } from '@/utils/userRole'
 
 interface UseVehicleDetailReturn {
   vehicle: Vehicle | null
@@ -42,9 +43,7 @@ export function useVehicleDetail(vehicleId: number | undefined, options?: UseVeh
     }
     setIsLoading(true)
     setError(null)
-    const canUseManagedDetail = Boolean(
-      options?.preferManaged && isAuthenticated && (user?.role === 'BranchManager' || user?.role === 'SalesStaff' || user?.role === 'Admin'),
-    )
+    const canUseManagedDetail = Boolean(options?.preferManaged && isAuthenticated && canUseManagedVehicleView(user?.role))
     const getDetail = canUseManagedDetail
       ? vehicleService.getManagerVehicleById(vehicleId)
       : vehicleService.getVehicleById(vehicleId)

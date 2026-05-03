@@ -27,7 +27,7 @@ export function useInstallmentDraft(vehicleId: number) {
     async function loadDraft() {
       try {
         const apps = await installmentService.getMyApplications()
-        const draft = apps.find((a) => a.vehicleId === vehicleId && a.status === 'DRAFT')
+        const draft = apps.items.find((a) => a.vehicleId === vehicleId && a.status === 'DRAFT')
         if (draft && !cancelled) {
           setApplicationId(draft.id)
           setApplication(draft)

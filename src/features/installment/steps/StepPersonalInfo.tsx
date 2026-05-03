@@ -16,7 +16,7 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 interface Props {
-  form: UseFormReturn<FullInstallmentData>
+  form: UseFormReturn<FullInstallmentData, any, any>
 }
 
 export function StepPersonalInfo({ form }: Props) {

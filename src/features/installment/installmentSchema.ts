@@ -1,5 +1,8 @@
-﻿import { z } from 'zod'
+import { z } from 'zod'
 import { isValidDdMmYyyyOrEmpty } from '@/utils/dateDdMmYyyy'
+
+export const BANK_CODES = ['VCB', 'TCB', 'BIDV', 'VPB', 'ACB', 'MB', 'VIB', 'SACOMBANK'] as const
+export type SupportedBankCode = (typeof BANK_CODES)[number]
 
 export const personalInfoSchema = z.object({
   fullName: z.string().min(2, 'Họ tên tối thiểu 2 ký tự').max(100),
@@ -46,9 +49,7 @@ export const loanDetailsSchema = z.object({
   loanAmount: z.coerce.number().min(0, 'Số tiền vay không hợp lệ'),
   loanTermMonths: z.coerce.number().min(6, 'Tối thiểu 6 tháng').max(84, 'Tối đa 84 tháng'),
   repaymentMethod: z.string().min(1, 'Chọn phương thức trả nợ'),
-  bankCode: z.enum(['VCB', 'TCB', 'BIDV', 'VPB', 'ACB', 'MB', 'VIB', 'SACOMBANK'], {
-    errorMap: () => ({ message: 'Chọn ngân hàng hỗ trợ' }),
-  }),
+  bankCode: z.enum(BANK_CODES, 'Chọn ngân hàng hỗ trợ'),
 }).superRefine((data, ctx) => {
   if (data.prepaymentAmount > data.vehiclePrice) {
     ctx.addIssue({
