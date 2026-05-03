@@ -2,6 +2,7 @@
  * Hybrid upload: backend ký → client POST trực tiếp lên Cloudinary → URL dùng trong API nghiệp vụ.
  */
 import axiosInstance from '@/utils/axiosInstance'
+import { assertCloudinaryImageSize } from '@/utils/uploadLimits'
 
 function unwrapData<T>(res: unknown): T {
   const r = res as { data?: T }
@@ -44,6 +45,7 @@ async function postFileToCloudinary(
   file: File,
   sig: CloudinarySignedUpload,
 ): Promise<string> {
+  assertCloudinaryImageSize(file)
   const fd = new FormData()
   fd.append('file', file)
   fd.append('api_key', sig.apiKey)

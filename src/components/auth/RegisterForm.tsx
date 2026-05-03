@@ -29,6 +29,8 @@ import {
   validateNewAccountPassword,
 } from '@/lib/auth/passwordRules'
 
+const VN_PHONE_REGEX = /^0\d{9}$/
+
 export function RegisterForm() {
   // State form — chỉ quản lý giá trị input
   const [name, setName] = useState('')
@@ -59,6 +61,18 @@ export function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setClientFieldErrors({})
+
+    const nextClientErrors: Record<string, string> = {}
+    if (!name.trim()) nextClientErrors.name = 'Họ tên không được để trống.'
+    if (!email.trim()) nextClientErrors.email = 'Email không được để trống.'
+    if (!phone.trim()) nextClientErrors.phone = 'Số điện thoại không được để trống.'
+    else if (!VN_PHONE_REGEX.test(phone.trim().replace(/\s/g, ''))) {
+      nextClientErrors.phone = 'Số điện thoại phải đúng 10 chữ số và bắt đầu bằng 0.'
+    }
+    if (Object.keys(nextClientErrors).length > 0) {
+      setClientFieldErrors(nextClientErrors)
+      return
+    }
 
     const pwdErr = validateNewAccountPassword(password)
     if (pwdErr) {
@@ -114,10 +128,11 @@ export function RegisterForm() {
           value={name}
           onChange={(e) => {
             setName(e.target.value)
+            setClientFieldErrors((prev) => ({ ...prev, name: '' }))
             clearErrors()
           }}
           placeholder="Nguyễn Văn A"
-          error={fieldErrors['name']}
+          error={fieldErrors['name'] || clientFieldErrors['name']}
           required
           autoComplete="name"
         />
@@ -130,10 +145,11 @@ export function RegisterForm() {
           value={email}
           onChange={(e) => {
             setEmail(e.target.value)
+            setClientFieldErrors((prev) => ({ ...prev, email: '' }))
             clearErrors()
           }}
           placeholder="email@example.com"
-          error={fieldErrors['email']}
+          error={fieldErrors['email'] || clientFieldErrors['email']}
           required
           autoComplete="email"
         />
@@ -146,10 +162,11 @@ export function RegisterForm() {
           value={phone}
           onChange={(e) => {
             setPhone(e.target.value)
+            setClientFieldErrors((prev) => ({ ...prev, phone: '' }))
             clearErrors()
           }}
           placeholder="0905123456"
-          error={fieldErrors['phone']}
+          error={fieldErrors['phone'] || clientFieldErrors['phone']}
           required
           autoComplete="tel"
         />

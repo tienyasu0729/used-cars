@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { Button, Spinner } from '@/components/ui'
+import { CLOUDINARY_SINGLE_IMAGE_MAX_BYTES, CLOUDINARY_SINGLE_IMAGE_MAX_LABEL } from '@/utils/uploadLimits'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
 
@@ -30,6 +31,11 @@ export function MobileUploadPage() {
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (file.size > CLOUDINARY_SINGLE_IMAGE_MAX_BYTES) {
+      setStatus('error')
+      setError(`Ảnh quá lớn. Tối đa ${CLOUDINARY_SINGLE_IMAGE_MAX_LABEL}.`)
+      return
+    }
 
     setPreviewUrl(URL.createObjectURL(file))
     setStatus('uploading')

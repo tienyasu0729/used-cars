@@ -6,6 +6,7 @@ import { useCompareStore } from '@/store/compareStore'
 import { BrandLogo } from '@/components/common/BrandLogo'
 import { SearchAutocomplete } from '@/components/common/SearchAutocomplete'
 import type { UserRole } from '@/types'
+import { resolveUploadPublicUrl } from '@/utils/mediaUrl'
 
 function getDashboardPath(role: UserRole): string {
   const map: Record<UserRole, string> = {
@@ -57,6 +58,7 @@ export function PublicHeader() {
   const removeCompareEntry = useCompareStore((s) => s.removeEntry)
   const clearCompare = useCompareStore((s) => s.clear)
   const navigate = useNavigate()
+  const avatarSrc = resolveUploadPublicUrl(user?.avatarUrl ?? undefined)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -184,8 +186,12 @@ export function PublicHeader() {
                 onClick={() => setAvatarOpen(!avatarOpen)}
                 className="flex items-center gap-2 rounded-full border border-white/30 p-1 pr-2 hover:bg-white/10"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-medium text-white">
-                  {user.name?.[0]?.toUpperCase() || 'U'}
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white/20 text-sm font-medium text-white">
+                  {avatarSrc ? (
+                    <img src={avatarSrc} alt={user.name ?? 'Avatar người dùng'} className="h-full w-full object-cover" />
+                  ) : (
+                    user.name?.[0]?.toUpperCase() || 'U'
+                  )}
                 </div>
                 <ChevronDown className="h-4 w-4 text-white" />
               </button>

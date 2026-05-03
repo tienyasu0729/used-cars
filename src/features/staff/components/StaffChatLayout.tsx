@@ -13,6 +13,7 @@ import { respondToConsultation } from '@/services/consultation.service'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
+import { resolveUploadPublicUrl } from '@/utils/mediaUrl'
 
 interface StaffChatLayoutProps {
   conversations: ChatConversation[]
@@ -41,6 +42,28 @@ function roleKey(role: string | undefined | null): string {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '')
+}
+
+function AvatarCircle({
+  name,
+  avatarUrl,
+  className,
+}: {
+  name?: string | null
+  avatarUrl?: string | null
+  className?: string
+}) {
+  const src = resolveUploadPublicUrl(avatarUrl ?? undefined)
+
+  return (
+    <div className={className}>
+      {src ? (
+        <img src={src} alt={name ?? 'Avatar người dùng'} className="h-full w-full object-cover" />
+      ) : (
+        (name?.slice(0, 2).toUpperCase() || 'U')
+      )}
+    </div>
+  )
 }
 
 export function StaffChatLayout({
@@ -232,13 +255,11 @@ export function StaffChatLayout({
                 onClick={() => onSelectConversation(c.id)}
                 className="flex min-w-0 flex-1 items-start gap-3 p-4 text-left"
               >
-                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-sm font-semibold text-slate-600">
-                  {c.participantAvatar ? (
-                    <img src={c.participantAvatar} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    c.participantName.slice(0, 2).toUpperCase()
-                  )}
-                </div>
+                <AvatarCircle
+                  name={c.participantName}
+                  avatarUrl={c.participantAvatar}
+                  className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-sm font-semibold text-slate-600"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="truncate font-semibold text-slate-900">{c.participantName}</p>
@@ -285,9 +306,11 @@ export function StaffChatLayout({
             <div className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-sm font-semibold text-slate-600">
-                    {displayName.slice(0, 2).toUpperCase()}
-                  </div>
+                  <AvatarCircle
+                    name={displayName}
+                    avatarUrl={selected?.participantAvatar}
+                    className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-sm font-semibold text-slate-600"
+                  />
                   <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
                 </div>
                 <div>
@@ -341,9 +364,11 @@ export function StaffChatLayout({
                         className={`flex ${m.senderType === 'self' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div className={`flex max-w-[75%] gap-2 ${m.senderType === 'self' ? 'flex-row-reverse' : ''}`}>
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-300 text-xs font-medium text-slate-600">
-                            {m.senderType === 'self' ? 'NV' : displayName.slice(0, 2).toUpperCase()}
-                          </div>
+                          <AvatarCircle
+                            name={m.senderType === 'self' ? user?.name : displayName}
+                            avatarUrl={m.senderType === 'self' ? user?.avatarUrl : selected?.participantAvatar}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-300 text-xs font-medium text-slate-600"
+                          />
                           <div
                             className={`rounded-2xl px-4 py-2.5 ${
                               m.senderType === 'self'

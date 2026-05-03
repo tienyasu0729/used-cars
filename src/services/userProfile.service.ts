@@ -2,6 +2,7 @@
  * Hồ sơ user đăng nhập — GET/PUT /users/me; avatar: hybrid (GET signature → Cloudinary → PUT URL).
  */
 import axiosInstance from '@/utils/axiosInstance'
+import { CLOUDINARY_SINGLE_IMAGE_MAX_BYTES } from '@/utils/uploadLimits'
 import type { ApiResponse } from '@/types/auth.types'
 import type { ProfileGender, UserProfile } from '@/types/auth.types'
 
@@ -98,10 +99,8 @@ export async function fetchCustomerStats(): Promise<CustomerStats> {
   return unwrapCustomerStats(res)
 }
 
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024
-
 function assertAvatarFile(file: File): void {
-  if (file.size > MAX_AVATAR_BYTES) {
+  if (file.size > CLOUDINARY_SINGLE_IMAGE_MAX_BYTES) {
     throw new Error('AVATAR_TOO_LARGE')
   }
   const t = file.type.toLowerCase()

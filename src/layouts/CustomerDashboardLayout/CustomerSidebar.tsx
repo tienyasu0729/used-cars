@@ -25,6 +25,7 @@ import { useBookings } from '@/hooks/useBookings'
 import { useDeposits } from '@/hooks/useDeposits'
 import { useConversations } from '@/hooks/useChats'
 import { useOrders } from '@/hooks/useOrders'
+import { CLOUDINARY_SINGLE_IMAGE_MAX_BYTES, CLOUDINARY_SINGLE_IMAGE_MAX_LABEL } from '@/utils/uploadLimits'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Tổng Quan' },
@@ -39,8 +40,6 @@ const navItems = [
   { to: '/dashboard/notifications', icon: Bell, label: 'Thông Báo', badgeKey: 'notifications' },
   { to: '/dashboard/security', icon: Lock, label: 'Bảo Mật' },
 ]
-
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 
 export function CustomerSidebar() {
   const { user, logout, patchUser } = useAuthStore()
@@ -82,8 +81,8 @@ export function CustomerSidebar() {
       addToast('error', 'Chỉ chấp nhận file ảnh.')
       return
     }
-    if (file.size > MAX_AVATAR_BYTES) {
-      addToast('error', 'Ảnh tối đa 2MB.')
+    if (file.size > CLOUDINARY_SINGLE_IMAGE_MAX_BYTES) {
+      addToast('error', `Ảnh tối đa ${CLOUDINARY_SINGLE_IMAGE_MAX_LABEL}.`)
       return
     }
     try {

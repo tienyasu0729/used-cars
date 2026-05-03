@@ -1,5 +1,6 @@
 import { api } from './apiClient'
 import type { CloudinarySignedUpload } from './managerMedia.service'
+import { assertCloudinaryImageSize } from '@/utils/uploadLimits'
 
 export type HomeBannerPublic = { id: number; imageUrl: string; sortOrder: number }
 
@@ -48,6 +49,7 @@ export async function deleteAdminHomeBanner(id: number): Promise<void> {
 }
 
 async function postFileToCloudinary(file: File, sig: CloudinarySignedUpload): Promise<{ secureUrl: string; publicId: string }> {
+  assertCloudinaryImageSize(file)
   const fd = new FormData()
   fd.append('file', file)
   fd.append('api_key', sig.apiKey)

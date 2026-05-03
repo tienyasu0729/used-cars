@@ -19,8 +19,8 @@ import {
   PASSWORD_CONFIRM_MISMATCH_MESSAGE,
 } from '@/lib/auth/passwordRules'
 
-// Regex giống RegisterForm/backend: 10–20 chữ số, bắt đầu bằng 0
-const VN_PHONE_REGEX = /^0\d{9,19}$/
+// Regex giống RegisterForm/backend: đúng 10 chữ số, bắt đầu bằng 0
+const VN_PHONE_REGEX = /^0\d{9}$/
 
 const schema = z
   .object({
@@ -41,7 +41,7 @@ const schema = z
       .min(1, 'Số điện thoại không được để trống.')
       .max(20, 'Số điện thoại tối đa 20 ký tự.')
       .refine((v) => VN_PHONE_REGEX.test(v.replace(/\s/g, '')), {
-        message: 'Số điện thoại bắt đầu bằng 0, 10–20 chữ số.',
+        message: 'Số điện thoại phải đúng 10 chữ số và bắt đầu bằng 0.',
       }),
     startDate: z.string().min(1, 'Ngày bắt đầu là bắt buộc.'),
     notes: z.string().optional(),
@@ -171,21 +171,21 @@ export function ManagerCreateStaffPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 p-8">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700">Họ và tên nhân viên</span>
+              <span className="text-sm font-semibold text-slate-700">Họ và tên nhân viên <span className="text-red-500">*</span></span>
               <Input {...register('name')} placeholder="Nguyễn Văn A" autoComplete="name" />
               {errors.name && (
                 <p className="text-xs text-red-500">{errors.name.message}</p>
               )}
             </label>
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700">Địa chỉ Email</span>
+              <span className="text-sm font-semibold text-slate-700">Địa chỉ Email <span className="text-red-500">*</span></span>
               <Input {...register('email')} type="email" placeholder="example@banxeoto.vn" autoComplete="email" />
               {errors.email && (
                 <p className="text-xs text-red-500">{errors.email.message}</p>
               )}
             </label>
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-700">Số điện thoại</span>
+              <span className="text-sm font-semibold text-slate-700">Số điện thoại <span className="text-red-500">*</span></span>
               <Input {...register('phone')} type="tel" placeholder="0905123456" autoComplete="tel" />
               {errors.phone && (
                 <p className="text-xs text-red-500">{errors.phone.message}</p>
@@ -196,7 +196,7 @@ export function ManagerCreateStaffPage() {
               <p className="text-sm text-slate-900">Nhân viên bán hàng (SalesStaff)</p>
             </div>
             <label className="flex flex-col gap-2 md:col-span-2">
-              <span className="text-sm font-semibold text-slate-700">Ngày bắt đầu làm việc</span>
+              <span className="text-sm font-semibold text-slate-700">Ngày bắt đầu làm việc <span className="text-red-500">*</span></span>
               <Input {...register('startDate')} type="date" />
               {errors.startDate && (
                 <p className="text-xs text-red-500">{errors.startDate.message}</p>
@@ -233,7 +233,7 @@ export function ManagerCreateStaffPage() {
             {!autoPassword && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-semibold text-slate-700">Mật khẩu</span>
+                  <span className="text-sm font-semibold text-slate-700">Mật khẩu <span className="text-red-500">*</span></span>
                   <div className="relative">
                     <Input
                       {...register('password')}
@@ -257,7 +257,7 @@ export function ManagerCreateStaffPage() {
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-semibold text-slate-700">Xác nhận mật khẩu</span>
+                  <span className="text-sm font-semibold text-slate-700">Xác nhận mật khẩu <span className="text-red-500">*</span></span>
                   <div className="relative">
                     <Input
                       {...register('confirmPassword')}

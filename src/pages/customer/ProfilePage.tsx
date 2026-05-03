@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -6,16 +6,20 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 import { Button, Input, ConfirmDialog } from '@/components/ui'
-import { Lock } from 'lucide-react'
-import { getProfile, updateProfile, normalizeVNPhoneForApi } from '@/services/user.service'
+import { Camera, Loader2, Lock } from 'lucide-react'
+import { getProfile, updateProfile, normalizeVNPhoneForApi, uploadAvatar } from '@/services/user.service'
 import { isoDateToDdMmYyyy, ddMmYyyyToIso, isValidDdMmYyyyOrEmpty } from '@/utils/dateDdMmYyyy'
 import { formatDateInputDdMmYyyy } from '@/utils/dateInputMask'
+import { resolveUploadPublicUrl } from '@/utils/mediaUrl'
+import { CLOUDINARY_SINGLE_IMAGE_MAX_LABEL } from '@/utils/uploadLimits'
 import {
   PROFILE_NAME_REGEX_U,
   PROFILE_ADDRESS_MAX_LEN,
   profileAddressNoIllegalControlChars,
 } from '@/utils/profileValidation'
 import type { ApiErrorResponse } from '@/types/auth.types'
+
+const VN_PHONE_REGEX = /^0\d{9}$/
 
 const schema = z.object({
   name: z
@@ -29,9 +33,9 @@ const schema = z.object({
     ),
   phone: z
     .string()
-    .optional()
+    .trim()
+    .min(1, 'Số điện thoại không được để trống')
     .refine((s) => {
-      if (s == null || s.trim() === '') return true
       const n = normalizeVNPhoneForApi(s)
       return n != null && /^0\d{9}$/.test(n)
     }, 'Số điện thoại không hợp lệ (10 số bắt đầu 0, hoặc +84 và 9 chữ số)'),
@@ -52,6 +56,13 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+function getAvatarUploadErrorMessage(err: unknown): string {
+  const message = err instanceof Error ? err.message : ''
+  if (message === 'AVATAR_TOO_LARGE') return `Ảnh đại diện tối đa ${CLOUDINARY_SINGLE_IMAGE_MAX_LABEL}.`
+  if (message === 'AVATAR_TYPE') return 'Chỉ hỗ trợ ảnh JPG hoặc PNG.'
+  return 'Tải ảnh thất bại. Vui lòng thử lại.'
+}
+
 function getDashboardPath(pathname: string): string {
   if (pathname.startsWith('/admin')) return '/admin/dashboard'
   if (pathname.startsWith('/staff')) return '/staff/dashboard'
@@ -63,6 +74,8 @@ export function ProfilePage() {
   const { pathname } = useLocation()
   const { user, patchUser } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   const {
     register,
@@ -105,6 +118,8 @@ export function ProfilePage() {
     })
   }, [user, reset])
 
+  const avatarSrc = useMemo(() => resolveUploadPublicUrl(user?.avatarUrl ?? undefined), [user?.avatarUrl])
+
   // State cho popup xác nhận trước khi lưu
   const [showConfirm, setShowConfirm] = useState(false)
   const [pendingData, setPendingData] = useState<FormData | null>(null)
@@ -119,8 +134,12 @@ export function ProfilePage() {
   const onConfirmSave = async () => {
     if (!user || !pendingData) return
     const data = pendingData
-    const phoneNorm = data.phone?.trim() ? normalizeVNPhoneForApi(data.phone) : null
+    const phoneNorm = normalizeVNPhoneForApi(data.phone)
     try {
+      if (!phoneNorm || !VN_PHONE_REGEX.test(phoneNorm)) {
+        addToast('error', 'Số điện thoại không hợp lệ.')
+        return
+      }
       const iso = ddMmYyyyToIso(data.dateOfBirth)
       const p = await updateProfile({
         name: data.name,
@@ -155,6 +174,22 @@ export function ProfilePage() {
     })
   }
 
+  const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setAvatarUploading(true)
+    try {
+      const avatarUrl = await uploadAvatar(file)
+      patchUser({ avatarUrl })
+      addToast('success', 'Đã cập nhật ảnh đại diện')
+    } catch (err) {
+      addToast('error', getAvatarUploadErrorMessage(err))
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <nav className="flex items-center gap-2 text-sm text-slate-500">
@@ -172,13 +207,49 @@ export function ProfilePage() {
             <p className="mt-0.5 text-sm text-slate-500">Quản lý thông tin cá nhân để bảo mật tài khoản tốt hơn</p>
           </div>
           <form onSubmit={onSave} className="space-y-5 p-5">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#1A3C6E]/10 ring-4 ring-white">
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-2xl font-bold text-[#1A3C6E]">{user?.name?.[0]?.toUpperCase() || 'U'}</span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Ảnh đại diện</p>
+                    <p className="mt-1 text-sm text-slate-500">Hỗ trợ JPG, PNG. Dung lượng tối đa {CLOUDINARY_SINGLE_IMAGE_MAX_LABEL}.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/jpg"
+                    className="hidden"
+                    onChange={onAvatarChange}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={avatarUploading}
+                    className="rounded-lg border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+                  >
+                    {avatarUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                    {avatarUploading ? 'Đang tải ảnh...' : 'Đổi ảnh đại diện'}
+                  </Button>
+                </div>
+              </div>
+            </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Họ và tên</label>
+                <label className="text-sm font-semibold text-slate-700">Họ và tên <span className="text-red-500">*</span></label>
                 <Input {...register('name')} error={errors.name?.message} placeholder="Nhập họ tên" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Email</label>
+                <label className="text-sm font-semibold text-slate-700">Email <span className="text-red-500">*</span></label>
                 <Input
                   value={user?.email ?? ''}
                   readOnly
@@ -188,8 +259,8 @@ export function ProfilePage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Số điện thoại</label>
-                <Input type="tel" {...register('phone')} error={errors.phone?.message} placeholder="0xxxxxxxxx hoặc +84" />
+                <label className="text-sm font-semibold text-slate-700">Số điện thoại <span className="text-red-500">*</span></label>
+                <Input type="tel" {...register('phone')} error={errors.phone?.message} placeholder="0xxxxxxxxx hoặc +84" required />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">Ngày sinh</label>

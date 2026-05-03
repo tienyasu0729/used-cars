@@ -3,6 +3,7 @@ import { Upload, Camera, QrCode, X, CheckCircle, ImageIcon } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { contractService } from '@/services/contract.service'
 import { Button, Spinner } from '@/components/ui'
+import { DOCUMENT_UPLOAD_MAX_BYTES, DOCUMENT_UPLOAD_MAX_LABEL } from '@/utils/uploadLimits'
 
 export interface SignedParams {
   uploadUrl: string
@@ -27,8 +28,6 @@ interface DocumentUploadPanelProps {
   sides: { key: string; label: string }[]
   onSidesChange: (values: Record<string, SideValue>) => void
 }
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false)
@@ -92,7 +91,7 @@ function SideUpload({
   const handleLocalFile = useCallback(
     (file: File) => {
       if (!file.type.startsWith('image/')) { setError('Chỉ hỗ trợ file ảnh'); return }
-      if (file.size > MAX_FILE_SIZE) { setError('File quá lớn (tối đa 10 MB)'); return }
+      if (file.size > DOCUMENT_UPLOAD_MAX_BYTES) { setError(`File quá lớn (tối đa ${DOCUMENT_UPLOAD_MAX_LABEL})`); return }
       setError(null)
       const preview = URL.createObjectURL(file)
       onChange({ localFile: file, localPreview: preview })

@@ -3,6 +3,7 @@ import {
   FileText, Upload, Trash2, FileImage, AlertCircle, CheckCircle2, Circle,
 } from 'lucide-react'
 import type { InstallmentDocumentDTO } from '@/services/installment.service'
+import { DOCUMENT_UPLOAD_MAX_BYTES, DOCUMENT_UPLOAD_MAX_LABEL } from '@/utils/uploadLimits'
 
 const DOCUMENT_TYPES = [
   { value: 'CCCD_FRONT', label: 'CCCD / CMND — Mặt trước', required: true },
@@ -23,7 +24,6 @@ export { DOCUMENT_TYPES }
 export const REQUIRED_DOCUMENT_TYPES = DOCUMENT_TYPES.filter((t) => t.required).map((t) => t.value)
 
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp,application/pdf'
-const MAX_FILE_SIZE = 10 * 1024 * 1024
 export interface PendingDocument {
   tempId: string
   file: File
@@ -59,7 +59,7 @@ export function StepDocuments({
     if (!files || files.length === 0) return
     setError(null)
     const file = files[0]
-    if (file.size > MAX_FILE_SIZE) { setError('File quá lớn. Tối đa 10MB.'); return }
+    if (file.size > DOCUMENT_UPLOAD_MAX_BYTES) { setError(`File quá lớn. Tối đa ${DOCUMENT_UPLOAD_MAX_LABEL}.`); return }
     if (!ACCEPTED_TYPES.split(',').some((t) => file.type === t)) {
       setError('Chỉ chấp nhận JPG, PNG, WebP hoặc PDF.'); return
     }

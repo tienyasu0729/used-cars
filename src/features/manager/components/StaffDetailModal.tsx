@@ -8,6 +8,8 @@ import { useToastStore } from '@/store/toastStore'
 import { useAuthStore } from '@/store/authStore'
 import { Button, Input, Badge, Modal, ConfirmDialog } from '@/components/ui'
 
+const VN_PHONE_REGEX = /^0\d{9}$/
+
 interface StaffDetailModalProps {
   staff: ManagerStaffMember | null
   isOpen: boolean
@@ -91,7 +93,7 @@ function StaffDetailPanel({
     mutationFn: () =>
       managerStaffService.update(staffNumericId!, {
         name: editName.trim(),
-        phone: editPhone.trim() === '' ? null : editPhone.trim(),
+        phone: editPhone.replace(/\s/g, '').trim(),
       }),
     onSuccess: () => {
       addToast('success', 'Đã cập nhật thông tin nhân viên.')
@@ -259,18 +261,18 @@ function StaffDetailPanel({
             {editOpen ? (
               <div className="space-y-3">
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-600">Họ tên</span>
+                  <span className="text-xs font-semibold text-slate-600">Họ tên <span className="text-red-500">*</span></span>
                   <Input value={editName} onChange={(e) => setEditName(e.target.value)} disabled={busy} />
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-600">Số điện thoại</span>
-                  <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} disabled={busy} />
+                  <span className="text-xs font-semibold text-slate-600">Số điện thoại <span className="text-red-500">*</span></span>
+                  <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} disabled={busy} required />
                 </label>
                 <div className="flex gap-2">
                   <Button
                     type="button"
                     className="flex-1 bg-[#1A3C6E] text-white"
-                    disabled={busy || !editName.trim()}
+                    disabled={busy || !editName.trim() || !VN_PHONE_REGEX.test(editPhone.replace(/\s/g, '').trim())}
                     onClick={() => updateMut.mutate()}
                   >
                     {updateMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Lưu'}

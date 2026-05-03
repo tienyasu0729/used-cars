@@ -182,7 +182,7 @@ export function AdminUsersPage() {
         id,
         body: {
           name: data.name,
-          phone: data.phone.trim() === '' ? null : data.phone.trim(),
+          phone: data.phone.replace(/\s/g, '').trim(),
           role: data.role,
           branchId: data.branchId?.trim() ? Number(data.branchId) : null,
           status: data.status,

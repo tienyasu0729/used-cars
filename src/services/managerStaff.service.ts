@@ -28,7 +28,7 @@ export interface CreateStaffRequestBody {
 
 export interface UpdateStaffBody {
   name: string
-  phone?: string | null
+  phone: string
 }
 
 export interface UpdateStaffStatusBody {

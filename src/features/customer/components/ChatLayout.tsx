@@ -4,9 +4,35 @@ import { formatChatSidebarTime } from '@/utils/format'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Send, ChevronLeft, ChevronRight, Trash2, X } from 'lucide-react'
 import { parseVehicleAttachmentMessagePayload, VEHICLE_ATTACHMENT_MESSAGE_TYPE } from '@/utils/chatAttachment'
+import { resolveUploadPublicUrl } from '@/utils/mediaUrl'
+import { useAuthStore } from '@/store/authStore'
 
 const NAVY = '#1A3C6E'
 const ORANGE = '#E8612A'
+
+function AvatarCircle({
+  name,
+  avatarUrl,
+  className,
+  style,
+}: {
+  name?: string | null
+  avatarUrl?: string | null
+  className?: string
+  style?: CSSProperties
+}) {
+  const src = resolveUploadPublicUrl(avatarUrl ?? undefined)
+
+  return (
+    <div className={className} style={style}>
+      {src ? (
+        <img src={src} alt={name ?? 'Avatar người dùng'} className="h-full w-full object-cover" />
+      ) : (
+        name?.[0]?.toUpperCase() ?? '?'
+      )}
+    </div>
+  )
+}
 
 interface ChatLayoutProps {
   conversations: ChatConversation[]
@@ -43,6 +69,7 @@ export function ChatLayout({
   const [listFilter, setListFilter] = useState<'all' | 'unread'>('all')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const user = useAuthStore((state) => state.user)
 
   const filterBar = showListFilter ?? compact
   const selected = conversations.find((c) => c.id === selectedId)
@@ -181,7 +208,9 @@ export function ChatLayout({
                       }}
                     >
                       {/* Avatar */}
-                      <div
+                      <AvatarCircle
+                        name={c.participantName}
+                        avatarUrl={c.participantAvatar}
                         className="relative shrink-0 flex items-center justify-center rounded-full font-medium"
                         style={{
                           width: compact ? '2.25rem' : '2.5rem',
@@ -190,17 +219,15 @@ export function ChatLayout({
                           background: isSelected ? NAVY : 'rgba(26,60,110,0.1)',
                           color: isSelected ? '#fff' : NAVY,
                         }}
-                      >
-                        {c.participantName[0]?.toUpperCase() ?? '?'}
-                        {sidebarCollapsed && c.unreadCount > 0 && (
-                          <span
-                            className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
-                            style={{ background: ORANGE }}
-                          >
-                            {c.unreadCount > 9 ? '9+' : c.unreadCount}
-                          </span>
-                        )}
-                      </div>
+                      />
+                      {sidebarCollapsed && c.unreadCount > 0 && (
+                        <span
+                          className="absolute -right-0.5 top-2.5 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                          style={{ background: ORANGE }}
+                        >
+                          {c.unreadCount > 9 ? '9+' : c.unreadCount}
+                        </span>
+                      )}
 
                       {!sidebarCollapsed && (
                         <div className="min-w-0 flex-1">
@@ -278,7 +305,9 @@ export function ChatLayout({
               className="flex shrink-0 items-center gap-3 border-b border-slate-200"
               style={{ padding: compact ? '0.5rem 0.75rem' : '1rem' }}
             >
-              <div
+              <AvatarCircle
+                name={selected?.participantName}
+                avatarUrl={selected?.participantAvatar}
                 className="flex shrink-0 items-center justify-center rounded-full font-medium"
                 style={{
                   width: compact ? '2.25rem' : '2.5rem',
@@ -287,9 +316,7 @@ export function ChatLayout({
                   background: 'rgba(26,60,110,0.1)',
                   color: NAVY,
                 }}
-              >
-                {selected?.participantName?.[0]?.toUpperCase() ?? 'T'}
-              </div>
+              />
               <div className="min-w-0">
                 <p className={`font-semibold text-slate-900 ${compact ? 'text-sm' : ''}`}>
                   {selected?.participantName ?? 'Tư vấn viên'}
@@ -308,19 +335,30 @@ export function ChatLayout({
                   key={m.id}
                   className={`flex ${m.senderType === 'self' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div
-                    className="max-w-[85%] rounded-2xl text-sm"
-                    style={{
-                      padding: compact ? '0.5rem 0.75rem' : '0.5rem 1rem',
-                      ...(m.senderType === 'self'
-                        ? { background: NAVY, color: '#fff', borderBottomRightRadius: '0.25rem' }
-                        : { background: '#e8edf5', color: '#1e293b', borderBottomLeftRadius: '0.25rem' }),
-                    }}
-                  >
-                    {renderMessageContent(m)}
-                    <p className="mt-1 text-[10px] opacity-60">
-                      {new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                  <div className={`flex max-w-[85%] items-end gap-2 ${m.senderType === 'self' ? 'flex-row-reverse' : ''}`}>
+                    <AvatarCircle
+                      name={m.senderType === 'self' ? user?.name : selected?.participantName}
+                      avatarUrl={m.senderType === 'self' ? user?.avatarUrl : selected?.participantAvatar}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-medium"
+                      style={{
+                        background: m.senderType === 'self' ? 'rgba(26,60,110,0.14)' : '#dbe4f0',
+                        color: NAVY,
+                      }}
+                    />
+                    <div
+                      className="rounded-2xl text-sm"
+                      style={{
+                        padding: compact ? '0.5rem 0.75rem' : '0.5rem 1rem',
+                        ...(m.senderType === 'self'
+                          ? { background: NAVY, color: '#fff', borderBottomRightRadius: '0.25rem' }
+                          : { background: '#e8edf5', color: '#1e293b', borderBottomLeftRadius: '0.25rem' }),
+                      }}
+                    >
+                      {renderMessageContent(m)}
+                      <p className="mt-1 text-[10px] opacity-60">
+                        {new Date(m.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

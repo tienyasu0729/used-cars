@@ -7,15 +7,21 @@ import type { AdminUser } from '@/types/admin.types'
 
 const ROLES_NO_BRANCH = ['Customer', 'Admin'] as const
 const ROLES_REQUIRE_BRANCH = ['SalesStaff', 'BranchManager'] as const
+const VN_PHONE_REGEX = /^0\d{9}$/
 
 function requiresBranch(role: string) {
   return (ROLES_REQUIRE_BRANCH as readonly string[]).includes(role)
 }
 
 const baseSchema = z.object({
-  name: z.string().min(2, 'Tối thiểu 2 ký tự'),
-  email: z.string().email('Email không hợp lệ'),
-  phone: z.string().max(20, 'Tối đa 20 ký tự'),
+  name: z.string().trim().min(2, 'Tối thiểu 2 ký tự'),
+  email: z.string().trim().min(1, 'Email không được để trống').email('Email không hợp lệ'),
+  phone: z
+    .string()
+    .trim()
+    .min(1, 'Số điện thoại không được để trống')
+    .max(20, 'Tối đa 20 ký tự')
+    .refine((value) => VN_PHONE_REGEX.test(value.replace(/\s/g, '')), 'Số điện thoại phải đúng 10 chữ số và bắt đầu bằng 0'),
   role: z.string().min(1, 'Bắt buộc'),
   branchId: z.string().optional(),
   status: z.enum(['active', 'inactive', 'locked']),
@@ -162,9 +168,9 @@ export function EditUserModal({
         <Input label="Họ tên" {...form.register('name')} error={form.formState.errors.name?.message} required disabled={readOnly} />
         <Input label="Email" type="email" {...form.register('email')} error={form.formState.errors.email?.message} required disabled readOnly className="bg-slate-50" />
         {!readOnly ? <p className="text-xs text-slate-500">Email không đổi qua API quản trị.</p> : null}
-        <Input label="Số điện thoại" {...form.register('phone')} error={form.formState.errors.phone?.message} disabled={readOnly} />
+        <Input label="Số điện thoại" {...form.register('phone')} error={form.formState.errors.phone?.message} disabled={readOnly} required />
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Vai trò</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Vai trò <span className="text-red-500">*</span></label>
           <select
             {...form.register('role')}
             disabled={readOnly || isTargetAdmin}
@@ -185,7 +191,7 @@ export function EditUserModal({
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">
             Chi nhánh
-            {needsBranch ? <span className="ml-1 text-amber-700">*</span> : null}
+            {needsBranch ? <span className="ml-1 text-red-500">*</span> : null}
           </label>
           <select
             {...form.register('branchId')}
@@ -212,7 +218,7 @@ export function EditUserModal({
           {branchErr ? <p className="mt-1 text-xs text-red-600">{branchErr}</p> : null}
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Trạng thái</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Trạng thái <span className="text-red-500">*</span></label>
           <select {...form.register('status')} disabled={readOnly} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-100">
             <option value="active">Hoạt động</option>
             <option value="inactive">Vô hiệu</option>
