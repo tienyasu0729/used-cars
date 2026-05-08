@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<title>BanXeOTo Da Nang - Mua Bán Xe Ô Tô Uy Tín</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<!-- Sticky Header -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex h-16 items-center justify-between gap-4">
+<div class="flex items-center gap-8">
+<a class="flex items-center gap-2 group" href="/">
+<div class="bg-primary p-1.5 rounded-lg text-white">
+<span class="material-symbols-outlined block">directions_car</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-primary">BanXeOTo <span class="text-slate-600 dark:text-slate-400">Da Nang</span></h1>
+</a>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Mua Xe</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Chi Nhánh</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Liên Hệ</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Về Chúng Tôi</a>
+</nav>
+</div>
+<div class="flex flex-1 items-center justify-end gap-4">
+<div class="hidden lg:flex relative w-full max-w-xs">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary" placeholder="Tìm xe..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="hidden sm:flex px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Đăng nhập</button>
+<button class="px-4 py-2 text-sm font-bold bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">Đăng ký</button>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative h-[500px] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/40 z-10"></div>
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Modern luxury cars parked in a clean showroom" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDct-qji3arwsG0GMmPgMY-JnOon940F7ha4vDLen13AYTzKwvKn4LtHN0lqbhB1NNUFDp8-Hv3Y_Iw3WXgMYxNAnE9CncrZVx82svHwCok0sla-oD0r84j2iXuBpC9cFyS1fsdjXhZ4NNZmMcoq28e15iMm0t1pAfNu3LiiEcUgUEGw_J6GhjJC1IPaXyTVxVFQq_iszxStErzoCO1Iu7loECY4caTIuAnKnPuaFvalqMqip66v2bTksuoYkf888hnTsXR1qgFXq9l');"></div>
+<div class="relative z-20 max-w-4xl px-4 text-center">
+<h2 class="text-4xl md:text-6xl font-black text-white mb-6 leading-tight tracking-tight">Tìm xe ô tô phù hợp nhất tại Đà Nẵng</h2>
+<p class="text-white/90 text-lg mb-10 max-w-2xl mx-auto">Hệ thống mua bán xe uy tín hàng đầu khu vực miền Trung với hơn 10 năm kinh nghiệm.</p>
+<div class="bg-white dark:bg-slate-900 p-2 rounded-xl shadow-2xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto">
+<div class="flex-1 flex items-center px-4 py-3 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800">
+<span class="material-symbols-outlined text-slate-400 mr-2">search</span>
+<input class="w-full border-none focus:ring-0 bg-transparent p-0 text-sm" placeholder="Hãng xe, từ khóa..." type="text"/>
+</div>
+<div class="flex-1 flex items-center px-4 py-3 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800">
+<span class="material-symbols-outlined text-slate-400 mr-2">payments</span>
+<select class="w-full border-none focus:ring-0 bg-transparent p-0 text-sm appearance-none">
+<option>Khoảng giá</option>
+<option>Dưới 500tr</option>
+<option>500tr - 1 tỷ</option>
+<option>Trên 1 tỷ</option>
+</select>
+</div>
+<button class="bg-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-primary/90 transition-all">Tìm kiếm</button>
+</div>
+</div>
+</section>
+<!-- Quick Stats -->
+<section class="max-w-7xl mx-auto px-4 -mt-12 relative z-30">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg flex items-center gap-6 border border-slate-100 dark:border-slate-700">
+<div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">directions_car</span>
+</div>
+<div>
+<p class="text-3xl font-black text-primary">500+</p>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Xe đang bán</p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg flex items-center gap-6 border border-slate-100 dark:border-slate-700">
+<div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">apartment</span>
+</div>
+<div>
+<p class="text-3xl font-black text-primary">3</p>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Chi nhánh</p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg flex items-center gap-6 border border-slate-100 dark:border-slate-700">
+<div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">verified</span>
+</div>
+<div>
+<p class="text-3xl font-black text-primary">10 Năm</p>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Kinh nghiệm</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Featured Vehicles -->
+<section class="max-w-7xl mx-auto px-4 py-20">
+<div class="flex items-end justify-between mb-10">
+<div>
+<h3 class="text-3xl font-bold mb-2">Xe Nổi Bật</h3>
+<p class="text-slate-500 dark:text-slate-400">Những mẫu xe hot nhất đang có mặt tại cửa hàng</p>
+</div>
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Vehicle Card 1 -->
+<div class="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="White Toyota Camry parked on a city street" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAOSk3c7MKu6jdKd5mJ-cNf1EicpIL8sTXOjuPG9qxIO3DKT7HOduSn6fkv-mCJZXQ5HRSD3FSoDpfXlWWJ5EpFhMzGLo8I3EGhgGDEowEU1sQD8rSJLWLKFgaqrtObTgCps9idaOEvLLe-__zFBQKqIhNZibZp2dBi6oyEYiilWJAxBkzujIV01ksLzfSDElKSUKWO5G0Uzi0T7BliCPRTyj3xl3hIHzbt4nyYVakAeIN6NcTPMQI3OPy0GInQRMVEHLUkaAMoe1W"/>
+<span class="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">Mới về</span>
+</div>
+<div class="p-5">
+<h4 class="font-bold text-lg mb-1">Toyota Camry 2.5Q</h4>
+<p class="text-primary font-bold text-xl mb-3">980,000,000₫</p>
+<div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-5">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">speed</span>
+                                20,000km
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+                                2021
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">settings</span>
+                                Tự động
+                            </div>
+</div>
+<button class="w-full py-2.5 rounded-lg border-2 border-primary/10 text-primary font-bold hover:bg-primary hover:text-white transition-all">Xem chi tiết</button>
+</div>
+</div>
+<!-- Vehicle Card 2 -->
+<div class="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Blue Honda CR-V driving on highway" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU4GDlNKvP9vuBNXzYOyCbAeZnDBGNCb2GZhikkaoFa0tpiXW4gZM5e7LU1oCRpvRE1emnX3-6XWaTSJK7AaVYmGf4vMIHtAJ7qXQTOwWcypq_GbHUQ4xsgMxyFHirC4eU4eMvhTl2xx08dMes-cM1jUYGhlTfsTSImZgtupE0RESi5G2ZhKfkDpKl9kUXxtDbe6xmO2-aWHJfH_zQ--mleiyRmBFaZrUelyqK6eqxCok41_PY9sQW2vKQ7nCkF2N4qYQBQbcgiOZS"/>
+</div>
+<div class="p-5">
+<h4 class="font-bold text-lg mb-1">Honda CR-V L</h4>
+<p class="text-primary font-bold text-xl mb-3">850,000,000₫</p>
+<div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-5">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">speed</span>
+                                15,000km
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+                                2022
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">settings</span>
+                                Tự động
+                            </div>
+</div>
+<button class="w-full py-2.5 rounded-lg border-2 border-primary/10 text-primary font-bold hover:bg-primary hover:text-white transition-all">Xem chi tiết</button>
+</div>
+</div>
+<!-- Vehicle Card 3 -->
+<div class="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Red Mazda 3 in front of a modern building" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4Sxatsvpf4NMGhYFaRGaJlAGlunlFciBJvDF6BtrkthOsE8SJY25OVERy4XKXpikZWYwKxDX4XKB8ZtUFMo-n0a4_w2Fh672hGRDSPE5i4sECNTDMJfbj0zJNycI7L6h8bibPcP9BvvJJRC_32WMr2m8g6IMgMa4bO4YtDZ1KqptxsdBZTs1ApE9giwv-SyUDOzdELEdwdC_3kXG97A5ZddvDQVPJjWoBj40asW8QBJihG_whcQ9NtOLTQT0e1YVvOYocg1r0lmYA"/>
+</div>
+<div class="p-5">
+<h4 class="font-bold text-lg mb-1">Mazda 3 Luxury</h4>
+<p class="text-primary font-bold text-xl mb-3">620,000,000₫</p>
+<div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-5">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">speed</span>
+                                30,000km
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+                                2020
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">settings</span>
+                                Tự động
+                            </div>
+</div>
+<button class="w-full py-2.5 rounded-lg border-2 border-primary/10 text-primary font-bold hover:bg-primary hover:text-white transition-all">Xem chi tiết</button>
+</div>
+</div>
+<!-- Vehicle Card 4 -->
+<div class="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Silver Hyundai SUV on mountain road" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEPKYap99zI-CJVQmwxlf7rCEJg4XzXyUV9_DupaYAaxInHVIpLixp8vE9PVOLF0ymNkd1rQNLi3ySldENaGUW75zhFZp4078UoJwXX8tbaTRuii4O5ogibg-XzvGEqVDkmLPJmgQ64ksHNHfzK3OImrvLh0gHDP6bEuMQFZsjaMfZozAk7ZTjwpw8CYQY9ojSdy5LOpGbU9rW-Zb8GYY05DF-6oct1K4kT_uo7g5h93Ay1KCi_cwo9JBq03fLUkANJM0MBGzMqW83"/>
+</div>
+<div class="p-5">
+<h4 class="font-bold text-lg mb-1">Hyundai SantaFe</h4>
+<p class="text-primary font-bold text-xl mb-3">1,050,000,000₫</p>
+<div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-5">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">speed</span>
+                                10,000km
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+                                2023
+                            </div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">settings</span>
+                                Tự động
+                            </div>
+</div>
+<button class="w-full py-2.5 rounded-lg border-2 border-primary/10 text-primary font-bold hover:bg-primary hover:text-white transition-all">Xem chi tiết</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Why Choose Us -->
+<section class="bg-slate-100 dark:bg-slate-900/50 py-20">
+<div class="max-w-7xl mx-auto px-4">
+<div class="text-center mb-16">
+<h3 class="text-3xl font-bold mb-4">Tại sao chọn chúng tôi?</h3>
+<p class="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Chúng tôi cam kết mang lại trải nghiệm mua sắm ô tô minh bạch, an toàn và chuyên nghiệp nhất cho khách hàng.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+<div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 text-center group hover:-translate-y-2 transition-transform">
+<div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-6 group-hover:bg-primary group-hover:text-white transition-all">
+<span class="material-symbols-outlined text-3xl">verified_user</span>
+</div>
+<h5 class="text-lg font-bold mb-3">Kiểm định 160 bước</h5>
+<p class="text-sm text-slate-500 dark:text-slate-400">Mọi xe đều được kiểm tra kỹ thuật nghiêm ngặt bởi đội ngũ kỹ thuật viên giàu kinh nghiệm.</p>
+</div>
+<div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 text-center group hover:-translate-y-2 transition-transform">
+<div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-6 group-hover:bg-primary group-hover:text-white transition-all">
+<span class="material-symbols-outlined text-3xl">history</span>
+</div>
+<h5 class="text-lg font-bold mb-3">Lịch sử minh bạch</h5>
+<p class="text-sm text-slate-500 dark:text-slate-400">Cam kết không xe đâm đụng, không ngập nước, hồ sơ pháp lý rõ ràng từng chiếc xe.</p>
+</div>
+<div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 text-center group hover:-translate-y-2 transition-transform">
+<div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-6 group-hover:bg-primary group-hover:text-white transition-all">
+<span class="material-symbols-outlined text-3xl">account_balance</span>
+</div>
+<h5 class="text-lg font-bold mb-3">Hỗ trợ trả góp</h5>
+<p class="text-sm text-slate-500 dark:text-slate-400">Liên kết với nhiều ngân hàng lớn, hỗ trợ vay lên đến 70% giá trị xe với lãi suất ưu đãi.</p>
+</div>
+<div class="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 text-center group hover:-translate-y-2 transition-transform">
+<div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-6 group-hover:bg-primary group-hover:text-white transition-all">
+<span class="material-symbols-outlined text-3xl">handyman</span>
+</div>
+<h5 class="text-lg font-bold mb-3">Bảo hành 12 tháng</h5>
+<p class="text-sm text-slate-500 dark:text-slate-400">An tâm vận hành với gói bảo hành động cơ và hộp số dài hạn cho mọi dòng xe.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Branch Map Section -->
+<section class="py-20 max-w-7xl mx-auto px-4">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div>
+<h3 class="text-3xl font-bold mb-6">Hệ thống chi nhánh</h3>
+<p class="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">Chúng tôi hiện có 3 showroom lớn tại Đà Nẵng, giúp khách hàng dễ dàng tiếp cận và trải nghiệm thực tế những mẫu xe mong muốn.</p>
+<div class="space-y-6">
+<div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+<div class="bg-primary/10 text-primary w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center">1</div>
+<div>
+<h6 class="font-bold">Showroom Hải Châu (Trụ sở)</h6>
+<p class="text-sm text-slate-500">123 Nguyễn Hữu Thọ, Hải Châu, Đà Nẵng</p>
+<p class="text-sm font-semibold text-primary mt-1">Hotline: 0905 XXX XXX</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+<div class="bg-primary/10 text-primary w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center">2</div>
+<div>
+<h6 class="font-bold">Showroom Sơn Trà</h6>
+<p class="text-sm text-slate-500">456 Ngô Quyền, Sơn Trà, Đà Nẵng</p>
+<p class="text-sm font-semibold text-primary mt-1">Hotline: 0905 YYY YYY</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+<div class="bg-primary/10 text-primary w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center">3</div>
+<div>
+<h6 class="font-bold">Showroom Liên Chiểu</h6>
+<p class="text-sm text-slate-500">789 Tôn Đức Thắng, Liên Chiểu, Đà Nẵng</p>
+<p class="text-sm font-semibold text-primary mt-1">Hotline: 0905 ZZZ ZZZ</p>
+</div>
+</div>
+</div>
+</div>
+<div class="rounded-2xl overflow-hidden h-[450px] shadow-2xl relative">
+<img class="w-full h-full object-cover" data-alt="Stylized map of Da Nang city highlighting store locations" data-location="Da Nang" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiC7J0hORbILBYaS_ZH3SP4yhb9Y9UJxvbVKdh888bA6orGTMWaxZBPraVctss_MzuHS15837u7kpW3CAMs7J5vuxmZ6GRt8LFoAHK_DZ22cQ-Nw_GTGjqV7q-PCjIapBA7vq1gnfGKvOXyLmMiPZKgphNzXpgKaIpmSKOI5sFRQUhhvEO6GKc-oEUBXihrgg-MEzuBnx5Oi440oWYIl-X5RMJfvnDkrtTzNeiQQfN9Oa7W4dLz77omJrnYRpo9le1vEC97-GbnbVB"/>
+<div class="absolute inset-0 bg-primary/10 pointer-events-none"></div>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="bg-white dark:bg-slate-900 py-20 border-y border-slate-200 dark:border-slate-800">
+<div class="max-w-7xl mx-auto px-4">
+<div class="text-center mb-16">
+<h3 class="text-3xl font-bold mb-4">Khách hàng nói gì về chúng tôi</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-slate-50 dark:bg-slate-800 p-8 rounded-2xl relative">
+<span class="material-symbols-outlined text-primary/20 text-6xl absolute top-4 right-4">format_quote</span>
+<div class="flex text-yellow-500 mb-4">
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+</div>
+<p class="text-slate-600 dark:text-slate-300 italic mb-6">"Dịch vụ rất chuyên nghiệp, nhân viên tư vấn nhiệt tình. Tôi rất hài lòng với chiếc xe Camry vừa mua tại đây."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a satisfied male customer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxp6gT3SPVnCyI7b6gEseCbXI4yr6VDm3YF872QkeGS4UyCap8lJ9nmKUipM1UnJYEkzqK-N-LJJQNoFmxfXGwkVqBkcENnEduignREwJp_-KvT7QjUyMrKhpf2K2G7DQnX-QKWC_PTkR2QXBfeRAEuBByetwMCxH53NBjPo5n45OKnCSRaZ7CzmQuEPYpXJmmAsBAI1yOtD9tZgwAKSnXaWous8oYptmmeDc8o8VNf1KPYLMXnCmMwZZG-OKhkrE8mxprMNulVeuN"/>
+</div>
+<div>
+<h6 class="font-bold">Anh Nguyễn Văn A</h6>
+<p class="text-xs text-slate-500">Khách hàng tại Hải Châu</p>
+</div>
+</div>
+</div>
+<div class="bg-slate-50 dark:bg-slate-800 p-8 rounded-2xl relative">
+<span class="material-symbols-outlined text-primary/20 text-6xl absolute top-4 right-4">format_quote</span>
+<div class="flex text-yellow-500 mb-4">
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+</div>
+<p class="text-slate-600 dark:text-slate-300 italic mb-6">"Thủ tục vay ngân hàng nhanh chóng đến không ngờ. Xe được bảo hành và kiểm tra rất kỹ trước khi bàn giao."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a satisfied female customer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsFMC4xlOsYeDIqTn299AQIvGVgwZFlabNZSMpCwHD9YMowonV5E9d7Kna6IAFwF96yqaw9wgJKCYlY2LZAqGGgTYOOz9rVE2HtB29NpSq4_WMScg2jC4iltv3IH4OC1CE6U_bV7juNEMc0Rr5-kflbdPcLPsHf00PFFLgds4qK_trckEOXBXn511DQvfH7LPnuwL86OZjnkMZpIPmog23F6oEUdBR5bxQdggO1xSKs8zXKEgpxIOwbDLMPcH33uA0p225Rm8kBXSY"/>
+</div>
+<div>
+<h6 class="font-bold">Chị Lê Thị B</h6>
+<p class="text-xs text-slate-500">Khách hàng tại Ngũ Hành Sơn</p>
+</div>
+</div>
+</div>
+<div class="bg-slate-50 dark:bg-slate-800 p-8 rounded-2xl relative">
+<span class="material-symbols-outlined text-primary/20 text-6xl absolute top-4 right-4">format_quote</span>
+<div class="flex text-yellow-500 mb-4">
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+<span class="material-symbols-outlined">star</span>
+</div>
+<p class="text-slate-600 dark:text-slate-300 italic mb-6">"Hệ thống chi nhánh thuận tiện. Chế độ hậu mãi sau bán hàng rất tốt, tôi luôn an tâm khi mang xe đi bảo dưỡng."</p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a satisfied male customer with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSKk6AC8vpxWGRxkLCWa3GGbPnjY6EdJZPk4KwFjTDvMCUIw-25iJ_m_M6qPfwwjjHwEoImFz1yctzGKxaMxWbTyvWSz1s8SBXWE2BXAF8hK1MUoXH-Dv_J5aJ8rZ1dAtLYcYafvdcROdDyw3XoP9MCEJZv1ZwlcsxBYo_vpLZyZp-qO8gDOIhcY8NxHl_nDEOD6LLjf2AilTDMfJKENR0K1sXHhgciZy3sBHgSQGZLoWW9IST9ANExm-H4KJPzZtwV-c5ICd9fvRp"/>
+</div>
+<div>
+<h6 class="font-bold">Anh Trần Văn C</h6>
+<p class="text-xs text-slate-500">Khách hàng tại Cẩm Lệ</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Banner -->
+<section class="max-w-7xl mx-auto px-4 py-20">
+<div class="bg-primary rounded-3xl p-8 md:p-16 text-center text-white relative overflow-hidden">
+<div class="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+<div class="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
+<h3 class="text-3xl md:text-4xl font-black mb-6 relative z-10">Bạn đang muốn bán hoặc đổi xe?</h3>
+<p class="text-white/80 text-lg mb-10 max-w-xl mx-auto relative z-10">Liên hệ ngay với chúng tôi để được định giá xe miễn phí và hỗ trợ thu mua tận nơi với giá tốt nhất thị trường.</p>
+<div class="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
+<button class="bg-white text-primary px-10 py-4 rounded-xl font-bold text-lg hover:bg-slate-100 transition-all">Định giá xe ngay</button>
+<button class="bg-primary border-2 border-white/30 px-10 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all">Liên hệ tư vấn</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-slate-900 text-slate-300 py-16">
+<div class="max-w-7xl mx-auto px-4">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+<div>
+<div class="flex items-center gap-2 mb-6">
+<div class="bg-primary p-1.5 rounded-lg text-white">
+<span class="material-symbols-outlined block">directions_car</span>
+</div>
+<h4 class="text-xl font-bold tracking-tight text-white">BanXeOTo <span class="text-slate-400">Da Nang</span></h4>
+</div>
+<p class="text-sm leading-relaxed mb-6">Hệ thống mua bán xe ô tô uy tín hàng đầu miền Trung, chuyên cung cấp các dòng xe lướt, xe đã qua kiểm định chất lượng cao.</p>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary transition-all" href="#"><span class="material-symbols-outlined">social_leaderboard</span></a>
+<a class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary transition-all" href="#"><span class="material-symbols-outlined">smart_display</span></a>
+<a class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary transition-all" href="#"><span class="material-symbols-outlined">alternate_email</span></a>
+</div>
+</div>
+<div>
+<h5 class="text-white font-bold mb-6">Liên kết nhanh</h5>
+<ul class="space-y-4 text-sm">
+<li><a class="hover:text-white transition-colors" href="#">Về chúng tôi</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Tất cả xe đang bán</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Chính sách bảo hành</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Tin tức ô tô</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Tuyển dụng</a></li>
+</ul>
+</div>
+<div>
+<h5 class="text-white font-bold mb-6">Hãng xe phổ biến</h5>
+<ul class="space-y-4 text-sm">
+<li><a class="hover:text-white transition-colors" href="#">Toyota Da Nang</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Honda Da Nang</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Mazda Da Nang</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Hyundai Da Nang</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Kia Da Nang</a></li>
+</ul>
+</div>
+<div>
+<h5 class="text-white font-bold mb-6">Thông tin liên hệ</h5>
+<ul class="space-y-4 text-sm">
+<li class="flex gap-3">
+<span class="material-symbols-outlined text-primary text-xl">location_on</span>
+                            123 Nguyễn Hữu Thọ, Đà Nẵng
+                        </li>
+<li class="flex gap-3">
+<span class="material-symbols-outlined text-primary text-xl">call</span>
+                            0905 XXX XXX
+                        </li>
+<li class="flex gap-3">
+<span class="material-symbols-outlined text-primary text-xl">mail</span>
+                            info@banxeotodanang.com
+                        </li>
+<li class="flex gap-3">
+<span class="material-symbols-outlined text-primary text-xl">schedule</span>
+                            Thứ 2 - CN: 08:00 - 20:00
+                        </li>
+</ul>
+</div>
+</div>
+<div class="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+<p>© 2024 BanXeOTo Da Nang. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="hover:text-white" href="#">Điều khoản sử dụng</a>
+<a class="hover:text-white" href="#">Chính sách bảo mật</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,13 @@
+.git
+.gitignore
+.agent
+.cursor
+.codex
+node_modules
+dist
+docs
+.env
+.env.*
+npm-debug.log*
+playwright-report
+test-results

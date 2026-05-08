@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Đăng Nhập - BanXeOTo Da Nang</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased">
+<div class="flex min-h-screen">
+<!-- Left Panel: Brand & Pattern -->
+<div class="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden items-center justify-center p-12">
+<!-- Background Pattern Placeholder -->
+<div class="absolute inset-0 opacity-10" data-alt="Abstract dark carbon fiber car pattern" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCN9wrCNjCjaZCVwmywmjuQvNsro-C2Azx7ZA6yuQJzXAAez5H9-LtEZc5K7F-FHgAhxLSgXl0js41UTztqCkIJkNOWff4f03dpJod0NLveejNqvXhJ4cJPrv8HAkT-mt51xA2N-wKKoWJBl5KJSGiyyCTktljBncUnCllGt2lsVERtE-L1zJLPBjqaGUhl-FngmZqtyIbNPkmw7YAl13Rddq-qFgacDJ8aw6blXcOatEG2yXjo0yzycqGCfBqksnUZ9-9rG_Py0ej0');">
+</div>
+<div class="relative z-10 max-w-lg text-center">
+<div class="mb-8 flex justify-center">
+<div class="bg-white p-4 rounded-xl shadow-2xl">
+<svg class="w-16 h-16 text-primary" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path>
+</svg>
+</div>
+</div>
+<h1 class="text-4xl font-bold text-white mb-6">BanXeOTo Da Nang</h1>
+<p class="text-slate-200 text-lg leading-relaxed">
+                    Nền tảng mua bán xe ô tô uy tín hàng đầu tại Đà Nẵng. Kết nối người bán và người mua một cách nhanh chóng, an toàn và minh bạch.
+                </p>
+<div class="mt-12 grid grid-cols-2 gap-6 text-white text-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary bg-white rounded-full p-1 text-xs">check</span>
+<span>Hàng nghìn tin đăng mới</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary bg-white rounded-full p-1 text-xs">check</span>
+<span>Kiểm định xe chuyên nghiệp</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary bg-white rounded-full p-1 text-xs">check</span>
+<span>Hỗ trợ trả góp nhanh</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary bg-white rounded-full p-1 text-xs">check</span>
+<span>Giá tốt nhất thị trường</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Panel: Login Form -->
+<div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white dark:bg-background-dark">
+<div class="w-full max-w-md">
+<div class="lg:hidden mb-8 flex items-center gap-3">
+<svg class="size-8 text-primary" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path>
+</svg>
+<span class="text-xl font-bold text-slate-900 dark:text-slate-100">BanXeOTo</span>
+</div>
+<div class="mb-10">
+<h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Đăng Nhập</h2>
+<p class="text-slate-500 dark:text-slate-400">Chào mừng bạn quay lại với BanXeOTo Da Nang</p>
+</div>
+<form class="space-y-6">
+<div>
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2" for="email">
+                            Email hoặc Số điện thoại
+                        </label>
+<input class="w-full px-4 py-3.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" id="email" placeholder="Nhập email hoặc SĐT" type="text"/>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="password">
+                                Mật khẩu
+                            </label>
+<a class="text-sm font-medium text-primary hover:underline" href="#">Quên mật khẩu?</a>
+</div>
+<div class="relative">
+<input class="w-full px-4 py-3.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" id="password" placeholder="Nhập mật khẩu" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex items-center">
+<input class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary" id="remember" type="checkbox"/>
+<label class="ml-2 text-sm text-slate-600 dark:text-slate-400" for="remember">Ghi nhớ đăng nhập</label>
+</div>
+<button class="w-full bg-primary hover:bg-opacity-90 text-white font-bold py-3.5 rounded-lg transition-colors shadow-lg" type="submit">
+                        Đăng Nhập
+                    </button>
+<div class="relative flex py-3 items-center">
+<div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+<span class="flex-shrink mx-4 text-slate-400 text-sm">Hoặc tiếp tục với</span>
+<div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+</div>
+<button class="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold py-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors" type="button">
+<img alt="Google icon" class="w-5 h-5" data-alt="Google colorful logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzrb8s5Z17AFucis0cOg0VT9jEOubqIxuFAyxr1ou1K-yFWHfMAWwZI19RHHCjzeK9Pl2qRvefv5DJN5LFY-PNlVPjRY5YWtFFWoG6rsYy1zDj8E1XaAlOgzkQRYzDJSiunN17rgX_5YT6J2UFrHKwO6zhQBSrTa7JgzMFbsBbjHINi75Q2oKStcrz-FKtV3jznKiWxVYla6gTsmBWHAgLlyyeJ18j3DhMysu3vYnE6SOOJmBbNDsEWzaT-hziWh0SIw39tFT_LLJJ"/>
+                        Đăng nhập bằng Google
+                    </button>
+</form>
+<div class="mt-10 text-center">
+<p class="text-slate-600 dark:text-slate-400">
+                        Chưa có tài khoản? 
+                        <a class="text-primary font-bold hover:underline ml-1" href="/register">Đăng ký ngay</a>
+</p>
+</div>
+<div class="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-400">
+                    © 2024 BanXeOTo Da Nang. All rights reserved.
+                </div>
+</div>
+</div>
+</div>
+</body></html>

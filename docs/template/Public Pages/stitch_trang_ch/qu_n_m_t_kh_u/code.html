@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quên mật khẩu - BanXeOTo Da Nang</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen flex-col items-center justify-center p-4">
+<!-- Main Container -->
+<div class="w-full max-w-[480px] space-y-8 bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<!-- Header/Logo Area -->
+<div class="flex flex-col items-center text-center space-y-4">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-10 bg-primary/10 flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-primary text-3xl">directions_car</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">BanXeOTo Da Nang</h1>
+</div>
+<div class="space-y-2">
+<h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">Quên mật khẩu</h2>
+<p class="text-slate-500 dark:text-slate-400 text-base">Nhập email của bạn để nhận liên kết đặt lại mật khẩu an toàn.</p>
+</div>
+</div>
+<!-- Request Password Form -->
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300" for="email">Địa chỉ Email</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 text-lg">mail</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" id="email" name="email" placeholder="username@email.com" required="" type="email"/>
+</div>
+</div>
+<button class="w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors" type="submit">
+                    Gửi Link Đặt Lại
+                </button>
+</form>
+<!-- Success State (Hidden by default, shown via logic usually) -->
+<!-- Removing 'hidden' class to demonstrate components as requested in prompt -->
+<div class="pt-6 border-t border-slate-100 dark:border-slate-800">
+<div class="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 rounded-xl p-6 flex flex-col items-center text-center space-y-4">
+<div class="size-12 bg-green-100 dark:bg-green-800/30 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-green-600 dark:text-green-400 text-3xl">check_circle</span>
+</div>
+<div class="space-y-1">
+<p class="text-green-800 dark:text-green-300 font-bold text-lg">Đã gửi email thành công</p>
+<p class="text-green-700 dark:text-green-400 text-sm">
+                            Vui lòng kiểm tra hộp thư đến của bạn và làm theo hướng dẫn để đặt lại mật khẩu.
+                        </p>
+</div>
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg" data-alt="Abstract secure email communication illustration" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBOY-ykvCUzC_kxeFr_X25oshSn04d7xneaiApVtrrUeALp-ELBZiu8q-bGt1HzYaTkDtZAMJonbKg_HWdtr-qwbak6gTaTy7BCFVZBZFvq6RyV_pJCFNcjW7G3-F2OaHLBGEv2qfp58-DZIMz3Mrg0eLGfx7aGlii-Jfkkaoa42kLbpXWgOQSTfUcqM9OkzwtMaCJgcN2Gyn9Oxl5_0NH1EWALUr9he2mFQLZm_UzeQgPyQFdoODpKKodh7PCQx2Ioa-_mWG3zBhdv");'>
+</div>
+</div>
+</div>
+<!-- Footer Links -->
+<div class="flex items-center justify-center pt-4">
+<a class="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors" href="/login">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+                    Quay lại đăng nhập
+                </a>
+</div>
+</div>
+<!-- Support Info -->
+<p class="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+            Cần hỗ trợ? <a class="font-medium text-primary hover:underline" href="#">Liên hệ bộ phận kỹ thuật</a>
+</p>
+</div>
+</body></html>

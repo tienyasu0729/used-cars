@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<title>Quản Lý Đặt Lịch Lái Thử - BanXeOTo Da Nang</title>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex flex-col min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 w-full border-b border-primary/10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 md:px-10 py-3">
+<div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-3xl font-bold">directions_car</span>
+<h2 class="text-xl font-bold tracking-tight hidden sm:block">BanXeOTo Da Nang</h2>
+</div>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Tổng quan</a>
+<a class="text-primary border-b-2 border-primary text-sm font-bold py-1" href="#">Lịch Hẹn</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Khách Hàng</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="#">Kho Xe</a>
+</nav>
+</div>
+<div class="flex items-center gap-4 flex-1 justify-end">
+<div class="relative max-w-xs w-full hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-sm" placeholder="Tìm kiếm khách hàng, xe..." type="text"/>
+</div>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-background-dark"></span>
+</button>
+<div class="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden">
+<img alt="Staff Avatar" class="w-full h-full object-cover" data-alt="Professional sales staff portrait avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5dON6gXFd9L_voXa2Pn1zrnNi5s5HbUbhiRJZ7BmuH4wAc98vNpgPFqyEKFJcVlkhWpFm8yTw6N5p6WWiR6Ay3T7s3qApf5gPHg1Ojl1lvwB-OgvDsNRa1-cyvZbLtRvaIzwpcePK9ZBAuGe8aDj9fJ3xcjyPauKAspogLkHSEEgoEJ2dcR7up-TbSw5vxnqhbXym0eNPsSFmd5ezd-IACBbB3caRNvm8NakcW5QSqHb97yIAmAejueT1Exvm_Ks5bybs-UWeXF3t"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8">
+<!-- Header Section -->
+<div class="mb-8">
+<h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Lịch Hẹn Lái Thử</h1>
+<p class="text-slate-500 dark:text-slate-400">Quản lý và điều phối các yêu cầu lái thử xe từ khách hàng tại khu vực Đà Nẵng.</p>
+</div>
+<!-- Dashboard Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<p class="text-sm font-medium text-slate-500 mb-1">Tổng lịch hẹn hôm nay</p>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold text-slate-900 dark:text-white">12</span>
+<span class="text-xs font-semibold text-green-600 mb-1">+2 mới</span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<p class="text-sm font-medium text-slate-500 mb-1">Chờ xác nhận</p>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold text-amber-500">05</span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<p class="text-sm font-medium text-slate-500 mb-1">Đã xác nhận</p>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold text-primary">07</span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<p class="text-sm font-medium text-slate-500 mb-1">Tỷ lệ hoàn thành</p>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-bold text-slate-900 dark:text-white">85%</span>
+</div>
+</div>
+</div>
+<!-- Filter Tabs -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="border-b border-slate-200 dark:border-slate-800 px-4 flex flex-wrap gap-2 sm:gap-6">
+<button class="py-4 px-2 border-b-2 border-primary text-primary text-sm font-bold">Tất Cả</button>
+<button class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 text-sm font-semibold transition-colors">Chờ Xác Nhận</button>
+<button class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 text-sm font-semibold transition-colors">Đã Xác Nhận</button>
+<button class="py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 text-sm font-semibold transition-colors">Đã Hủy</button>
+</div>
+<!-- List View Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-slate-50 dark:bg-slate-800/50">
+<tr>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Mẫu Xe</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Khách Hàng</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Ngày &amp; Giờ</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Trạng Thái</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Thao Tác</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Row 1: Pending -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-16 h-12 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
+<div class="w-full h-full bg-slate-300 dark:bg-slate-600" data-alt="Front view of a modern luxury sedan car" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB_1lMa9RuCDKakhsfyj5q32xxJWgbQJ9agguOqG4L62vdUx--GlA9qQM0Jwr2IB33dW3GtOtY5l-M-_SrTKbNOyW_ApD6kD9pLtcb_vwYf9ZXmVYXKLpzKTmVEc8nMqY30VxRi6hW-XaGmkfF-Ks30Qkv0LTgF2xUmS1WU1fC78r9Q9lEf-EwzdSLL1qGPf5-Wpy0agorLiytqmtVRAnVEA1L-mdU7_p2T8dK2OM-kxMMjI1QhfKhJovvtpQNTnnQhZ1V1Rgn0aplW'); background-size: cover; background-position: center;"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Toyota Camry 2024</p>
+<p class="text-xs text-slate-500">Bản 2.5Q - Trắng</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900 dark:text-white">Nguyễn Văn An</span>
+<span class="text-xs text-slate-500">0905 123 456</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">25/10/2023</span>
+<span class="text-xs text-primary font-bold">10:00 sáng</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-500">
+                                        Chờ xác nhận
+                                    </span>
+</td>
+<td class="px-6 py-4">
+<div class="flex justify-end gap-2">
+<button class="p-2 bg-green-500/10 text-green-600 hover:bg-green-600 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Xác Nhận">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+</button>
+<button class="p-2 bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Đổi Lịch">
+<span class="material-symbols-outlined text-lg">calendar_month</span>
+</button>
+<button class="p-2 bg-red-500/10 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Hủy">
+<span class="material-symbols-outlined text-lg">cancel</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Confirmed -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-16 h-12 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
+<div class="w-full h-full bg-slate-300 dark:bg-slate-600" data-alt="Side profile of a red SUV driving on road" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCFH_RMrfLfoRI82IdoXQC0KyWehl0WTbS3Gti_KQS0eByknMWhDjPlAIPM5hjmdRwys7NPDeFTtY9w3bENA-t-8kwV0moJcp68ekgpJE7MsIxufG3fXR57vJU0_dlj7CB9sLCaE0ED_6ha_VuDbQHOlmx6l1UBjtLBUTMY9JngbA778KYYrn2NVBzLAUycC3RqCKQ5iNQaflpXjMPw8rJ69V_bdtPioE3eQpXiUKpoQa5bqO4LR15Cd8iXHxKzQyYi5-Xj2Ry8EvQU'); background-size: cover; background-position: center;"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Hyundai SantaFe</p>
+<p class="text-xs text-slate-500">Máy dầu cao cấp</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900 dark:text-white">Trần Thị Bích</span>
+<span class="text-xs text-slate-500">0914 987 654</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">26/10/2023</span>
+<span class="text-xs text-primary font-bold">15:30 chiều</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500">
+                                        Đã xác nhận
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Đổi Lịch">
+<span class="material-symbols-outlined text-lg">calendar_month</span>
+</button>
+<button class="p-2 bg-red-500/10 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Hủy">
+<span class="material-symbols-outlined text-lg">cancel</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Cancelled -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors opacity-70">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-16 h-12 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0 grayscale">
+<div class="w-full h-full bg-slate-300 dark:bg-slate-600" data-alt="Blue compact hatchback car in a studio" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBwDqms1QGmSSSgKjM8fDA3gLsMZ_qQkvdO0a7Xf4v9ko3Vi2YOI7__l46-rBdOQa-3CdoRUO5zeSloVVCQxC6iHdLZXFBGBTCVfcoNWBjI58N74bJakQ4BFdpJkvMWEsbFQmbYThVqXfN_GBkR98ifDfL-Nw52VLcALeiSFV7KJSC7q-xkaBiiVugbLLjroTVAkTA2i8D3KoGHvDjHVnJapewhOm_q8vISyDAU2fNQwBVn-Dtnm1eYMqvHkAiDHeP5-hTvu0cmHl0Y'); background-size: cover; background-position: center;"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Mazda 3</p>
+<p class="text-xs text-slate-500">Hatchback - Xám</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900 dark:text-white">Lê Văn Cường</span>
+<span class="text-xs text-slate-500">0988 112 233</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">27/10/2023</span>
+<span class="text-xs text-slate-400 font-bold line-through">08:00 sáng</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400">
+                                        Đã hủy
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-sm text-primary font-bold hover:underline">Xem chi tiết</button>
+</td>
+</tr>
+<!-- Row 4: Pending -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-16 h-12 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
+<div class="w-full h-full bg-slate-300 dark:bg-slate-600" data-alt="White sports utility vehicle in motion" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBZd5Ip_WwUMirxDUJ2hgIYQ7Awc0N6L_1skCx8ovBtPzJwgvjPAf3NERcnsJZWzC9rgEBVmQmFrubrSgO5HyqVzxGN4pejV7sXyXEjj3TLeRb-icwX68f6a_4H3EQnW-42IGw0Tl6xdiMGBmpfcgUkMVM-oV4h2LxGZHHDNshyQehHtM8_9ETjc2XYHpJYJFfsw3HsQ7gZsdo3UVQ6H7HVj-fx5r4wxY4cyiNp6FAtZXvPvET2CddiAGc_0Q5BugWVqs7JRXl4ToEh'); background-size: cover; background-position: center;"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Ford Everest</p>
+<p class="text-xs text-slate-500">Titanium+ 4x4</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900 dark:text-white">Phạm Minh Hoàng</span>
+<span class="text-xs text-slate-500">0935 334 455</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">28/10/2023</span>
+<span class="text-xs text-primary font-bold">14:00 chiều</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-500">
+                                        Chờ xác nhận
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 bg-green-500/10 text-green-600 hover:bg-green-600 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Xác Nhận">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+</button>
+<button class="p-2 bg-blue-500/10 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Đổi Lịch">
+<span class="material-symbols-outlined text-lg">calendar_month</span>
+</button>
+<button class="p-2 bg-red-500/10 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Hủy">
+<span class="material-symbols-outlined text-lg">cancel</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<p class="text-sm text-slate-500">Hiển thị <span class="font-bold text-slate-900 dark:text-white">1-4</span> trong <span class="font-bold text-slate-900 dark:text-white">24</span> lịch hẹn</p>
+<div class="flex items-center gap-1">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-primary text-white text-sm font-bold">1</button>
+<button class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition-colors">2</button>
+<button class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition-colors">3</button>
+<span class="px-1 text-slate-400">...</span>
+<button class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-semibold transition-colors">6</button>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="mt-auto py-6 border-t border-primary/10 text-center text-slate-500 text-sm">
+<p>© 2023 BanXeOTo Da Nang. All Rights Reserved. Sales Staff Dashboard v1.2</p>
+</footer>
+</div>
+</body></html>

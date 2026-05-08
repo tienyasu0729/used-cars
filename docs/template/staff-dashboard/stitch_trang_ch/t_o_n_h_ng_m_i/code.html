@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<title>BanXeOTo Da Nang - Tạo Đơn Hàng</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark px-6 md:px-10 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">BanXeOTo Da Nang</h2>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-primary text-sm font-bold border-b-2 border-primary pb-1" href="#">Đơn hàng</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Xe</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Khách hàng</a>
+</nav>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col md:flex-row">
+<!-- Sidebar (Desktop) -->
+<aside class="w-full md:w-64 bg-white dark:bg-background-dark border-r border-slate-200 dark:border-slate-800 p-4 hidden md:flex flex-col gap-4">
+<div class="flex flex-col mb-4">
+<h1 class="text-slate-900 dark:text-slate-100 text-base font-bold">Quản trị viên</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Phòng Kinh Doanh Đà Nẵng</p>
+</div>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium">Tổng quan</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white shadow-md shadow-primary/20" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<p class="text-sm font-medium">Đơn hàng</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">directions_car</span>
+<p class="text-sm font-medium">Xe có sẵn</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<p class="text-sm font-medium">Khách hàng</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<p class="text-sm font-medium">Báo cáo</p>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-4 md:p-8">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 text-sm mb-6">
+<a class="text-slate-500 hover:text-primary" href="#">Dashboard</a>
+<span class="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
+<a class="text-slate-500 hover:text-primary" href="#">Đơn hàng</a>
+<span class="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
+<span class="text-primary font-semibold">Tạo đơn hàng mới</span>
+</nav>
+<!-- Header Title -->
+<div class="mb-8">
+<h2 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Tạo đơn hàng mới</h2>
+<p class="text-slate-500 dark:text-slate-400 mt-1">Hoàn tất các bước dưới đây để thiết lập đơn hàng cho khách hàng.</p>
+</div>
+<!-- Multi-step Wizard Header -->
+<div class="mb-10">
+<div class="flex justify-between items-center max-w-4xl mx-auto relative px-4">
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 dark:bg-slate-700 -translate-y-1/2 z-0"></div>
+<div class="absolute top-1/2 left-0 w-3/4 h-0.5 bg-primary -translate-y-1/2 z-0"></div>
+<!-- Step 1 -->
+<div class="relative z-10 flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold ring-4 ring-white dark:ring-background-dark transition-all">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-xs font-bold text-primary whitespace-nowrap">1. Chọn Xe</span>
+</div>
+<!-- Step 2 -->
+<div class="relative z-10 flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold ring-4 ring-white dark:ring-background-dark transition-all">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-xs font-bold text-primary whitespace-nowrap">2. Khách Hàng</span>
+</div>
+<!-- Step 3 (Active) -->
+<div class="relative z-10 flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold ring-4 ring-white dark:ring-background-dark transition-all">
+                                3
+                            </div>
+<span class="text-xs font-bold text-primary whitespace-nowrap">3. Chi Tiết</span>
+</div>
+<!-- Step 4 -->
+<div class="relative z-10 flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center font-bold ring-4 ring-white dark:ring-background-dark transition-all">
+                                4
+                            </div>
+<span class="text-xs font-bold text-slate-400 whitespace-nowrap">4. Xác Nhận</span>
+</div>
+</div>
+</div>
+<!-- Step Content: Chi Tiết Đơn Hàng -->
+<div class="max-w-4xl mx-auto">
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+<h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">Chi tiết thanh toán &amp; đơn hàng</h3>
+<span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase tracking-wider">Mã nháp: #ORDER-TEMP</span>
+</div>
+<div class="p-8">
+<form class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Left Column: Financials -->
+<div class="space-y-6">
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Giá xe niêm yết (VNĐ)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined">payments</span>
+<input class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 font-semibold focus:ring-primary focus:border-primary" readonly="" type="text" value="1,250,000,000"/>
+</div>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Số tiền đặt cọc (VNĐ)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-primary material-symbols-outlined">account_balance_wallet</span>
+<input class="w-full pl-10 pr-4 py-3 border-primary/50 dark:border-primary/30 rounded-lg text-slate-900 dark:text-slate-100 font-semibold focus:ring-primary focus:border-primary" placeholder="Nhập số tiền cọc" type="text" value="50,000,000"/>
+</div>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+<div class="flex justify-between items-center">
+<span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Số tiền còn lại:</span>
+<span class="text-xl font-black text-primary">1,200,000,000 VNĐ</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Payment & Notes -->
+<div class="space-y-6">
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Phương thức thanh toán</label>
+<div class="grid grid-cols-2 gap-3">
+<label class="flex items-center gap-3 p-3 border-2 border-primary rounded-xl bg-primary/5 cursor-pointer transition-all">
+<input checked="" class="text-primary focus:ring-primary h-4 w-4" name="payment" type="radio"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-primary">Tiền mặt</span>
+<span class="text-[10px] text-primary/70">Tại cửa hàng</span>
+</div>
+</label>
+<label class="flex items-center gap-3 p-3 border-2 border-slate-100 dark:border-slate-800 rounded-xl hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer transition-all">
+<input class="text-primary focus:ring-primary h-4 w-4" name="payment" type="radio"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-700 dark:text-slate-300">Chuyển khoản</span>
+<span class="text-[10px] text-slate-500">Bank Transfer</span>
+</div>
+</label>
+<label class="flex items-center gap-3 p-3 border-2 border-slate-100 dark:border-slate-800 rounded-xl hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer transition-all">
+<input class="text-primary focus:ring-primary h-4 w-4" name="payment" type="radio"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-700 dark:text-slate-300">VNPay</span>
+<span class="text-[10px] text-slate-500">QR Code</span>
+</div>
+</label>
+<label class="flex items-center gap-3 p-3 border-2 border-slate-100 dark:border-slate-800 rounded-xl hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer transition-all">
+<input class="text-primary focus:ring-primary h-4 w-4" name="payment" type="radio"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-700 dark:text-slate-300">MoMo</span>
+<span class="text-[10px] text-slate-500">Ví điện tử</span>
+</div>
+</label>
+</div>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Ghi chú đơn hàng</label>
+<textarea class="w-full px-4 py-3 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:ring-primary focus:border-primary placeholder-slate-400" placeholder="Thêm ghi chú đặc biệt cho đơn hàng này..." rows="4"></textarea>
+</div>
+</div>
+</form>
+</div>
+<!-- Vehicle Summary Bar -->
+<div class="px-8 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-16 h-12 bg-slate-200 dark:bg-slate-700 rounded overflow-hidden">
+<div class="w-full h-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-500">image</span>
+</div>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-tight">Đã chọn xe:</p>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100">Hyundai Santa Fe 2024 - Phiên bản Cao cấp (Trắng)</p>
+</div>
+</div>
+<button class="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">edit</span> Thay đổi xe
+                            </button>
+</div>
+<!-- Form Actions -->
+<div class="p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+<button class="px-6 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span> Quay lại
+                            </button>
+<div class="flex gap-4">
+<button class="px-6 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-bold text-sm hover:text-slate-700">Hủy bỏ</button>
+<button class="px-8 py-2.5 rounded-lg bg-primary text-white font-bold text-sm shadow-lg shadow-primary/30 flex items-center gap-2 hover:bg-primary/90">
+                                    Tiếp theo <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Quick Info -->
+<div class="mt-6 flex flex-col md:flex-row gap-4">
+<div class="flex-1 p-4 bg-blue-50 dark:bg-primary/10 rounded-lg flex gap-3 border border-blue-100 dark:border-primary/20">
+<span class="material-symbols-outlined text-primary">info</span>
+<p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+<span class="font-bold">Lưu ý:</span> Đơn hàng sẽ được chuyển sang trạng thái "Chờ xác nhận" sau khi hoàn tất bước tiếp theo. Nhân viên cần kiểm tra kỹ thông tin thuế phí trước khi gửi cho khách hàng.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

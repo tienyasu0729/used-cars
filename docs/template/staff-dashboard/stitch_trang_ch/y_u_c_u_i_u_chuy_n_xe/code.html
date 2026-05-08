@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quản lý Yêu cầu Điều chuyển - BanXeOTo Da Nang</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-primary/10 bg-white dark:bg-slate-900 px-6 lg:px-10 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-8 flex items-center justify-center bg-primary text-white rounded-lg">
+<span class="material-symbols-outlined text-xl">directions_car</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">BanXeOTo Da Nang</h2>
+</div>
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="#">Tổng quan</a>
+<a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="#">Kho xe</a>
+<a class="text-primary text-sm font-semibold border-b-2 border-primary py-1" href="#">Yêu cầu</a>
+<a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="#">Báo cáo</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<label class="hidden sm:flex flex-col min-w-40 h-10 max-w-64 relative">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+<div class="text-slate-500 flex items-center justify-center pl-3">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input w-full border-none bg-transparent focus:ring-0 text-sm" placeholder="Tìm kiếm yêu cầu..." value=""/>
+</div>
+</label>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-primary">notifications</span>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border-2 border-primary/20" data-alt="Avatar of sales staff member" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC9vG7BG58elNL5XZFmkEdVWLKtDqB4cSLnGFpqQbEuRqkDIpjowwu7yH17Cv_ZbQ1gFKdm9MCG4231xaTyx-t8VsHmXH1AQftqY-K5XFiY5Pd4UiRQZIQ_xrFVf_jH4ASEZuOMlfvCOa4HBfzl3QAptcs_J4c8E73uDsdsgut3MOOimwYL2pAaN4fCKHcduUQAv5tBBi6OROp250nbnc6Nsf9BJdctJe_3g5aOMaTiran-eh6hV0CUTYlyz1vFiOv48KhVWDDM4k5K");'></div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col max-w-7xl mx-auto w-full px-4 lg:px-10 py-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div class="space-y-2">
+<h1 class="text-slate-900 dark:text-white text-3xl font-black leading-tight tracking-tight">Quản lý Yêu cầu Điều chuyển</h1>
+<p class="text-slate-500 dark:text-slate-400 text-base">Theo dõi và tạo mới các yêu cầu điều chuyển xe giữa các chi nhánh trong hệ thống.</p>
+</div>
+<button class="flex items-center justify-center rounded-lg h-12 px-6 bg-primary text-white gap-2 text-base font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">add</span>
+<span>Tạo Yêu Cầu Mới</span>
+</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+<aside class="lg:col-span-1 space-y-4">
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-4 mb-6">
+<div class="bg-primary/10 p-3 rounded-full text-primary">
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white">Nguyễn Văn A</h3>
+<p class="text-xs text-slate-500">Nhân viên kinh doanh</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Bảng điều khiển</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">directions_car</span>
+<span class="text-sm font-medium">Danh sách xe</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white shadow-md" href="#">
+<span class="material-symbols-outlined">swap_horiz</span>
+<span class="text-sm font-medium">Yêu cầu điều chuyển</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-sm font-medium">Lịch sử giao dịch</span>
+</a>
+</nav>
+</div>
+<div class="bg-primary/5 p-4 rounded-xl border border-primary/10">
+<h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-3">Thống kê tháng này</h4>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-sm text-slate-600 dark:text-slate-400">Yêu cầu đã gửi</span>
+<span class="font-bold">12</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm text-slate-600 dark:text-slate-400">Đã được duyệt</span>
+<span class="font-bold text-green-600 text-sm">8</span>
+</div>
+</div>
+</div>
+</aside>
+<div class="lg:col-span-3 space-y-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+<h2 class="text-lg font-bold text-slate-900 dark:text-white">Danh sách yêu cầu của tôi</h2>
+<div class="flex gap-2">
+<button class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+<span class="material-symbols-outlined text-xl">filter_list</span>
+</button>
+<button class="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+<span class="material-symbols-outlined text-xl">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800/50">
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Mã Xe &amp; Tên</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Từ Chi Nhánh</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Đến Chi Nhánh</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Ngày Yêu Cầu</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Trạng Thái</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">VIN-2024-X5</span>
+<span class="text-xs text-slate-500">BMW X5 xDrive40i 2024</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Đà Nẵng - Hải Châu</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Đà Nẵng - Liên Chiểu</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">20/05/2024</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                Chờ Duyệt
+                                            </span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">VIN-2023-M3</span>
+<span class="text-xs text-slate-500">Mazda 3 Luxury 2023</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Huế - Trung Tâm</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Đà Nẵng - Hải Châu</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">18/05/2024</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                Đã Duyệt
+                                            </span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">VIN-2024-CRV</span>
+<span class="text-xs text-slate-500">Honda CR-V L 2024</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Quảng Nam - Hội An</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Đà Nẵng - Hải Châu</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">15/05/2024</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                                Từ Chối
+                                            </span>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">VIN-2022-CAM</span>
+<span class="text-xs text-slate-500">Toyota Camry 2.5Q 2022</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Đà Nẵng - Ngũ Hành Sơn</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Đà Nẵng - Hải Châu</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">10/05/2024</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                Đã Duyệt
+                                            </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<span class="text-sm text-slate-500">Hiển thị 4 trên 12 yêu cầu</span>
+<div class="flex gap-1">
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded bg-primary text-white text-xs font-bold px-3">1</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold px-3">2</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold px-3">3</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+<div class="bg-primary px-6 py-4 flex items-center justify-between">
+<h2 class="text-white text-lg font-bold flex items-center gap-2">
+<span class="material-symbols-outlined">add_circle</span>
+                                Tạo Phiếu Yêu Cầu Điều Chuyển
+                            </h2>
+<span class="text-primary/70 bg-white/10 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Mẫu 04-DC-2024</span>
+</div>
+<form class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-slate-700 dark:text-slate-300">Chọn Xe Điều Chuyển</label>
+<div class="relative">
+<select class="form-select w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm py-3">
+<option value="">-- Chọn xe từ kho hệ thống --</option>
+<option>Mercedes-Benz C200 Avantgarde (VIN-8829)</option>
+<option>Ford Everest Titanium+ (VIN-9901)</option>
+<option>Hyundai SantaFe Premium (VIN-4432)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-3 text-slate-400 pointer-events-none">directions_car</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-slate-700 dark:text-slate-300">Chi Nhánh Đích</label>
+<div class="relative">
+<select class="form-select w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm py-3">
+<option value="">-- Chọn chi nhánh nhận --</option>
+<option>Đà Nẵng - Hải Châu (Trụ sở)</option>
+<option>Đà Nẵng - Ngũ Hành Sơn</option>
+<option>Đà Nẵng - Liên Chiểu</option>
+<option>Huế - Trung Tâm</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-3 text-slate-400 pointer-events-none">location_on</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 md:col-span-2">
+<label class="text-sm font-bold text-slate-700 dark:text-slate-300">Lý Do Điều Chuyển</label>
+<input class="form-input w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm py-3" placeholder="Nhập lý do (VD: Khách hàng tại chi nhánh đích muốn xem xe)" type="text"/>
+</div>
+<div class="flex flex-col gap-2 md:col-span-2">
+<label class="text-sm font-bold text-slate-700 dark:text-slate-300">Ghi Chú Thêm</label>
+<textarea class="form-textarea w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm" placeholder="Thông tin bổ sung về tình trạng xe hoặc yêu cầu đặc biệt..." rows="3"></textarea>
+</div>
+<div class="md:col-span-2 flex justify-end gap-3 mt-2">
+<button class="px-6 py-3 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" type="reset">
+                                    Hủy bỏ
+                                </button>
+<button class="px-8 py-3 rounded-lg bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:brightness-110 transition-all" type="submit">
+                                    Gửi Yêu Cầu
+                                </button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-auto py-6 border-t border-slate-200 dark:border-slate-800 px-6 lg:px-10 text-center text-slate-500 text-sm">
+<p>© 2024 BanXeOTo Da Nang. Hệ thống quản trị nội bộ dành cho nhân viên.</p>
+</footer>
+</div>
+</body></html>

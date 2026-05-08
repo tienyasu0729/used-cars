@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>Quản Lý Tồn Kho - BanXeOTo Da Nang</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 lg:px-10">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-6 flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">directions_car</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">BanXeOTo Da Nang</h2>
+</div>
+<div class="flex flex-1 justify-end gap-8 items-center">
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-primary text-sm font-bold border-b-2 border-primary pb-1" href="#">Kho Xe</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Khách Hàng</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Báo Cáo</a>
+</nav>
+<div class="bg-slate-200 dark:bg-slate-700 rounded-full size-10 bg-cover bg-center" data-alt="Avatar của nhân viên bán hàng" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAUpY03hyep4zqUgFir6bGqv50nAPwFzryKM87w5gxrdh8N5zjD2vPgqaWmeOS-BAP1QyCZwEZ5IQf-OQRMJ8xxioom5JvCIyIKL06V935XITEOvZy0mb0qhZEtqAK2mZVrMPsH8pqAf3iNi4XzdfHNP1AIKkX0lXm_5Le4FCidtzDyWO4Jqn-GUjkZJWc3_g5lKvd6MZK6bzX7T0v3bAD0eVEuPBvxkAGYJHG0D-f9O6oQzJasxlp-X81EtIw9i86a2Y_beTTAhWCZ")'></div>
+</div>
+</header>
+<div class="flex flex-1">
+<!-- Sidebar Navigation -->
+<aside class="hidden lg:flex w-64 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 gap-4">
+<div class="flex items-center gap-3 px-2 py-4">
+<div class="bg-primary/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary">person</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-slate-100 text-sm font-bold">NV. Nguyễn Văn A</h1>
+<p class="text-slate-500 text-xs">Sales Staff Dashboard</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium">Tổng quan</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<p class="text-sm font-bold">Kho xe chi nhánh</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">contract</span>
+<p class="text-sm font-medium">Giao dịch</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">event</span>
+<p class="text-sm font-medium">Lịch hẹn</p>
+</a>
+<div class="my-4 border-t border-slate-100 dark:border-slate-800"></div>
+<a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium">Cài đặt</p>
+</a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col p-4 md:p-8 max-w-7xl mx-auto w-full">
+<div class="flex flex-col gap-6">
+<!-- Header & Title -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="flex flex-col gap-1">
+<h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Quản lý Tồn kho Chi nhánh</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Theo dõi và cập nhật trạng thái xe tại showroom Đà Nẵng</p>
+</div>
+<!-- Toggle section for other branches -->
+<button class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg hover:shadow-sm transition-all text-sm font-semibold text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+                        Xem tồn kho chi nhánh khác
+                        <span class="material-symbols-outlined text-[20px]">expand_more</span>
+</button>
+</div>
+<!-- Filters & Search -->
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="border-b border-slate-100 dark:border-slate-800">
+<div class="flex px-4 overflow-x-auto no-scrollbar">
+<button class="border-b-2 border-primary text-primary px-6 py-4 text-sm font-bold whitespace-nowrap">Tất Cả</button>
+<button class="border-b-2 border-transparent text-slate-500 hover:text-slate-700 px-6 py-4 text-sm font-bold whitespace-nowrap">Còn Hàng</button>
+<button class="border-b-2 border-transparent text-slate-500 hover:text-slate-700 px-6 py-4 text-sm font-bold whitespace-nowrap">Đã Đặt Cọc</button>
+<button class="border-b-2 border-transparent text-slate-500 hover:text-slate-700 px-6 py-4 text-sm font-bold whitespace-nowrap">Đã Bán</button>
+</div>
+</div>
+<div class="p-4">
+<div class="relative w-full max-w-md">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent text-sm transition-all" placeholder="Tìm kiếm Biển số hoặc tên xe..." type="text"/>
+</div>
+</div>
+<!-- Inventory Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+<th class="px-6 py-4">Hình ảnh</th>
+<th class="px-6 py-4">Tên xe</th>
+<th class="px-6 py-4 text-center">Biển số</th>
+<th class="px-6 py-4 text-center">Năm SX</th>
+<th class="px-6 py-4 text-right">Giá niêm yết</th>
+<th class="px-6 py-4 text-center">Trạng Thái</th>
+<th class="px-6 py-4">Cập Nhật Cuối</th>
+<th class="px-6 py-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="h-12 w-20 rounded-lg bg-slate-200 dark:bg-slate-700 bg-cover bg-center overflow-hidden" data-alt="Hình ảnh Toyota Camry 2023 màu đen" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDepfM1J3CSRv30q8u--WvWLGHg5tJNvJRfh0XqfnfoZxAEOnp1wWPsttBr2lKZmMf4ocpZ2T8VYFb-vCUYoU7MNj8t7nMH90Kxt6zVkLkDr_mcsVjHpH0CbOxQV2FuiWgbf0ZwF36_Y33zXgMrRu2ZPem0qxFpBgKVbgmGtURJoLcg_SZJww25VIj9NLxj696I9TB5b8LgJHh8AnYvUO_i3_K8jPafzkEEuxnNG78JmqTEnprt3j7SdZVbk3f29PyFVK-zkFwNLHVQ")'></div>
+</td>
+<td class="px-6 py-4 font-bold text-slate-900 dark:text-white">Toyota Camry 2.5Q</td>
+<td class="px-6 py-4 text-center font-mono">43A-123.45</td>
+<td class="px-6 py-4 text-center">2023</td>
+<td class="px-6 py-4 text-right font-bold text-primary">1.350.000.000đ</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-700 dark:bg-green-900/30 dark:text-green-400">Còn Hàng</span>
+</td>
+<td class="px-6 py-4 text-slate-500 text-xs">2 giờ trước</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="h-12 w-20 rounded-lg bg-slate-200 dark:bg-slate-700 bg-cover bg-center overflow-hidden" data-alt="Hình ảnh Mazda CX-5 2022 màu đỏ" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDULUk1ZA6w2uADFa2eBOW66wEjrZcQQ7Dt90km8yCq5tLLXUfUhWpOJiRbqBmhzA7tQrvMUtL3IP8FBylhLK56pCf4af-Z5ESQdr7hIhhsqZe1nlwCcqdKl8gtEoCutNNgyjQSN3ZOxYIWcrbkXDHGejidt7ijsfotkzgulh58BBKTsQN-ALN_IKxFU-S1UoCDZ-x2mLIVI1UqqcrF9FCHwUfgCIbW4Wq8TXCsLS9ZxQ40hWY9qvdMBt0JKhaUob3qVTy2rCGmsT4c")'></div>
+</td>
+<td class="px-6 py-4 font-bold text-slate-900 dark:text-white">Mazda CX-5 Premium</td>
+<td class="px-6 py-4 text-center font-mono">43C-678.90</td>
+<td class="px-6 py-4 text-center">2022</td>
+<td class="px-6 py-4 text-right font-bold text-primary">850.000.000đ</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Đã Đặt Cọc</span>
+</td>
+<td class="px-6 py-4 text-slate-500 text-xs">Hôm qua, 15:30</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="h-12 w-20 rounded-lg bg-slate-200 dark:bg-slate-700 bg-cover bg-center overflow-hidden" data-alt="Hình ảnh Hyundai SantaFe 2021 màu trắng" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDDUthuaDWh1oKC3YnBMhKnTNT5e41aCKdV0HpfqKhdwluBpkmHosMpYK1nttumJsC0P-92f0RyUCttPIYMnxAKmE8l_WQqviMwCjMeqVFAIi2cS5AJHsiCkN_zmYZPRL6f53tB_AqDtoS0OAObL1wgNX1J2UeEXwfzZl2YgWwXD-BJjVIzOzj94SdSPpxQdIpmQpGCu-R2To7bc7kMYasmfo3Qzy8xMnnAZovHI_mmenjNuXVxpE5FzRMyOgij_CGc2KYlPPYdR4EB")'></div>
+</td>
+<td class="px-6 py-4 font-bold text-slate-900 dark:text-white">Hyundai SantaFe</td>
+<td class="px-6 py-4 text-center font-mono">43A-445.56</td>
+<td class="px-6 py-4 text-center">2021</td>
+<td class="px-6 py-4 text-right font-bold text-primary">1.020.000.000đ</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">Đã Bán</span>
+</td>
+<td class="px-6 py-4 text-slate-500 text-xs">02/10/2023</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="h-12 w-20 rounded-lg bg-slate-200 dark:bg-slate-700 bg-cover bg-center overflow-hidden" data-alt="Hình ảnh Ford Ranger 2023 màu xám" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBb9G8Bzx4WooyhKIcXViChW-P2DESn0CN53EHH1urfwn0eFvOzSdqRFPZApYVVqXlS0LmWP1Ul2f-1WzFqE7Avwv8G0VgL5UjO4S3f6ed6rMeTRaSFPe708cxVixhmaHo1_T1NY5pVc2cNTOHJmfVOPz4viZpTMTvBnqrfODrvIRasrqgn4hUIuu3SGdYYBPUqBwQNRuqp3BgEtlpFDHJZo6LQze2UwkgSYT_eu6uSjicqTM2TsERLyVP3SklzoYBM2_5n1VOPOzPF")'></div>
+</td>
+<td class="px-6 py-4 font-bold text-slate-900 dark:text-white">Ford Ranger Wildtrak</td>
+<td class="px-6 py-4 text-center font-mono">43B-998.77</td>
+<td class="px-6 py-4 text-center">2023</td>
+<td class="px-6 py-4 text-right font-bold text-primary">965.000.000đ</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-700 dark:bg-green-900/30 dark:text-green-400">Còn Hàng</span>
+</td>
+<td class="px-6 py-4 text-slate-500 text-xs">28/09/2023</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<p class="text-xs text-slate-500">Hiển thị 1-4 trong số 128 xe tại chi nhánh</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded text-xs font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" disabled="">Trước</button>
+<button class="px-3 py-1 bg-primary text-white rounded text-xs font-bold">1</button>
+<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded text-xs font-medium hover:bg-white dark:hover:bg-slate-700">2</button>
+<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded text-xs font-medium hover:bg-white dark:hover:bg-slate-700">3</button>
+<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 rounded text-xs font-medium hover:bg-white dark:hover:bg-slate-700">Sau</button>
+</div>
+</div>
+</div>
+<!-- Stats Summary Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold text-slate-500 uppercase">Tổng tồn kho</span>
+<span class="material-symbols-outlined text-primary text-[20px]">inventory</span>
+</div>
+<p class="text-2xl font-black text-slate-900 dark:text-white">128</p>
+<p class="text-xs text-green-600 font-medium mt-1">+5 xe mới tuần này</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold text-slate-500 uppercase">Đang sẵn có</span>
+<span class="material-symbols-outlined text-green-500 text-[20px]">check_circle</span>
+</div>
+<p class="text-2xl font-black text-slate-900 dark:text-white">92</p>
+<p class="text-xs text-slate-400 font-medium mt-1">72% tổng số xe</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold text-slate-500 uppercase">Đã đặt cọc</span>
+<span class="material-symbols-outlined text-amber-500 text-[20px]">pending_actions</span>
+</div>
+<p class="text-2xl font-black text-slate-900 dark:text-white">14</p>
+<p class="text-xs text-amber-600 font-medium mt-1">Chờ hoàn tất thủ tục</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold text-slate-500 uppercase">Đã bán (Tháng)</span>
+<span class="material-symbols-outlined text-slate-400 text-[20px]">sell</span>
+</div>
+<p class="text-2xl font-black text-slate-900 dark:text-white">22</p>
+<p class="text-xs text-primary font-medium mt-1">Đạt 85% chỉ tiêu</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

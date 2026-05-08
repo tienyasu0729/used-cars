@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Contact Us - BanXeOTo Da Nang</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen flex-col overflow-x-hidden">
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="flex h-16 items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined text-lg">directions_car</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight text-primary">BanXeOTo <span class="text-slate-700 dark:text-slate-300">Da Nang</span></h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Cars</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Services</a>
+<a class="text-sm font-medium text-primary" href="#">Contact</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined">person</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1">
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+<div class="mb-8">
+<nav class="flex mb-4 text-sm font-medium text-slate-500 dark:text-slate-400">
+<a class="hover:text-primary" href="#">Home</a>
+<span class="mx-2 text-slate-300">/</span>
+<span class="text-primary">Contact</span>
+</nav>
+<h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white lg:text-5xl">Contact Us</h1>
+<p class="mt-4 max-w-2xl text-lg text-slate-600 dark:text-slate-400">
+                        Have questions about our premium car selection or need to book a test drive? Reach out to our Da Nang team today.
+                    </p>
+</div>
+<div class="grid grid-cols-1 gap-12 lg:grid-cols-2">
+<div class="rounded-2xl bg-white dark:bg-slate-900 p-8 shadow-sm border border-slate-200 dark:border-slate-800">
+<h3 class="text-xl font-bold mb-6">Send us a Message</h3>
+<form action="#" class="space-y-5">
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
+<input class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="John Doe" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Email Address</label>
+<input class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="john@example.com" type="email"/>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Phone Number (SĐT)</label>
+<input class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="+84 123 456 789" type="tel"/>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Subject</label>
+<select class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+<option>Sales Inquiry</option>
+<option>Schedule Test Drive</option>
+<option>Car Service</option>
+<option>Financing Options</option>
+<option>Other</option>
+</select>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Message</label>
+<textarea class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none" placeholder="How can we help you?" rows="4"></textarea>
+</div>
+<button class="w-full rounded-lg bg-primary py-4 px-6 text-sm font-bold text-white hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20" type="submit">
+                                Send Message
+                            </button>
+</form>
+</div>
+<div class="space-y-8">
+<div class="grid grid-cols-1 gap-6">
+<div class="flex items-start gap-4">
+<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<div>
+<h4 class="text-lg font-bold">Main Showroom</h4>
+<p class="mt-1 text-slate-600 dark:text-slate-400">123 Nguyen Huu Tho Street, Hai Chau District, Da Nang City, Vietnam</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">call</span>
+</div>
+<div>
+<h4 class="text-lg font-bold">Phone</h4>
+<p class="mt-1 text-slate-600 dark:text-slate-400">+84 236 123 4567</p>
+<p class="text-slate-600 dark:text-slate-400">Hotline: 1900 88 88 88</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">mail</span>
+</div>
+<div>
+<h4 class="text-lg font-bold">Email</h4>
+<p class="mt-1 text-slate-600 dark:text-slate-400">sales@banxeotodanang.com</p>
+<p class="text-slate-600 dark:text-slate-400">support@banxeotodanang.com</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<div>
+<h4 class="text-lg font-bold">Opening Hours</h4>
+<p class="mt-1 text-slate-600 dark:text-slate-400">Mon - Sat: 8:00 AM - 8:00 PM</p>
+<p class="text-slate-600 dark:text-slate-400">Sunday: 9:00 AM - 5:00 PM</p>
+</div>
+</div>
+</div>
+<div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="h-[300px] w-full bg-slate-200 dark:bg-slate-800 relative group">
+<img alt="Map location of Da Nang showroom" class="h-full w-full object-cover" data-alt="Satellite view map of Da Nang city area" data-location="Da Nang" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAM26-oUyS7xjCEtdzw3GX3QK5R4qcAMAwloiIX9IQ8zmuNz0715lY6cKzyx6uPphvMAk3hWUf7a20I-icNl0PBV9eJ9dZ_W0_y_viuLmArywZuAgk2GSlEC6F6-wUVa_77rBgBUZIwwid9X5h1bGeE7aBXQYss-i6h-V0gcAimVHEQqx72V5hmiAnpa9p5-mSVbP48C6aG4aoFZBEc_vgfsf04q0y7Zt0oo_xcnBPZV7IihJnBUlB8IKu1NZLvlfR_hJGFB17d89A-"/>
+<div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors cursor-pointer">
+<div class="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-primary shadow-xl">
+<span class="material-symbols-outlined text-sm">open_in_new</span>
+                                        Open in Google Maps
+                                    </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-20 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+<div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+<div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+<div class="flex items-center gap-2">
+<div class="flex h-6 w-6 items-center justify-center rounded bg-primary text-white">
+<span class="material-symbols-outlined text-xs">directions_car</span>
+</div>
+<span class="text-sm font-bold tracking-tight text-slate-900 dark:text-white">BanXeOTo Da Nang</span>
+</div>
+<div class="flex gap-6 text-sm text-slate-500 dark:text-slate-400">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Cookies</a>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400">
+                        © 2024 BanXeOTo Da Nang. All rights reserved.
+                    </p>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

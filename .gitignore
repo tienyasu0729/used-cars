@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# context-mode MCP (AI tooling - local only)
+GEMINI.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

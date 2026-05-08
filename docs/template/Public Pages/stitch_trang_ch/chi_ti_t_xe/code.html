@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "secondary-orange": "#f97316",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 w-full border-b border-primary/10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="flex h-16 items-center justify-between">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-3xl font-bold">directions_car</span>
+<h2 class="text-xl font-bold tracking-tight">BanXeOTo Da Nang</h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Mua xe</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Bán xe</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Dịch vụ</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors" href="#">Tin tức</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-64 rounded-lg border-none bg-primary/5 py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary" placeholder="Tìm kiếm xe..." type="text"/>
+</div>
+<button class="p-2 rounded-lg hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300">favorite</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/10 overflow-hidden">
+<img alt="User Profile" data-alt="User profile avatar placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNQW5C0JyaTiyj_wBVHza1IRpzKHgsz7fs4KmFt3lh6l9x74zEs5RdrOBM4JsbrqjpMZSmxoV1Hhf9hgm6JmXqxc5QDYymbdQdAveEq0C3s6YlmXopuf-bQTYi-f9N4Q6SHzhkV9hkdQLzPIAYeEVnRL2UWvK3oXYMIhhAlcjGyMoAsXovGj3xJULWO7a4lzzl1wkb7kh-b50altiHq17EtCvmhmlLQbcwa1wYy2KOzW9FNCEmXlxjGaXnk3IcJ5nLjd_8f39APWe5"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 mb-6 text-sm font-medium text-slate-500">
+<a class="hover:text-primary" href="#">Trang chủ</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<a class="hover:text-primary" href="#">Xe cũ</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-primary font-semibold">Toyota Camry 2.5Q 2020</span>
+</nav>
+<div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
+<!-- Left: Gallery Section -->
+<div class="lg:col-span-8 flex flex-col gap-4">
+<div class="aspect-[16/9] w-full overflow-hidden rounded-xl bg-slate-200">
+<div class="h-full w-full bg-cover bg-center" data-alt="Front view of white Toyota Camry 2020" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDVtjrmkVZjPMDHrT2lLWM6uyOsHFIDNtj6PFQjkMRyBLZvq_ZTpZEOW00kFL8SMJuzw34F5Mm4vjJOqJcyveZV3YnI0mNr4m0tgaz20gbbBKBVLfFo5U5OjlwNbI2lAMuLEi9bsjgU_9cmpLzL6-Ud-8iIwdxOO580FGS-Zf3csYv7w-jEYxaEljZ0GoeyXjY1wSPIoaulh5bEuXmparSZ9CWfsVDEOpBZMO3khPU8nBjOx95tmLZg55FQ8PbW3LPWwML0xtQYMDkL');"></div>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+<div class="h-24 w-32 shrink-0 overflow-hidden rounded-lg border-2 border-primary ring-2 ring-primary ring-offset-2">
+<img class="h-full w-full object-cover" data-alt="White Toyota Camry front angle thumbnail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABbBzP8NduNp4qq_nl2gdNykx8qg00_KwYBY6vUSRna1hHwwHtaBMeUTNLSzgZycJG6GyarRs3BFrII4PV-ykvBnrhJuQJfq1m-34JtWGIkFyK4I98kks-6a0grJRgo9k_bOfJEM8-hQ_mrDcH3ygFW2HTVV0KHU9JhLu1sWaTktB8i-8oTkCEr2sBqrw8L0eWGC1P0BORJoaBr0VO3SEBfMM4mVYiyia1Pb8egyS-QeJR0MI1ufYI8YgX8_8osp4qFusoej3O3ij-"/>
+</div>
+<div class="h-24 w-32 shrink-0 overflow-hidden rounded-lg hover:opacity-80 transition-opacity">
+<img class="h-full w-full object-cover" data-alt="Toyota Camry interior dashboard view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaDWq-J0Zb8CV41sxw1EiTsnhW6ksfACoUXrkwM2KTO_-uGttEsaw23Ai3GSOJVeGOtdOCTxh2DxC3wz6kDMPjIzwq3hmn3if-bQHd3h2iVmbwefwa6OZ5KBfS7cFHIfKNvuDlHsA9-E9VgQ4_nBIrVLQWJmNSCDOoNRfoYbc8RzKyiQ9SoN_CV3vweO7-1r-3IBW0XY16lMMI6fHArr9LaakS9AAfr3cYp-FwZ7Q34we6uFFCOqUYJjOSghvcbru-jOdNsghQIyaz"/>
+</div>
+<div class="h-24 w-32 shrink-0 overflow-hidden rounded-lg hover:opacity-80 transition-opacity">
+<img class="h-full w-full object-cover" data-alt="Rear view of Toyota Camry 2020" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_VQfXcI1NIgFoylkQAysUfOjpPkGZk1LTBoCzE3CsbkKm-Z3xSoNtg0cKnc4zYjX7KL8kZyzl_-Dhwr47VwYNd0qjkbspNs4i69IpQMplu9raxS5AipMJW0yyzOvrN0ZxuZFPwG--SsY5Lgtr38haoilp8ADgina881Tyx3caVOXhPUK-o1dfBj6nBM6M2rUfhyGf8lxvXVKnsL4O5FnFXjXDPAQNDou6wjGuS3L9I5JW7eq0YBwjVRm3x8uvmCcKGozqVkRSKNDA"/>
+</div>
+<div class="h-24 w-32 shrink-0 overflow-hidden rounded-lg hover:opacity-80 transition-opacity">
+<img class="h-full w-full object-cover" data-alt="Toyota Camry alloy wheels detail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-UdMatz-Z0kXx9FcjAnPY63YiyR4W6P86rKH3E384YnmX-vJD9VcluwBmKHZz1RczcEjza5S-GAdzNYD1xe5e-426QPhRtiRBpWqALGK8mAxdGxEprONp8pjCwOGXbgkPvaBOp-lAWWyynzLvZ6QyWBp3n5xvYngw9N406jGWi8xBqHv4hPPPvaykYJPO4jf7_lDNV4eiTI4c13QfNsvIp1crjreK7MLiwupg_CZGl8RJL_tvCnRG5UEsaqJ-jFUexadMG5Qra9_o"/>
+</div>
+<div class="h-24 w-32 shrink-0 overflow-hidden rounded-lg relative group cursor-pointer">
+<img class="h-full w-full object-cover opacity-50" data-alt="Abstract car showroom background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzLsBm23Hkg3EXwYhxmfM5B9PNhIXmXPlpLhlxYJ3fFTGn2ZmJD_k_glqJwYVAIE5Ptt43ILHkO6VBdMTxmmZmpeUpLkhHFZEKi0jNO1ehHVttDmGwm7-MmFys-E8aCSQjiZ2foqkvGAcXe5WYIB-g46T6JcyO18enF7VXbG_RNq5CvRPFv1PI5WFJAuSXIW8TFE7ADzvgWXEAjk_f6sRtZ6NREd5VprgqTQrB-3tMG6pFEnKLq9J8TbcowyLcRP7z419wMK8rRIiO"/>
+<div class="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold">+12</div>
+</div>
+</div>
+<!-- Desktop Tabs Section -->
+<div class="mt-8">
+<div class="border-b border-slate-200 dark:border-slate-800">
+<nav class="flex gap-8">
+<button class="border-b-2 border-primary pb-4 text-sm font-bold text-primary">Thông Số Kỹ Thuật</button>
+<button class="border-b-2 border-transparent pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors">Mô Tả</button>
+<button class="border-b-2 border-transparent pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors">Vị Trí</button>
+<button class="border-b-2 border-transparent pb-4 text-sm font-medium text-slate-500 hover:text-primary transition-colors">Xe Tương Tự</button>
+</nav>
+</div>
+<div class="py-8">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+<div class="flex justify-between border-b border-primary/5 py-2">
+<span class="text-slate-500">Kiểu dáng</span>
+<span class="font-semibold">Sedan</span>
+</div>
+<div class="flex justify-between border-b border-primary/5 py-2">
+<span class="text-slate-500">Nhiên liệu</span>
+<span class="font-semibold">Xăng</span>
+</div>
+<div class="flex justify-between border-b border-primary/5 py-2">
+<span class="text-slate-500">Hộp số</span>
+<span class="font-semibold">Tự động</span>
+</div>
+<div class="flex justify-between border-b border-primary/5 py-2">
+<span class="text-slate-500">Dẫn động</span>
+<span class="font-semibold">FWD - Dẫn động cầu trước</span>
+</div>
+<div class="flex justify-between border-b border-primary/5 py-2">
+<span class="text-slate-500">Số chỗ ngồi</span>
+<span class="font-semibold">5 chỗ</span>
+</div>
+<div class="flex justify-between border-b border-primary/5 py-2">
+<span class="text-slate-500">Màu xe</span>
+<span class="font-semibold">Trắng ngọc trai</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Info Panel (Sticky) -->
+<div class="lg:col-span-4">
+<div class="sticky top-24 space-y-6">
+<!-- Basic Info Card -->
+<div class="rounded-xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-primary/10">
+<h1 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Toyota Camry 2.5Q 2020</h1>
+<p class="text-3xl font-black text-primary mb-6">850.000.000 ₫</p>
+<!-- Quick Specs Grid -->
+<div class="grid grid-cols-3 gap-4 mb-8">
+<div class="flex flex-col items-center gap-1 rounded-lg bg-primary/5 p-3">
+<span class="material-symbols-outlined text-primary">calendar_today</span>
+<span class="text-[10px] uppercase font-bold text-slate-500">Năm SX</span>
+<span class="text-xs font-bold">2020</span>
+</div>
+<div class="flex flex-col items-center gap-1 rounded-lg bg-primary/5 p-3">
+<span class="material-symbols-outlined text-primary">speed</span>
+<span class="text-[10px] uppercase font-bold text-slate-500">Odo</span>
+<span class="text-xs font-bold">45k km</span>
+</div>
+<div class="flex flex-col items-center gap-1 rounded-lg bg-primary/5 p-3">
+<span class="material-symbols-outlined text-primary">settings_input_component</span>
+<span class="text-[10px] uppercase font-bold text-slate-500">Hộp số</span>
+<span class="text-xs font-bold">AT</span>
+</div>
+<div class="flex flex-col items-center gap-1 rounded-lg bg-primary/5 p-3">
+<span class="material-symbols-outlined text-primary">local_gas_station</span>
+<span class="text-[10px] uppercase font-bold text-slate-500">Động cơ</span>
+<span class="text-xs font-bold">2.5L</span>
+</div>
+<div class="flex flex-col items-center gap-1 rounded-lg bg-primary/5 p-3">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<span class="text-[10px] uppercase font-bold text-slate-500">Khu vực</span>
+<span class="text-xs font-bold">Đà Nẵng</span>
+</div>
+<div class="flex flex-col items-center gap-1 rounded-lg bg-primary/5 p-3">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<span class="text-[10px] uppercase font-bold text-slate-500">Bảo hành</span>
+<span class="text-xs font-bold">1 Năm</span>
+</div>
+</div>
+<!-- CTA Buttons -->
+<div class="space-y-3">
+<button class="w-full rounded-lg bg-primary py-4 text-center text-sm font-bold text-white hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg">event_available</span>
+                                Đặt Lịch Lái Thử
+                            </button>
+<button class="w-full rounded-lg bg-secondary-orange py-4 text-center text-sm font-bold text-white hover:bg-secondary-orange/90 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg">payments</span>
+                                Đặt Cọc Ngay
+                            </button>
+<button class="w-full rounded-lg border-2 border-primary/20 bg-white dark:bg-slate-900 py-4 text-center text-sm font-bold text-primary hover:bg-primary/5 transition-all">
+                                Liên Hệ Tư Vấn
+                            </button>
+</div>
+</div>
+<!-- Branch Info Card -->
+<div class="rounded-xl bg-slate-100 dark:bg-slate-800/50 p-6 border border-slate-200 dark:border-slate-800">
+<h3 class="font-bold text-slate-900 dark:text-white mb-4">Thông tin Showroom</h3>
+<div class="flex items-start gap-3 mb-4">
+<span class="material-symbols-outlined text-primary mt-1">store</span>
+<div>
+<p class="font-bold text-sm">BanXeOTo Đà Nẵng - Chi nhánh 1</p>
+<p class="text-xs text-slate-500 mt-1">123 Nguyễn Hữu Thọ, Hải Châu, Đà Nẵng</p>
+</div>
+</div>
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary">call</span>
+<p class="font-bold text-sm">0905 XXX XXX</p>
+</div>
+<div class="h-32 w-full rounded-lg bg-slate-300 overflow-hidden">
+<img class="h-full w-full object-cover" data-alt="Map of showroom location in Da Nang" data-location="Da Nang" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRKE65KciMqdrAnmxxfwV6qlxXB3-gJW8cY0xgxqr7_3eVtMCViiz2gYXYSWJGqupWV2SQNENaGL5N2x2IBWxQIaHbJc2tp2HFdDKEA3XFY6yaCsf09Ai5OatUB2SVY-7k9WRL7z-caUgUdyHtGavr_OWoBnuWnQhetGlP6RUztgsg8xhQRgKU6uJOmbhjP-S0E1nNdB1-hxwXxAxdRZ6OI_o39eL5PM-s9ChvzGo6a4JJN9mfhqt5s1rIJqPOIND9CUlItgpRY6Fw"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Similar Vehicles Section -->
+<section class="mt-16">
+<h2 class="text-2xl font-black mb-8">Xe Tương Tự</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Vehicle Card 1 -->
+<div class="group overflow-hidden rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-primary/10 transition-transform hover:-translate-y-1">
+<div class="relative aspect-[4/3]">
+<img class="h-full w-full object-cover" data-alt="Modern sedan in silver color" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNhToroOkjgnzwD-eDTrWO7RNYT6rut4cy-6IkGduC_qFpG72JQcFBnYTy-R3qUjOWmlPyqYRh1yYUYZkp4OA_je_8vhYkaWHDAOjtkvA8geZyVYlyTUUh5vZw-ovdCFdLMVCIPXWvr0xpSKF_Qs2OvXIlqMQktQ_cmnCvx4BoE8tXGlisgKtts96TSLkyYIIzE26V6tMW8geBEWLoK1yOQgNsXYJjb0teVO0ib6MkPWGOoFr02cXZ88jlrHooPG-BicYqcKCpjoKz"/>
+<div class="absolute top-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase text-primary">Xe mới về</div>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-slate-900 dark:text-white line-clamp-1">Toyota Camry 2.5Q 2021</h3>
+<p class="text-primary font-bold mt-1">920.000.000 ₫</p>
+<div class="mt-4 flex items-center justify-between text-xs text-slate-500">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">speed</span> 20k km</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">location_on</span> Đà Nẵng</span>
+</div>
+</div>
+</div>
+<!-- More cards could go here -->
+<div class="group overflow-hidden rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-primary/10 transition-transform hover:-translate-y-1">
+<div class="relative aspect-[4/3]">
+<img class="h-full w-full object-cover" data-alt="Blue luxury sedan parked" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU3cu3tSxg4Me8LrcjxO9a2HvpvVTyTYgg0zNKXLDXAtOhbjU5XaiTfK4f0yg9EY0cTLL_B95QrmM_c8dF8CJe6bq4ILj_Sa9YZSourH7vF9wfuDm5OOwMxN0aWuD2QGytIIhLsyDMrmpPcqCsV8xJh2jGjlqCLi-gGNF1g1S-Jp-ITAko4PWfrbnJZkU3_l6saE20pg6bmNOaySS-5ex-rroQO2YTGzMdC2Ci361Y20O8BEkBd281BH0miLbSrXh12yrGkF_SPiqn"/>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-slate-900 dark:text-white line-clamp-1">Mazda 6 2.5 Premium 2020</h3>
+<p class="text-primary font-bold mt-1">790.000.000 ₫</p>
+<div class="mt-4 flex items-center justify-between text-xs text-slate-500">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">speed</span> 35k km</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">location_on</span> Đà Nẵng</span>
+</div>
+</div>
+</div>
+<div class="group overflow-hidden rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-primary/10 transition-transform hover:-translate-y-1">
+<div class="relative aspect-[4/3]">
+<img class="h-full w-full object-cover" data-alt="Black premium business car" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgQy4tSBi9j-4GyQcTOGLKyzp5eprbMsp-LhAKe5OuO5f23LObiaM4om1DPA1BIjEFuI0zvClYBRx8NV-J6neMfk1USFYckzzq5OzaaQhIvrcwzLh1Ghfl21Hvci3OAh59s6D8wBz-L6gkVz5YawUj6L3hQXduIQ-GMdG_fcQZMvATdgp3qPwZpC4yFaOh98MK141QABE8NYjWTChkAOqZzE65xDUik21e03WwT8GMtxR4ynrjDvuczMk-ZUnvs0vihMYQ7XK6D6Sh"/>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-slate-900 dark:text-white line-clamp-1">VinFast Lux A2.0 2020</h3>
+<p class="text-primary font-bold mt-1">650.000.000 ₫</p>
+<div class="mt-4 flex items-center justify-between text-xs text-slate-500">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">speed</span> 50k km</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">location_on</span> Đà Nẵng</span>
+</div>
+</div>
+</div>
+<div class="group overflow-hidden rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-primary/10 transition-transform hover:-translate-y-1">
+<div class="relative aspect-[4/3]">
+<img class="h-full w-full object-cover" data-alt="Grey luxury German sedan" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCn4IgIBffP8YThjS8FTQ7O4KF6W5CPaWVXMLgVFhi_ICd2-7cX-fa7w79jvOkORJcD5G99dE2aUW4pDkCMY9fOzAQ-W60vn9B4p6iRj10OEePW-SGe-nMRGv9vGiaNU3rig_xyXK4mZPtEJP4d8_vVuXz69_Utxj00a16FxdKbm8zTydnXJ8wBneFviaplDdM7pKeESsUjPznc9MjvqZmW9jDeLnBUUx9I2nCPBlWojydozDspFuAktwmKmMlZ1cRH8L31qfi0Lx91"/>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-slate-900 dark:text-white line-clamp-1">Mercedes-Benz C200 2019</h3>
+<p class="text-primary font-bold mt-1">1.150.000.000 ₫</p>
+<div class="mt-4 flex items-center justify-between text-xs text-slate-500">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">speed</span> 42k km</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">location_on</span> Đà Nẵng</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="mt-20 border-t border-primary/10 bg-white dark:bg-slate-900 py-12">
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+<div class="md:col-span-1">
+<div class="flex items-center gap-2 text-primary mb-4">
+<span class="material-symbols-outlined text-3xl font-bold">directions_car</span>
+<h2 class="text-xl font-bold tracking-tight">BanXeOTo Da Nang</h2>
+</div>
+<p class="text-sm text-slate-500 leading-relaxed">Nơi mua bán xe ô tô uy tín hàng đầu tại Đà Nẵng. Cam kết chất lượng, bảo hành dài hạn.</p>
+</div>
+<div>
+<h4 class="font-bold mb-4">Liên kết</h4>
+<ul class="space-y-2 text-sm text-slate-500">
+<li><a class="hover:text-primary transition-colors" href="#">Về chúng tôi</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Chính sách bảo hành</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Điều khoản dịch vụ</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold mb-4">Dịch vụ</h4>
+<ul class="space-y-2 text-sm text-slate-500">
+<li><a class="hover:text-primary transition-colors" href="#">Mua xe trả góp</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Định giá xe cũ</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Bảo dưỡng định kỳ</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold mb-4">Đăng ký bản tin</h4>
+<div class="flex gap-2">
+<input class="flex-1 rounded-lg border-primary/20 bg-primary/5 text-sm focus:ring-primary" placeholder="Email của bạn" type="email"/>
+<button class="bg-primary text-white p-2 rounded-lg"><span class="material-symbols-outlined">send</span></button>
+</div>
+</div>
+</div>
+<div class="mt-12 pt-8 border-t border-primary/10 text-center text-xs text-slate-400">
+                © 2024 BanXeOTo Da Nang. All rights reserved.
+            </div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>So Sánh Xe - BanXeOTo Đà Nẵng</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 md:px-10 lg:px-40 py-3">
+<div class="flex items-center justify-between gap-8 max-w-7xl mx-auto">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-3xl">directions_car</span>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">BanXeOTo Da Nang</h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Mua xe</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Bán xe</a>
+<a class="text-primary text-sm font-bold border-b-2 border-primary leading-normal" href="#">So sánh</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-medium transition-colors" href="#">Tin tức</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-4">
+<label class="hidden lg:flex flex-col min-w-40 h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full bg-slate-100 dark:bg-slate-800">
+<div class="text-slate-500 flex items-center justify-center pl-3">
+<span class="material-symbols-outlined text-lg">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 border-none bg-transparent focus:ring-0 text-sm placeholder:text-slate-500" placeholder="Tìm kiếm xe..." value=""/>
+</div>
+</label>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg size-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-lg size-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col items-center">
+<div class="w-full max-w-7xl px-4 md:px-10 lg:px-40 py-8">
+<!-- Page Title & Actions -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div class="flex flex-col gap-2">
+<nav class="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-widest font-semibold">
+<a class="hover:text-primary" href="#">Trang chủ</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-primary">So sánh xe</span>
+</nav>
+<h1 class="text-slate-900 dark:text-slate-100 text-4xl font-black leading-tight tracking-tight">So sánh xe trực quan</h1>
+<p class="text-slate-600 dark:text-slate-400 text-base max-w-xl">Phân tích chi tiết thông số kỹ thuật, trang bị và giá lăn bánh của 3 dòng xe đang hot nhất tại thị trường Đà Nẵng.</p>
+</div>
+<button class="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+                        Thêm xe khác
+                    </button>
+</div>
+<!-- Comparison Table Container -->
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800/50">
+<th class="p-6 text-left min-w-[240px] sticky left-0 bg-slate-50 dark:bg-slate-800 z-10 border-r border-slate-200 dark:border-slate-700">
+<div class="flex flex-col gap-1">
+<span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Đặc tính kỹ thuật</span>
+<div class="flex items-center gap-2 text-primary text-sm">
+<span class="material-symbols-outlined text-sm">filter_alt</span>
+                                                Hiện khác biệt
+                                            </div>
+</div>
+</th>
+<!-- Car 1 Header -->
+<th class="p-6 min-w-[300px] text-center border-r border-slate-200 dark:border-slate-800">
+<div class="flex flex-col items-center gap-4">
+<div class="w-full aspect-[16/10] rounded-lg overflow-hidden relative group">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-110" data-alt="Modern Toyota Vios 2024 sedan in white color" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBbZym79yZnZPOPsgZvFzv5r8yca5nvXeH8zjlGEIhOlkEUBohfahbi3QbKNG6C6_i3C7UWAkErpzylxbZIHjTLbhjjXRuxYzIGChs6KwGZ7yU0i_M5Ncik8wiACwck--ojUvI-zdz-3QmLiOwh_oDnPlAag-jvGbwKyF4d2cwPyquRF_WNCf51eN_JVLJPZxfPH70EkhNzeWIZ825W7c830ZEi04js0NK0feV0SBS1XDexB6jVUmIiSzMf7KuderqF-O08-zBwxBqM');"></div>
+<button class="absolute top-2 right-2 size-8 bg-white/90 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 leading-tight">Toyota Vios 1.5G</h3>
+<p class="text-primary font-extrabold text-xl">592.000.000đ</p>
+</div>
+<button class="w-full py-2 bg-primary/10 hover:bg-primary hover:text-white text-primary rounded-lg text-sm font-bold transition-all border border-primary/20">
+                                                Đặt Lịch Lái Thử
+                                            </button>
+</div>
+</th>
+<!-- Car 2 Header -->
+<th class="p-6 min-w-[300px] text-center border-r border-slate-200 dark:border-slate-800">
+<div class="flex flex-col items-center gap-4">
+<div class="w-full aspect-[16/10] rounded-lg overflow-hidden relative group">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-110" data-alt="Luxury Hyundai Accent 2024 in silver metallic" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC9FMSFcTmRv3t7P_2_nLQo38ZFWitwKAwjYOlrx0uPAjQgRheJhDm5UI9HeF8tgd8nYg1Wu9XacMuYpt4vsal_Drl-2__9k04Br5v_ARgnu552gQCGT38o0ik6b0da9WFBJWNtseQjuYB4YRqZHumDt7Q7P0UcHjskLlH_Nr-zMbnRLZkxMKrNvnf1EG6NWnLsZ4l9caI_p176wKa0d_-GTzstPkcjNXrsgNRnPWizLbxRdfwUmzt47b8BYD32wkr3o5xNDL6LPRtU');"></div>
+<button class="absolute top-2 right-2 size-8 bg-white/90 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 leading-tight">Hyundai Accent 1.5 AT</h3>
+<p class="text-primary font-extrabold text-xl">542.000.000đ</p>
+</div>
+<button class="w-full py-2 bg-primary/10 hover:bg-primary hover:text-white text-primary rounded-lg text-sm font-bold transition-all border border-primary/20">
+                                                Đặt Lịch Lái Thử
+                                            </button>
+</div>
+</th>
+<!-- Car 3 Header -->
+<th class="p-6 min-w-[300px] text-center">
+<div class="flex flex-col items-center gap-4">
+<div class="w-full aspect-[16/10] rounded-lg overflow-hidden relative group">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-110" data-alt="Dynamic Honda City 2024 RS in red color" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBXhsMlqNnQleYQp49kQu1fR_iHAsyMvalPJCJ6NSAC4yeKjWS2frD3Ady_RPb53_0tck4aaFmHphHSRHkJJjtYkfzHNLzoNOYMfA5Sl6qxWIwc3jGBB6VnA8pJrCBWQDvScoWgGbpV2EBnk5fxqQ0HCtDFkIihikLvBHL5bbl047Fwf5oJ0Exb_N1yZc6ehocUbpJGdm7htC7_gBMIkb69V64bIId5VIDgag1vgx8slg8bC4swYWZcoZKP9hKKWmT4zze7iowtx3cT');"></div>
+<button class="absolute top-2 right-2 size-8 bg-white/90 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 leading-tight">Honda City L</h3>
+<p class="text-primary font-extrabold text-xl">589.000.000đ</p>
+</div>
+<button class="w-full py-2 bg-primary/10 hover:bg-primary hover:text-white text-primary rounded-lg text-sm font-bold transition-all border border-primary/20">
+                                                Đặt Lịch Lái Thử
+                                            </button>
+</div>
+</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Hãng Section -->
+<tr class="group">
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-slate-700">Hãng xe</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 font-semibold border-r border-slate-200 dark:border-slate-800">Toyota</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 font-semibold border-r border-slate-200 dark:border-slate-800">Hyundai</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 font-semibold">Honda</td>
+</tr>
+<!-- Năm SX Section -->
+<tr class="bg-primary/5 dark:bg-primary/10">
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-slate-50 dark:bg-slate-900/80 z-10 border-r border-slate-200 dark:border-slate-700">Năm sản xuất</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 font-bold border-r border-slate-200 dark:border-slate-800">2023</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 font-bold border-r border-slate-200 dark:border-slate-800">2023</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 font-bold">2023</td>
+</tr>
+<!-- Kilometers Section -->
+<tr>
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-slate-700">Số Kilômét</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">Mới 100%</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">Mới 100%</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300">Mới 100%</td>
+</tr>
+<!-- Engine Section -->
+<tr>
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-slate-700">Động cơ</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">1.5L Dual VVT-i</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">1.5L Smartstream G</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300">1.5L i-VTEC</td>
+</tr>
+<!-- Horsepower - Difference highlighted -->
+<tr class="bg-primary/5 dark:bg-primary/10">
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-slate-50 dark:bg-slate-900/80 z-10 border-r border-slate-200 dark:border-slate-700">Công suất (Mã lực)</td>
+<td class="p-4 text-center border-r border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300">
+<span>106 HP</span>
+</div>
+</td>
+<td class="p-4 text-center border-r border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300">
+<span>115 HP</span>
+</div>
+</td>
+<td class="p-4 text-center">
+<div class="flex items-center justify-center gap-2 text-primary font-bold">
+<span>119 HP</span>
+<span class="material-symbols-outlined text-sm">trending_up</span>
+</div>
+</td>
+</tr>
+<!-- Fuel Section -->
+<tr>
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-slate-700">Nhiên liệu</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">Xăng</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">Xăng</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300">Xăng</td>
+</tr>
+<!-- Transmission Section -->
+<tr>
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-slate-700">Hộp số</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">Số tự động vô cấp CVT</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">Số tự động vô cấp iVT</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300">Số tự động vô cấp CVT</td>
+</tr>
+<!-- Wheelbase Section -->
+<tr>
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-slate-700">Chiều dài cơ sở (mm)</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">2.550</td>
+<td class="p-4 text-center text-primary font-bold border-r border-slate-200 dark:border-slate-800">2.670</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300">2.600</td>
+</tr>
+<!-- Safety Section -->
+<tr>
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-200 dark:border-slate-700">Số túi khí</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">7 túi khí</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">6 túi khí</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300">6 túi khí</td>
+</tr>
+<!-- Additional Features -->
+<tr class="bg-primary/5 dark:bg-primary/10">
+<td class="p-4 pl-6 text-slate-500 text-sm font-medium sticky left-0 bg-slate-50 dark:bg-slate-900/80 z-10 border-r border-slate-200 dark:border-slate-700">Hệ thống an toàn chủ động</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">Toyota Safety Sense</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">Hyundai SmartSense</td>
+<td class="p-4 text-center text-slate-700 dark:text-slate-300">Honda SENSING</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Footer CTA Section -->
+<div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-primary p-6 rounded-xl text-white flex flex-col justify-between items-start gap-4">
+<div class="space-y-2">
+<h4 class="text-xl font-bold">Cần tư vấn thêm?</h4>
+<p class="text-primary/70 text-white/80 text-sm">Chuyên viên của chúng tôi sẽ giúp bạn chọn chiếc xe phù hợp nhất với nhu cầu.</p>
+</div>
+<button class="bg-white text-primary px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-100 transition-colors">Gọi ngay 1900 xxxx</button>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between items-start gap-4">
+<div class="space-y-2">
+<h4 class="text-xl font-bold text-slate-900 dark:text-slate-100">Tính toán trả góp</h4>
+<p class="text-slate-500 text-sm">Chỉ từ 6.500.000đ/tháng với lãi suất ưu đãi đặc biệt tại Đà Nẵng.</p>
+</div>
+<button class="text-primary font-bold text-sm flex items-center gap-1">
+                            Xem bảng tính <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between items-start gap-4">
+<div class="space-y-2">
+<h4 class="text-xl font-bold text-slate-900 dark:text-slate-100">Ưu đãi hôm nay</h4>
+<p class="text-slate-500 text-sm">Giảm 50% phí trước bạ + Tặng gói phụ kiện 15 triệu đồng cho các dòng xe trên.</p>
+</div>
+<span class="px-3 py-1 bg-red-100 text-red-600 rounded text-xs font-bold uppercase tracking-tight">Còn 2 ngày</span>
+</div>
+</div>
+</div>
+</main>
+<footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-10">
+<div class="max-w-7xl mx-auto px-4 md:px-10 lg:px-40 grid grid-cols-1 md:grid-cols-4 gap-10">
+<div class="col-span-1 md:col-span-2 space-y-4">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-2xl">directions_car</span>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold">BanXeOTo Da Nang</h2>
+</div>
+<p class="text-slate-500 text-sm max-w-sm">Nền tảng mua bán và so sánh xe ô tô uy tín hàng đầu tại Đà Nẵng. Cập nhật giá xe mới nhất và kho xe cũ chất lượng.</p>
+</div>
+<div>
+<h4 class="font-bold mb-4">Liên kết nhanh</h4>
+<ul class="space-y-2 text-sm text-slate-500">
+<li><a class="hover:text-primary" href="#">Bảng giá xe Toyota</a></li>
+<li><a class="hover:text-primary" href="#">Bảng giá xe Hyundai</a></li>
+<li><a class="hover:text-primary" href="#">Bảng giá xe Honda</a></li>
+<li><a class="hover:text-primary" href="#">Thủ tục trả góp</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold mb-4">Liên hệ</h4>
+<ul class="space-y-2 text-sm text-slate-500">
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">location_on</span> Hải Châu, Đà Nẵng</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">call</span> 0905 XXX XXX</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">mail</span> contact@banxeotodanang.com</li>
+</ul>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

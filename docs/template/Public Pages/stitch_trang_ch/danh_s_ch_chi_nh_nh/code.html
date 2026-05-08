@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hệ thống chi nhánh - BanXeOTo Da Nang</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex h-16 items-center justify-between gap-8">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<h2 class="text-primary dark:text-slate-100 text-xl font-black leading-tight tracking-tight">BanXeOTo</h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white text-sm font-semibold transition-colors" href="#">Trang chủ</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white text-sm font-semibold transition-colors" href="#">Xe cũ</a>
+<a class="text-primary dark:text-white text-sm font-bold border-b-2 border-primary py-5" href="#">Chi nhánh</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end items-center gap-4">
+<div class="hidden lg:flex flex-1 max-w-md">
+<label class="relative w-full">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-lg">search</span>
+</div>
+<input class="block w-full rounded-full border-none bg-slate-100 dark:bg-slate-800 py-2 pl-10 pr-3 text-sm placeholder-slate-500 focus:ring-2 focus:ring-primary dark:text-white" placeholder="Tìm kiếm xe..." type="text"/>
+</label>
+</div>
+<button class="flex items-center justify-center p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">person</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1">
+<div class="w-full bg-white dark:bg-background-dark pt-8 pb-4">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div class="max-w-2xl">
+<h1 class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-tight mb-2">Hệ thống chi nhánh</h1>
+<p class="text-slate-500 dark:text-slate-400 text-lg">Tìm showroom BanXeOTo gần nhất tại Đà Nẵng để được tư vấn và xem xe trực tiếp.</p>
+</div>
+<div class="flex gap-2">
+<span class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary dark:text-slate-300">
+<span class="mr-1.5 flex h-2 w-2 rounded-full bg-primary"></span>
+                                3 Showrooms đang hoạt động
+                            </span>
+</div>
+</div>
+</div>
+</div>
+<section class="w-full">
+<div class="relative h-[450px] w-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Detailed map of Da Nang city showing automotive showrooms" data-location="Da Nang, Vietnam" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCP00W93pWYtBBtCT9ZI8RgRclxhUYGxQkCO5kaM3Jkqt_e5nCTybLaJxw962BkNINs09ZKZgktui-DoXAGnIK6ktzsyFcRRSwvE1cZ2-Rq9-ooaZIjExltAouifVJbgyAqgjkV30LtduKLCq4Y4R7zqzTQQh9hHp2J8UJJ96vJ1af9_WD0xR18X8PhPoVuOAaT9zJjSU23Bvlqb0XU0dOObL6yY0-fnSKSV7gmOhW5g4ZXaFqkSWyJWsf7D5LdzkdKJP9jjAVJtclw");'>
+</div>
+<div class="absolute inset-0 bg-black/5 pointer-events-none"></div>
+<div class="absolute top-6 left-1/2 -translate-x-1/2 w-full max-w-lg px-4">
+<div class="flex items-center bg-white dark:bg-slate-900 shadow-xl rounded-xl p-2 border border-slate-200 dark:border-slate-800">
+<div class="flex items-center flex-1 px-3">
+<span class="material-symbols-outlined text-slate-400 mr-2">location_on</span>
+<input class="w-full border-none focus:ring-0 bg-transparent text-slate-900 dark:text-white text-sm" placeholder="Nhập khu vực của bạn..." type="text"/>
+</div>
+<button class="bg-primary text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors">
+                                Tìm kiếm
+                            </button>
+</div>
+</div>
+<div class="absolute bottom-6 right-6 flex flex-col gap-2">
+<button class="flex h-12 w-12 items-center justify-center rounded-lg bg-white dark:bg-slate-900 shadow-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="flex h-12 w-12 items-center justify-center rounded-lg bg-white dark:bg-slate-900 shadow-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<button class="mt-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary shadow-lg text-white hover:bg-primary/90">
+<span class="material-symbols-outlined">near_me</span>
+</button>
+</div>
+<div class="absolute top-1/2 left-1/3 group cursor-pointer">
+<div class="flex flex-col items-center">
+<div class="bg-white dark:bg-slate-900 text-xs font-bold px-2 py-1 rounded shadow-md mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-primary/20">Hải Châu Center</div>
+<span class="material-symbols-outlined text-primary text-4xl drop-shadow-lg fill-1">location_on</span>
+</div>
+</div>
+<div class="absolute top-1/3 right-1/4 group cursor-pointer">
+<div class="flex flex-col items-center">
+<div class="bg-white dark:bg-slate-900 text-xs font-bold px-2 py-1 rounded shadow-md mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-primary/20">Sơn Trà Hub</div>
+<span class="material-symbols-outlined text-primary text-4xl drop-shadow-lg fill-1">location_on</span>
+</div>
+</div>
+</div>
+</section>
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<div class="flex items-center gap-2 mb-8">
+<span class="material-symbols-outlined text-primary">storefront</span>
+<h2 class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">Danh sách showroom chi tiết</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<div class="group flex flex-col bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-200 dark:border-slate-800">
+<div class="relative aspect-video overflow-hidden">
+<img alt="Modern car showroom with glass walls" class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110" data-alt="Modern glass car showroom exterior at night" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkt2fZikufsEOJcYlQn5v3G6TvJu0mIRSSPtWiFwWnUSV8Prcz4si2QfWjrYiJV91iu27mlmc_mZGBhiSIGkDWUG3oukLoXekjD-9zrlRhJAbvgod70XbfUHuZqDSSdtgL3LqDiGWj-zm1nMe61Ium4nLwiYjh1nVQsnrjnRxEMfMv8RulKaliSAqf8Rm-OxYwYciOeZZSvtZwdxkAH0_GWa2cf3rgld6gUZgl5HqrXtvEihwOTwqwF0gK5ip9gzzL-KhlbG_aKNMy"/>
+<div class="absolute top-4 right-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                Trụ sở chính
+                            </div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold mb-4">Chi nhánh Hải Châu</h3>
+<div class="space-y-3 mb-6 flex-1">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl">location_on</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">01 Nguyễn Văn Linh, Quận Hải Châu, Đà Nẵng</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">call</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-semibold">0905 123 456</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">schedule</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm">8:00 - 18:00 (Thứ 2 - CN)</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">directions_car</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">45 xe đang bày bán</p>
+</div>
+</div>
+<a class="inline-flex items-center justify-center w-full bg-primary text-white py-3 px-4 rounded-lg font-bold hover:bg-primary/90 transition-colors gap-2" href="#">
+                                Xem Chi Tiết
+                                <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</a>
+</div>
+</div>
+<div class="group flex flex-col bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-200 dark:border-slate-800">
+<div class="relative aspect-video overflow-hidden">
+<img alt="Large car dealership parking lot" class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110" data-alt="Spacious car dealership lot with multiple vehicles" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdpbQfTrghZzOM08W_cWFoEfHzdh07XWTg4hyFPieFx47YFFCfjRuDIzlQ93AYZM7dCgoKPw1403rNcBi6zU6Ge1iCuDkxogTJrZ1-lm7I9C-r69uepYGPmTMNk0uhBCOaa9gSyhrnhxXaucSXmYe0xNfDQVRHh04s1gll99d3bH1AZnYtiTa8MI6f4POxyJoJP4fls0mNKzWVEmZwWY3yy9K6KXmGDxbgB_vUhq5K0JuYoqJnXUFk5L2uFT9G0Cs8EgyF9wI7g10E"/>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold mb-4">Chi nhánh Thanh Khê</h3>
+<div class="space-y-3 mb-6 flex-1">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl">location_on</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">150 Điện Biên Phủ, Quận Thanh Khê, Đà Nẵng</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">call</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-semibold">0905 654 321</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">schedule</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm">8:00 - 18:00 (Thứ 2 - CN)</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">directions_car</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">32 xe đang bày bán</p>
+</div>
+</div>
+<a class="inline-flex items-center justify-center w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white py-3 px-4 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors gap-2" href="#">
+                                Xem Chi Tiết
+                                <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</a>
+</div>
+</div>
+<div class="group flex flex-col bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-200 dark:border-slate-800">
+<div class="relative aspect-video overflow-hidden">
+<img alt="High end luxury car showroom" class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110" data-alt="Luxury vehicle showroom interior with bright lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDs0qSxIVZaloyUPSqKXEDYmfmN65MAASaPtr4QPYK9OblNE6PH-Ph7Wbg2r4wPE4iZPNlUSrdPdDqv9izwK3WvW6GmKvMSgaeAgsNglSPg_6CJ9-RlSzFGZ85iHpgpRVs3W_swYo9Trk0B5kfkATDbGx6fqe3Bb2BDmBYHYJjhXd-dGVzwEnQVFkrivNz5eP52AWHhTPe0rlFviX4ML-X-oyKz9y2fqa3vLKSGFyrqaVwcvutrIY2RgQ3NjVYsoPpNiwKg1rtFlVyD"/>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="text-slate-900 dark:text-white text-xl font-bold mb-4">Chi nhánh Liên Chiểu</h3>
+<div class="space-y-3 mb-6 flex-1">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl">location_on</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">500 Tôn Đức Thắng, Quận Liên Chiểu, Đà Nẵng</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">call</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-semibold">0905 999 888</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">schedule</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm">8:00 - 18:00 (Thứ 2 - CN)</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-xl">directions_car</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">28 xe đang bày bán</p>
+</div>
+</div>
+<a class="inline-flex items-center justify-center w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white py-3 px-4 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors gap-2" href="#">
+                                Xem Chi Tiết
+                                <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+<div class="col-span-1 md:col-span-2">
+<div class="flex items-center gap-3 mb-4">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-primary text-white text-xs">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<h2 class="text-primary dark:text-slate-100 text-lg font-bold">BanXeOTo Da Nang</h2>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm mb-4 max-w-sm">Hệ thống mua bán xe ô tô cũ uy tín hàng đầu tại Đà Nẵng. Cam kết chất lượng, bảo hành dài hạn.</p>
+<div class="flex gap-4">
+<a class="h-10 w-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">social_leaderboard</span>
+</a>
+<a class="h-10 w-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">share</span>
+</a>
+</div>
+</div>
+<div>
+<h4 class="text-slate-900 dark:text-white font-bold mb-4">Liên kết</h4>
+<ul class="space-y-2 text-sm text-slate-500 dark:text-slate-400">
+<li><a class="hover:text-primary transition-colors" href="#">Trang chủ</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Danh sách xe</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Chi nhánh</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Liên hệ</a></li>
+</ul>
+</div>
+<div>
+<h4 class="text-slate-900 dark:text-white font-bold mb-4">Hỗ trợ</h4>
+<ul class="space-y-2 text-sm text-slate-500 dark:text-slate-400">
+<li><a class="hover:text-primary transition-colors" href="#">Thủ tục mua trả góp</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Quy trình kiểm định</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Chính sách bảo hành</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Câu hỏi thường gặp</a></li>
+</ul>
+</div>
+</div>
+<div class="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 text-center">
+<p class="text-slate-400 text-xs">© 2024 BanXeOTo Da Nang. All rights reserved.</p>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1a3c70",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#13181f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 transition-colors duration-300">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Navigation -->
+<header class="sticky top-0 z-50 w-full bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between h-16">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl">directions_car</span>
+<h1 class="text-xl font-bold tracking-tight text-primary">BanXeOTo Da Nang</h1>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Inventory</a>
+<a class="text-sm font-bold text-primary transition-colors" href="#">About</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Contact</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5">
+<span class="material-symbols-outlined text-slate-500 text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 placeholder-slate-500" placeholder="Search inventory..." type="text"/>
+</div>
+<button class="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-all">
+                            Sell Car
+                        </button>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow">
+<!-- Hero Section Story -->
+<section class="relative py-20 overflow-hidden">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid lg:grid-cols-2 gap-12 items-center">
+<div class="space-y-6">
+<span class="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider rounded-full">Our Story</span>
+<h2 class="text-4xl md:text-5xl font-black leading-tight text-slate-900 dark:text-white">
+                                Driving Excellence in Da Nang Since 2010
+                            </h2>
+<p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+                                What started as a small local lot has grown into Da Nang's premier destination for high-quality pre-owned vehicles. For over a decade, we have been committed to transparency, integrity, and building lasting relationships with our community.
+                            </p>
+<p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Our mission is simple: to provide a stress-free car buying experience where quality meets affordability. Every vehicle in our inventory undergoes a rigorous 150-point inspection to ensure your safety and satisfaction.
+                            </p>
+<div class="flex gap-4 pt-4">
+<div class="flex flex-col">
+<span class="text-3xl font-bold text-primary">13+</span>
+<span class="text-sm text-slate-500">Years Experience</span>
+</div>
+<div class="w-px h-12 bg-slate-200 dark:bg-slate-700"></div>
+<div class="flex flex-col">
+<span class="text-3xl font-bold text-primary">5k+</span>
+<span class="text-sm text-slate-500">Happy Customers</span>
+</div>
+<div class="w-px h-12 bg-slate-200 dark:bg-slate-700"></div>
+<div class="flex flex-col">
+<span class="text-3xl font-bold text-primary">250+</span>
+<span class="text-sm text-slate-500">Cars in Stock</span>
+</div>
+</div>
+</div>
+<div class="relative">
+<div class="aspect-video lg:aspect-square rounded-2xl overflow-hidden shadow-2xl bg-slate-200" data-alt="Modern office building with sleek glass exterior representing corporate headquarters" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBP6c184Z62hCK6TcURD1VHu4akAFAGk0Rr4dtt8OhVIsgTP6_wFm-8zs3ByByJEVlHzDk33L2vC4ZqkUPtwwHx_CJOQrA2k-AIuyjI5JEKN57U-lmd2Cc48PlCb7utKnPJutZX_Wn2A3HBf2_C7d059arQ8SzZiR3iWl2IeLlm1LfQ4qXNrvAlpnr9gtgiQ7fdbh05wB1ok1KKI5U4CiXFysf5L_pA0zLm31aO3dUI5LUMCJpCYaBpygA0cFN-Ih605Ovfp8fYZNp6'); background-size: cover; background-position: center;">
+</div>
+<div class="absolute -bottom-6 -left-6 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-xl hidden md:block">
+<div class="flex items-center gap-4">
+<div class="bg-primary/10 p-3 rounded-full">
+<span class="material-symbols-outlined text-primary">verified</span>
+</div>
+<div>
+<p class="font-bold text-slate-900 dark:text-white">Certified Dealer</p>
+<p class="text-xs text-slate-500 tracking-wide uppercase">Industry Recognized</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Company Milestones Timeline -->
+<section class="py-20 bg-slate-100 dark:bg-slate-900/50">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="text-center mb-16">
+<h2 class="text-3xl font-bold mb-4">Our Journey</h2>
+<div class="h-1.5 w-20 bg-primary mx-auto rounded-full"></div>
+</div>
+<div class="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+<!-- Milestone 1 -->
+<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+<div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-primary text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+<span class="material-symbols-outlined text-sm">rocket_launch</span>
+</div>
+<div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 shadow-sm">
+<div class="flex items-center justify-between space-x-2 mb-1">
+<div class="font-bold text-slate-900 dark:text-white">Founded in Da Nang</div>
+<time class="font-bold text-primary">2010</time>
+</div>
+<div class="text-slate-500 dark:text-slate-400">Opening our first showroom on Hai Phong Street with just 10 select vehicles.</div>
+</div>
+</div>
+<!-- Milestone 2 -->
+<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+<div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-primary text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+</div>
+<div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 shadow-sm">
+<div class="flex items-center justify-between space-x-2 mb-1">
+<div class="font-bold text-slate-900 dark:text-white">Reached 1,000 Sales</div>
+<time class="font-bold text-primary">2015</time>
+</div>
+<div class="text-slate-500 dark:text-slate-400">Celebrated a major milestone of 1,000 families served across Central Vietnam.</div>
+</div>
+</div>
+<!-- Milestone 3 -->
+<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+<div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-primary text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+<span class="material-symbols-outlined text-sm">storefront</span>
+</div>
+<div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 shadow-sm">
+<div class="flex items-center justify-between space-x-2 mb-1">
+<div class="font-bold text-slate-900 dark:text-white">Opened Second Branch</div>
+<time class="font-bold text-primary">2019</time>
+</div>
+<div class="text-slate-500 dark:text-slate-400">Expanded our operations to a larger, state-of-the-art facility in Son Tra District.</div>
+</div>
+</div>
+<!-- Milestone 4 -->
+<div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+<div class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-primary text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+<span class="material-symbols-outlined text-sm">workspace_premium</span>
+</div>
+<div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 shadow-sm">
+<div class="flex items-center justify-between space-x-2 mb-1">
+<div class="font-bold text-slate-900 dark:text-white">Voted Best Dealer</div>
+<time class="font-bold text-primary">2023</time>
+</div>
+<div class="text-slate-500 dark:text-slate-400">Recognized as the "Best Pre-owned Car Dealer in Da Nang" by the local automotive guild.</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Team Section -->
+<section class="py-20">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+<div class="space-y-2">
+<h2 class="text-3xl font-bold">Meet Our Leadership</h2>
+<p class="text-slate-500">The experts driving our commitment to quality service.</p>
+</div>
+<button class="text-primary font-bold flex items-center gap-2 hover:gap-3 transition-all">
+                            View all team members <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+<!-- Leader 1 -->
+<div class="group">
+<div class="relative aspect-[3/4] rounded-xl overflow-hidden mb-4 bg-slate-200">
+<img alt="Founder portrait" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Professional portrait of a male company founder in a business suit" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPldBs_Cw0vSkloZcXHsZCxHbNN9x28YlYSoWloCnIMwyOfIahpxeckzG64vS5C8ozIuyvxjZeFF9UaV5VonVVDutVwTKUdes95fsrTJNhl2xxXdoXbY6tADfW0-B-Fd1S-EWdSr7_dxqx8p96_nx_weZC-SEl9CESuXbfCqRNZ5d0ZdNjM1QyUw16yLgerzSHoLCGY3MYKlTTmn45djpNyOv9z6OO9CGFd7dW15wsJ7fk_exCeUqEMHTMGr9CvWUTQB5iNflef_di"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<h3 class="text-lg font-bold">Nguyen Minh Tu</h3>
+<p class="text-sm text-primary font-medium mb-2">Founder &amp; CEO</p>
+<p class="text-sm text-slate-500 line-clamp-2">A veteran of the automotive industry with 20 years of expertise in luxury vehicle logistics.</p>
+</div>
+<!-- Leader 2 -->
+<div class="group">
+<div class="relative aspect-[3/4] rounded-xl overflow-hidden mb-4 bg-slate-200">
+<img alt="General Manager portrait" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Professional portrait of a female general manager in office attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDj5cMy2qEhQ46TYjQgvw8fQhzB45CxXwahmELzHcK-PpTdkYcSW1t7VOHp_pjDBC4TbFq24tUI2_9f46qvgQohMZXfDdObFWc4wKsc8KCNYizfbDbDZEpk_KJwzbNu4z5Qo5DXpU8lOqHWqqHfdrqBVV-IU5e-Xf5AToJ-rz289WEr4cKg27Y_vwaaFREvEUMED-WnsNIa9EcEf0yFUNH3uOTUx3rsGNzBT4s0pqToFUncvXXtD3EqBtLM_hNTbJ3Sl6ru9DBW_P69"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<h3 class="text-lg font-bold">Le Thuy Linh</h3>
+<p class="text-sm text-primary font-medium mb-2">General Manager</p>
+<p class="text-sm text-slate-500 line-clamp-2">Ensuring every customer receives personalized service and leaves with their dream car.</p>
+</div>
+<!-- Leader 3 -->
+<div class="group">
+<div class="relative aspect-[3/4] rounded-xl overflow-hidden mb-4 bg-slate-200">
+<img alt="Sales Director portrait" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Portrait of a male sales director smiling in a modern office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvsaDRZwJqkBKH1E8fqbB6vsKGylq9zR7bZZSsletRfWDQoSlERjaR_IPnXPfD7vUZdI3xt0_Ae3gYfr6xipjo7QWWBwOM_FyLA5riv32SP0y4IHYFSbYzII-GwlT3wIKadsfkWdsWVoVbQZN4x_lcttq9h5eME7UHQYKQyjj-dWNeChk5s4yFLAaFgRTtqsVYn9ICy8azbPkOnHIEJyYFUqE113fWEe4is8j3FIO8T3OWa66t1k2fxyajAPbcWPzpR6dPiLNeVmkD"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<h3 class="text-lg font-bold">Pham Hoang Nam</h3>
+<p class="text-sm text-primary font-medium mb-2">Sales Director</p>
+<p class="text-sm text-slate-500 line-clamp-2">Expert in market analysis and vehicle valuation, ensuring fair pricing for every client.</p>
+</div>
+<!-- Leader 4 -->
+<div class="group">
+<div class="relative aspect-[3/4] rounded-xl overflow-hidden mb-4 bg-slate-200">
+<img alt="Service Manager portrait" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Professional portrait of a female technical service manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKKfYapG9cF-zNL806EUu1o7zGcIGIEQA8FhezZoDydP2qgYuflxrxaMCMQDuYnBTh_MdwBv3BZGzSVZMGJwosJmsf8nndNQIioa9ayq6-R5LrQZ4NJqHMK_ca5np7EZGJ8AeCxypTMpgDqJlf7LEgAJxORqla94P6XQIaMXUDFiwJNLeXW0a1hun_xJuDw53cBL7EWkbDKGm2yh0adXJzqgsZ4jp7YQHmLF6hO8KKEq1L1gYvsk4jrsgmY217hTkN1-XEA1860G2b"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<h3 class="text-lg font-bold">Tran Thi Mai</h3>
+<p class="text-sm text-primary font-medium mb-2">Service Manager</p>
+<p class="text-sm text-slate-500 line-clamp-2">Leading our technical team to maintain the highest standards of vehicle preparation.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Branch Gallery -->
+<section class="py-20 bg-slate-900 text-white">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="text-center mb-16">
+<h2 class="text-3xl font-bold mb-4">Visit Our Showrooms</h2>
+<p class="text-slate-400">Experience our collection of vehicles in person across Da Nang.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="group relative rounded-2xl overflow-hidden aspect-video shadow-2xl">
+<img alt="Main Branch" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Spacious modern car showroom with luxury vehicles parked on polished floors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnfHhCgT9MywJLokwD1NBU3wwPhBPpWaJCPZobhp_s94teqaTSCNF1j4AWV9VDlVSF2O2X1d-t2Fc8_iRNzXDBYJhHLeasBc51vG9Tzi9y4917ZqeKGqFPq5T-kVPT9f_zDrWqyK-hoclCyGZA7KV7ZVHF79JmA1MIXHOqoY3daqvJBJ-yM95nJAFiBeht5mnoUI-pfLzeIUTRr5UMlQLDTdUfviuk5lCSOvrvMU6KetB_zgVROWTj2-acYusJ_H3rDCjOqfSxYFSD"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-8 flex flex-col justify-end">
+<h4 class="text-2xl font-bold mb-2">Hai Chau Headquarters</h4>
+<div class="flex items-center gap-2 text-slate-300 text-sm mb-4">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span>123 Hai Phong St, Hai Chau, Da Nang</span>
+</div>
+<button class="bg-primary/80 hover:bg-primary text-white w-fit px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                                    Get Directions <span class="material-symbols-outlined text-sm">map</span>
+</button>
+</div>
+</div>
+<div class="group relative rounded-2xl overflow-hidden aspect-video shadow-2xl">
+<img alt="East Side Branch" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Sleek modern car dealership exterior with nighttime lighting and glass walls" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4iq6eYsNvnyu36fcQVVytggEyzFMSeQmx5M9hOLrykuximKTFiE9IejMMcfiIf9Xx3JVI6pBfL3W5emapwMb1pqVQVfmBhP5SG8QbdOmezeyYcQWu36A0t-oPF-vOecSkXgL9NLDVmiX6s8iZYQMi5_ilGStwZEa0s8eLiyz8whloul9tRnHkpUxt-qwQgulqvwBRjttNKMjiaHoggc1mwZbLBN7z-jDKDdHWrcmsWdRexxRo0axIpXB57r2s3M0bvvtB_nRXFFCD"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-8 flex flex-col justify-end">
+<h4 class="text-2xl font-bold mb-2">East Side Showroom</h4>
+<div class="flex items-center gap-2 text-slate-300 text-sm mb-4">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span>456 Vo Nguyen Giap St, Son Tra, Da Nang</span>
+</div>
+<button class="bg-primary/80 hover:bg-primary text-white w-fit px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                                    Get Directions <span class="material-symbols-outlined text-sm">map</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Newsletter Call to Action -->
+<section class="py-16">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="bg-primary rounded-3xl p-8 md:p-12 relative overflow-hidden flex flex-col items-center text-center">
+<div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 opacity-10">
+<span class="material-symbols-outlined text-[200px] text-white">directions_car</span>
+</div>
+<h2 class="text-3xl font-bold text-white mb-4 relative z-10">Stay Updated with Our Inventory</h2>
+<p class="text-white/80 mb-8 max-w-xl relative z-10">Be the first to know about new arrivals and special promotions at BanXeOTo Da Nang.</p>
+<form class="w-full max-w-md flex flex-col sm:flex-row gap-4 relative z-10">
+<input class="flex-grow px-6 py-4 rounded-xl focus:ring-2 focus:ring-white border-none text-slate-900" placeholder="Your email address" type="email"/>
+<button class="bg-white text-primary px-8 py-4 rounded-xl font-bold hover:bg-slate-100 transition-all">Subscribe</button>
+</form>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-slate-100 dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+<div class="col-span-1 md:col-span-2 space-y-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl">directions_car</span>
+<h2 class="text-xl font-bold tracking-tight text-primary">BanXeOTo Da Nang</h2>
+</div>
+<p class="text-slate-500 max-w-sm">Da Nang's trusted source for premium pre-owned vehicles since 2010. Quality, transparency, and expert service in every transaction.</p>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined text-xl">social_leaderboard</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined text-xl">photo_camera</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined text-xl">smart_display</span>
+</a>
+</div>
+</div>
+<div>
+<h4 class="font-bold mb-6">Quick Links</h4>
+<ul class="space-y-4 text-slate-500 text-sm">
+<li><a class="hover:text-primary transition-colors" href="#">Search Inventory</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Sell Your Car</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Financing Options</a></li>
+<li><a class="hover:text-primary transition-colors" href="#">Testimonials</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold mb-6">Contact Us</h4>
+<ul class="space-y-4 text-slate-500 text-sm">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<span>123 Hai Phong St, Hai Chau,<br/>Da Nang, Vietnam</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">call</span>
+<span>+84 (0) 236 123 4567</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">mail</span>
+<span>hello@banxeoto-dn.com</span>
+</li>
+</ul>
+</div>
+</div>
+<div class="border-t border-slate-200 dark:border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-500 text-xs">
+<p>© 2023 BanXeOTo Da Nang. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+</body></html>
