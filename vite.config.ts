@@ -1,19 +1,18 @@
-import { defineConfig } from 'vite'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
+import { defineConfig, loadEnv } from 'vite'
 
-<<<<<<< Updated upstream
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-=======
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
 // Proxy /api và /uploads → Spring Boot.
 // loadEnv theo thư mục file cấu hình (không phải process.cwd) — tránh chạy Vite từ thư mục cha
 // mà không đọc được .env → proxy trỏ sai port / sai target → 404 hoặc 502.
 // 502 Bad Gateway: thường do (1) backend chưa chạy / sai port, (2) trên Windows dùng "localhost"
 // có thể trỏ IPv6 (::1) trong khi JVM chỉ bind IPv4 — dùng 127.0.0.1 mặc định.
 export default defineConfig(({ mode }) => {
-  const projectRoot = fileURLToPath(new URL('.', import.meta.url))
-  const env = loadEnv(mode, projectRoot, '')
+  const env = loadEnv(mode, __dirname, '')
   const backendHost = (env.VITE_BACKEND_HOST || '127.0.0.1').trim()
   const backendPort = (env.VITE_BACKEND_PORT || '8080').trim()
   const backendOrigin = `http://${backendHost}:${backendPort}`
@@ -25,9 +24,12 @@ export default defineConfig(({ mode }) => {
   const devPort = Number(env.VITE_DEV_PORT) || 5173
   const googleAuthOrigin = (
     env.VITE_GOOGLE_AUTH_ORIGIN || `http://localhost:${devPort}`
-  ).trim().replace(/\/$/, '')
+  )
+    .trim()
+    .replace(/\/$/, '')
   const disableHmr =
     env.VITE_DISABLE_HMR === 'true' || env.VITE_DISABLE_HMR === '1'
+
   const headers = {
     'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
   }
@@ -53,7 +55,7 @@ export default defineConfig(({ mode }) => {
     '/ai-health': {
       target: aiChatOrigin,
       changeOrigin: true,
-      rewrite: (path: string) => path.replace(/^\/ai-health/, '/health'),
+      rewrite: (p: string) => p.replace(/^\/ai-health/, '/health'),
     },
   }
 
@@ -64,10 +66,7 @@ export default defineConfig(({ mode }) => {
         configureServer(server) {
           server.middlewares.use((req, res, next) => {
             const requestHost = req.headers.host
-            if (!requestHost) {
-              next()
-              return
-            }
+            if (!requestHost) return next()
 
             const canonical = new URL(googleAuthOrigin)
             const requestHostname = requestHost.startsWith('[')
@@ -77,9 +76,9 @@ export default defineConfig(({ mode }) => {
               requestHostname === '127.0.0.1' || requestHostname === '[::1]'
 
             if (isLoopbackAlias && canonical.hostname === 'localhost') {
-              const path = req.originalUrl || req.url || '/'
+              const p = req.originalUrl || req.url || '/'
               res.statusCode = 307
-              res.setHeader('Location', `${googleAuthOrigin}${path}`)
+              res.setHeader('Location', `${googleAuthOrigin}${p}`)
               res.end()
               return
             }
@@ -92,18 +91,20 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: {
       alias: {
-        '@': resolve(__dirname, './src'),
+        '@': path.resolve(__dirname, './src'),
       },
     },
     server: {
       port: devPort,
       strictPort: true,
       headers,
-      hmr: disableHmr ? false : {
-        protocol: 'ws',
-        host: 'localhost',
-        port: 24678,
-      },
+      hmr: disableHmr
+        ? false
+        : {
+            protocol: 'ws',
+            host: 'localhost',
+            port: 24678,
+          },
       proxy: { ...proxy },
     },
     preview: {
@@ -111,5 +112,4 @@ export default defineConfig(({ mode }) => {
       proxy: { ...proxy },
     },
   }
->>>>>>> Stashed changes
 })
