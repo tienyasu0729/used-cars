@@ -1,5 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Pencil, Eye, Plus, Search, Trash2, RotateCcw, CheckSquare } from 'lucide-react'
 import { useManagerVehicle, useManagerVehicles } from '@/hooks/useManagerVehicles'
 import { useHasPermission } from '@/hooks/usePermissions'
@@ -48,7 +48,6 @@ const VEHICLE_VISIBILITY_PARAMS = ['visible', 'hidden'] as const
 export function AdminVehiclesPage() {
   const canCreateVehicle = useHasPermission('Vehicles', 'create')
   const canDeleteVehicle = useHasPermission('Vehicles', 'delete')
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { deleteVehicle, restoreVehicleVisibility, isSubmitting } = useManagerVehicle()
   const { data: branches = [] } = useBranches()

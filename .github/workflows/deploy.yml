@@ -21,4 +21,5 @@ jobs:
             git pull origin main
             npm install
             npm run build
-            pm2 reload used-cars || pm2 start npm --name used-cars -- start
+            npm install -g serve
+            pm2 reload used-cars || pm2 start serve --name used-cars -- -s dist -l 3000

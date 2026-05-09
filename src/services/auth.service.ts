@@ -1,0 +1,233 @@
+/**
+ * Auth Service — Gọi API Auth (login, register, logout)
+ * 
+ * Service này chỉ xử lý các endpoint có sẵn từ backend Dev 1:
+ * - POST /auth/login
+ * - POST /auth/register
+ * - POST /auth/change-password (JWT)
+ * 
+ * Mỗi hàm unwrap ApiResponse wrapper và trả về data thực tế.
+ * Error handling: bắt lỗi từ axiosInstance (đã parse sẵn errorCode)
+ * rồi re-throw với message tiếng Việt thân thiện.
+ */
+
+import axiosInstance from '@/utils/axiosInstance'
+import { useAuthStore } from '@/store/authStore'
+import type {
+  LoginRequest,
+  RegisterRequest,
+  ChangePasswordRequest,
+  AuthResponse,
+  ApiResponse,
+  ApiErrorResponse,
+} from '@/types/auth.types'
+
+const authService = {
+  /**
+   * Đăng nhập bằng email + password.
+   * 
+   * Flow:
+   * 1. POST /auth/login với { email, password }
+   * 2. Backend trả ApiResponse<AuthResponse> → unwrap lấy data
+   * 3. Lưu token vào localStorage để interceptor tự gắn ở request sau
+   * 4. Return AuthResponse { user, token } cho hook xử lý tiếp
+   */
+  async login(loginData: LoginRequest): Promise<AuthResponse> {
+    try {
+      // axiosInstance đã unwrap response.data → nhận được ApiResponse<AuthResponse>
+      const apiResponse = await axiosInstance.post('/auth/login', loginData) as unknown as ApiResponse<AuthResponse>
+
+      const { user, token } = apiResponse.data
+      // Caller (vd. useLogin) phải gọi useAuthStore.setAuth để persist + state
+      return { user, token }
+    } catch (error) {
+      // Error đã được axiosInstance parse thành ApiErrorResponse
+      const apiError = error as ApiErrorResponse
+
+      // Map error code sang message tiếng Việt dễ hiểu
+      switch (apiError.errorCode) {
+        case 'INVALID_CREDENTIALS':
+          throw { ...apiError, message: 'Sai email hoặc mật khẩu. Vui lòng thử lại.' }
+        case 'ACCOUNT_SUSPENDED':
+          throw { ...apiError, message: 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.' }
+        case 'VALIDATION_FAILED':
+          throw apiError // Giữ nguyên errors[] để hook parse từng field
+        default:
+          console.error('[authService.login] Lỗi không xác định:', apiError)
+          throw { ...apiError, message: apiError.message || 'Đăng nhập thất bại. Vui lòng thử lại sau.' }
+      }
+    }
+  },
+
+  /**
+   * Đăng ký tài khoản Customer mới.
+   * 
+   * Flow:
+   * 1. POST /auth/register với { name, email, phone, password }
+   * 2. Backend trả HTTP 201 với ApiResponse<{ message: string }>
+   * 3. Return message thành công cho hook hiển thị
+   * 
+   * Lưu ý: Backend chỉ gán role Customer mặc định.
+   * Email verification chưa implement ở backend (chỉ trả message).
+   */
+  async register(registerData: RegisterRequest): Promise<{ message: string }> {
+    try {
+      const apiResponse = await axiosInstance.post('/auth/register', registerData) as unknown as ApiResponse<{ message: string }>
+      return { message: apiResponse.data.message || 'Đăng ký thành công!' }
+    } catch (error) {
+      const apiError = error as ApiErrorResponse
+
+      switch (apiError.errorCode) {
+        case 'VALIDATION_FAILED':
+          throw apiError // Giữ nguyên errors[] để hook parse từng field (VD: email trùng)
+        default:
+          console.error('[authService.register] Lỗi không xác định:', apiError)
+          throw { ...apiError, message: apiError.message || 'Đăng ký thất bại. Vui lòng thử lại sau.' }
+      }
+    }
+  },
+
+  /**
+   * Đăng xuất — xóa session ở client.
+   * 
+   * Backend chưa có endpoint /auth/logout riêng,
+   * nên chỉ cần xóa token và user khỏi localStorage.
+   * JWT sẽ tự hết hạn theo thời gian.
+   */
+  logout(): void {
+    useAuthStore.getState().clearAuth()
+    // TODO: implement khi backend xong — gọi POST /auth/logout để revoke token
+  },
+
+  /**
+   * Đổi mật khẩu khi đã đăng nhập.
+   * POST /auth/change-password — axios gắn Bearer từ localStorage.
+   */
+  /**
+   * Sau đăng nhập bằng mật khẩu tạm (admin reset) — đặt mật khẩu mới, nhận JWT đầy đủ quyền.
+   */
+  async completeRequiredPasswordChange(body: { newPassword: string }): Promise<AuthResponse> {
+    try {
+      const apiResponse = await axiosInstance.post(
+        '/auth/complete-required-password-change',
+        { newPassword: body.newPassword },
+      ) as unknown as ApiResponse<AuthResponse>
+      return apiResponse.data
+    } catch (error) {
+      const apiError = error as ApiErrorResponse
+      switch (apiError.errorCode) {
+        case 'PASSWORD_TOO_SHORT':
+        case 'VALIDATION_FAILED':
+          throw apiError
+        case 'UNAUTHORIZED':
+          throw { ...apiError, message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' }
+        default:
+          console.error('[authService.completeRequiredPasswordChange]', apiError)
+          throw { ...apiError, message: apiError.message || 'Không đặt được mật khẩu mới.' }
+      }
+    }
+  },
+
+  async changePassword(body: ChangePasswordRequest): Promise<{ message: string }> {
+    try {
+      const apiResponse = await axiosInstance.post('/auth/change-password', {
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+      }) as unknown as ApiResponse<{ success: boolean; message: string }>
+      return { message: apiResponse.data.message || 'Mật khẩu đã được thay đổi.' }
+    } catch (error) {
+      const apiError = error as ApiErrorResponse
+      switch (apiError.errorCode) {
+        case 'INVALID_CURRENT_PASSWORD':
+          throw { ...apiError, message: 'Mật khẩu hiện tại không đúng.' }
+        case 'PASSWORD_TOO_SHORT':
+          throw { ...apiError, message: 'Mật khẩu từ 8 đến 100 ký tự.' }
+        case 'VALIDATION_FAILED':
+          throw apiError
+        case 'UNAUTHORIZED':
+          throw { ...apiError, message: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.' }
+        default:
+          console.error('[authService.changePassword]', apiError)
+          throw { ...apiError, message: apiError.message || 'Đổi mật khẩu thất bại. Vui lòng thử lại sau.' }
+      }
+    }
+  },
+
+  /**
+   * Quên mật khẩu — gửi email chứa link đặt lại.
+   * Server luôn trả 200 bất kể email có tồn tại hay không.
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    try {
+      const apiResponse = await axiosInstance.post('/auth/forgot-password', { email }) as unknown as ApiResponse<{ message: string }>
+      return { message: apiResponse.data.message || 'Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.' }
+    } catch {
+      return { message: 'Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.' }
+    }
+  },
+
+  /**
+   * Đặt lại mật khẩu bằng token nhận từ email.
+   * Throw lỗi nếu token hết hạn hoặc không hợp lệ (server trả 4xx).
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    try {
+      const apiResponse = await axiosInstance.post('/auth/reset-password', { token, newPassword }) as unknown as ApiResponse<{ message: string }>
+      return { message: apiResponse.data.message || 'Mật khẩu đã được đặt lại thành công.' }
+    } catch (error) {
+      const apiError = error as ApiErrorResponse
+      switch (apiError.errorCode) {
+        case 'INVALID_RESET_TOKEN':
+          throw { ...apiError, message: 'Token không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới.' }
+        case 'PASSWORD_TOO_SHORT':
+          throw { ...apiError, message: 'Mật khẩu từ 8 đến 100 ký tự.' }
+        case 'VALIDATION_FAILED':
+          throw apiError
+        default:
+          console.error('[authService.resetPassword]', apiError)
+          throw { ...apiError, message: apiError.message || 'Đặt lại mật khẩu thất bại. Vui lòng thử lại sau.' }
+      }
+    }
+  },
+
+  /**
+   * Lấy danh sách permission của user hiện tại từ backend.
+   * Gọi sau khi login thành công, trả về mảng string VD: ["Vehicles.create", "Orders.view"]
+   */
+  async fetchMyPermissions(): Promise<string[]> {
+    try {
+      const apiResponse = await axiosInstance.get('/auth/me/permissions') as unknown as ApiResponse<string[]>
+      return apiResponse.data
+    } catch (error) {
+      console.error('[authService.fetchMyPermissions] Lỗi:', error)
+      return []
+    }
+  },
+
+  /**
+   * Đăng nhập / đăng ký bằng Google.
+   * Frontend gửi Google ID Token (credential) lên backend để verify.
+   * Backend trả về cùng format LoginResponse { user, token } như login thường.
+   */
+  async googleLogin(idToken: string): Promise<AuthResponse> {
+    try {
+      const apiResponse = await axiosInstance.post('/auth/google', { idToken }) as unknown as ApiResponse<AuthResponse>
+      const { user, token } = apiResponse.data
+      return { user, token }
+    } catch (error) {
+      const apiError = error as ApiErrorResponse
+
+      switch (apiError.errorCode) {
+        case 'GOOGLE_AUTH_FAILED':
+          throw { ...apiError, message: apiError.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.' }
+        case 'ACCOUNT_SUSPENDED':
+          throw { ...apiError, message: 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.' }
+        default:
+          console.error('[authService.googleLogin] Lỗi:', apiError)
+          throw { ...apiError, message: apiError.message || 'Đăng nhập Google thất bại. Vui lòng thử lại sau.' }
+      }
+    }
+  },
+}
+
+export default authService

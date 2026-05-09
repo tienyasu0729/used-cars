@@ -1,5 +1,3 @@
-import type { VehicleStatus } from '@/types'
-
 type BadgeVariant = 'available' | 'reserved' | 'sold' | 'pending' | 'confirmed' | 'danger' | 'default' | 'success' | 'warning'
 
 interface BadgeProps {

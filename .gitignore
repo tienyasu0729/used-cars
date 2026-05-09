@@ -25,3 +25,4 @@ GEMINI.md
 *.njsproj
 *.sln
 *.sw?
+.kiro/

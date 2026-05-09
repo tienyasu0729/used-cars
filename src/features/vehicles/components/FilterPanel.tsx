@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Calendar, Car, DollarSign, Settings2 } from 'lucide-react'
 
 import { Button } from '@/components/ui'
@@ -104,37 +104,38 @@ function PriceDualRange({
   const floor = 0
   const minThumb = normalizePriceValue(parsePriceInput(minPrice, floor), ceil)
   const maxThumb = normalizePriceValue(parsePriceInput(maxPrice, ceil), ceil)
-  const sharedClass =
-    'absolute inset-x-0 top-1/2 h-8 w-full -translate-y-1/2 cursor-pointer appearance-none bg-transparent disabled:cursor-not-allowed disabled:opacity-40 ' +
-    '[&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent ' +
-    '[&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:cursor-grab ' +
-    '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white ' +
-    '[&::-webkit-slider-thumb]:bg-[#1A3C6E] [&::-webkit-slider-thumb]:shadow-md ' +
-    '[&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-transparent ' +
-    '[&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:cursor-grab ' +
-    '[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white ' +
-    '[&::-moz-range-thumb]:bg-[#1A3C6E]'
   const off = disabled || ceil <= 0
 
+  const minPct = ceil > 0 ? (minThumb / ceil) * 100 : 0
+  const maxPct = ceil > 0 ? (maxThumb / ceil) * 100 : 100
+
+  // Khi 2 thumb chồng nhau hoặc min ở đầu trái (=0),
+  // thumb MIN phải nằm trên để user có thể kéo sang phải.
+  // Ngược lại thumb MAX nằm trên.
+  const minOnTop = minThumb >= maxThumb || minThumb === 0
+
+  const thumbClass =
+    'absolute inset-x-0 top-1/2 h-8 w-full -translate-y-1/2 cursor-pointer appearance-none bg-transparent ' +
+    'disabled:cursor-not-allowed disabled:opacity-40 ' +
+    '[&::-webkit-slider-runnable-track]:h-0 [&::-webkit-slider-runnable-track]:bg-transparent ' +
+    '[&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:cursor-grab ' +
+    '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white ' +
+    '[&::-webkit-slider-thumb]:bg-[#1A3C6E] [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:appearance-none ' +
+    '[&::-moz-range-track]:h-0 [&::-moz-range-track]:bg-transparent ' +
+    '[&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:cursor-grab ' +
+    '[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white ' +
+    '[&::-moz-range-thumb]:bg-[#1A3C6E] [&::-moz-range-thumb]:shadow-md'
+
   return (
-    <div className="relative mt-3 h-10">
-      <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-slate-200" aria-hidden />
-      <input
-        type="range"
-        min={floor}
-        max={ceil}
-        step={PRICE_STEP}
-        value={maxThumb}
-        disabled={off}
-        onChange={(event) => {
-          const next = normalizePriceValue(Number(event.target.value), ceil)
-          const currentMin = normalizePriceValue(parsePriceInput(minPrice, floor), ceil)
-          if (next < currentMin) onMinChange(String(next))
-          onMaxChange(String(next))
-        }}
-        className={`${sharedClass} z-[1]`}
-        aria-label="Gia toi da"
+    <div className="relative mt-4 h-8 select-none">
+      {/* Track nền xám */}
+      <div className="pointer-events-none absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-slate-200" />
+      {/* Track màu xanh giữa 2 thumb */}
+      <div
+        className="pointer-events-none absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[#1A3C6E]"
+        style={{ left: `${minPct}%`, right: `${100 - maxPct}%` }}
       />
+      {/* Thumb MIN */}
       <input
         type="range"
         min={floor}
@@ -148,8 +149,27 @@ function PriceDualRange({
           if (next > currentMax) onMaxChange(String(next))
           onMinChange(String(next))
         }}
-        className={`${sharedClass} z-[2]`}
-        aria-label="Gia toi thieu"
+        style={{ zIndex: minOnTop ? 4 : 3 }}
+        className={thumbClass}
+        aria-label="Giá tối thiểu"
+      />
+      {/* Thumb MAX */}
+      <input
+        type="range"
+        min={floor}
+        max={ceil}
+        step={PRICE_STEP}
+        value={maxThumb}
+        disabled={off}
+        onChange={(event) => {
+          const next = normalizePriceValue(Number(event.target.value), ceil)
+          const currentMin = normalizePriceValue(parsePriceInput(minPrice, floor), ceil)
+          if (next < currentMin) onMinChange(String(next))
+          onMaxChange(String(next))
+        }}
+        style={{ zIndex: minOnTop ? 3 : 4 }}
+        className={thumbClass}
+        aria-label="Giá tối đa"
       />
     </div>
   )
@@ -276,9 +296,9 @@ export function FilterPanel({
 
   const priceRangeLabel =
     normalizedMinPrice <= 0 && maxPrice === ''
-      ? `Tat ca gia den ${formatPriceShort(priceSliderCeil)}`
+      ? `Tất cả giá đến ${formatPriceShort(priceSliderCeil)}`
       : normalizedMinPrice <= 0
-        ? `Den ${formatPriceShort(normalizedMaxPrice)}`
+        ? `Đến ${formatPriceShort(normalizedMaxPrice)}`
         : `${formatPriceShort(normalizedMinPrice)} - ${formatPriceShort(Math.max(normalizedMinPrice, normalizedMaxPrice))}`
 
   const handleApply = () => {
@@ -336,9 +356,9 @@ export function FilterPanel({
     <aside className={`w-full shrink-0 ${inline ? '' : 'lg:w-72'}`}>
       <div className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm ${inline ? '' : 'sticky top-24'}`}>
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-lg font-bold">Bo loc tim kiem</h3>
+          <h3 className="text-lg font-bold">Bộ lọc tìm kiếm</h3>
           <button onClick={handleClear} className="text-xs font-semibold text-[#1A3C6E] hover:underline">
-            Xoa tat ca
+            Xóa tất cả
           </button>
         </div>
 
@@ -346,7 +366,7 @@ export function FilterPanel({
           <div>
             <label className="mb-3 flex items-center gap-2 text-sm font-semibold">
               <Car className="h-5 w-5 text-[#1A3C6E]" />
-              Hang xe
+              Hãng xe
             </label>
             <select
               value={selectedBrand}
@@ -355,7 +375,7 @@ export function FilterPanel({
               disabled={isLoadingCategories || Boolean(facets?.isLoading && !facets.error)}
             >
               <option value="">
-                {isLoadingCategories || (facets?.isLoading && !facets.error) ? 'Dang tai...' : 'Tat ca hang xe'}
+                {isLoadingCategories || (facets?.isLoading && !facets.error) ? 'Đang tải...' : 'Tất cả hãng xe'}
               </option>
               {brandOptions.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -369,14 +389,14 @@ export function FilterPanel({
             <div>
               <label className="mb-3 flex items-center gap-2 text-sm font-semibold">
                 <Car className="h-5 w-5 text-[#1A3C6E]" />
-                Dong xe
+                Dòng xe
               </label>
               <select
                 value={selectedModel}
                 onChange={(event) => setSelectedModel(event.target.value ? Number(event.target.value) : '')}
                 className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-3 pr-4 text-sm focus:border-[#1A3C6E] focus:ring-[#1A3C6E]/20"
               >
-                <option value="">Tat ca dong xe</option>
+                <option value="">Tất cả dòng xe</option>
                 {modelOptions.map((sub) => (
                   <option key={sub.id} value={sub.id}>
                     {sub.name}
@@ -389,16 +409,16 @@ export function FilterPanel({
           <div>
             <label className="mb-3 flex items-center gap-2 text-sm font-semibold">
               <DollarSign className="h-5 w-5 text-[#1A3C6E]" />
-              Khoang gia (VND)
+              Khoảng giá (VND)
             </label>
             <div className="mb-3 rounded-lg bg-[#1A3C6E]/5 px-3 py-2 text-sm font-semibold text-[#1A3C6E]">
-              Khoang gia: {priceRangeLabel}
+              Khoảng giá: {priceRangeLabel}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="Gia tu"
+                placeholder="Giá từ"
                 value={formatPriceInputValue(minPrice)}
                 onChange={(event) => setMinPrice(normalizePriceInput(event.target.value))}
                 onBlur={() => setMinPrice(String(normalizePriceValue(parsePriceInput(minPrice, 0), priceSliderCeil)))}
@@ -407,7 +427,7 @@ export function FilterPanel({
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="Gia den"
+                placeholder="Giá đến"
                 value={formatPriceInputValue(maxPrice)}
                 onChange={(event) => setMaxPrice(normalizePriceInput(event.target.value))}
                 onBlur={() => {
@@ -427,37 +447,60 @@ export function FilterPanel({
             />
             <p className="mt-1 text-xs text-slate-500">
               {hasFacetPriceRange
-                ? `Buoc gia ${formatPriceShort(PRICE_STEP)}. Toi da ${formatPriceShort(priceSliderCeil)} theo du lieu xe.`
-                : 'Chua du bien gia tu du lieu xe. Dang dung muc mac dinh de ban nhap va loc doc lap.'}
+                ? `Bước giá ${formatPriceShort(PRICE_STEP)}. Tối đa ${formatPriceShort(priceSliderCeil)} theo dữ liệu xe.`
+                : 'Chưa đủ biên giá từ dữ liệu xe. Đang dùng mức mặc định để bạn nhập và lọc độc lập.'}
             </p>
           </div>
 
           <div>
             <label className="mb-3 flex items-center gap-2 text-sm font-semibold">
               <Calendar className="h-5 w-5 text-[#1A3C6E]" />
-              Nam san xuat
+              Năm sản xuất
             </label>
-            <label className="mb-3 flex items-center gap-2 text-sm text-slate-600">
-              <input
-                type="checkbox"
-                checked={isAllYears}
-                onChange={(event) => {
-                  if (event.target.checked) {
-                    setMinYear('')
-                    setMaxYear('')
-                  } else {
+            <label className="mb-3 flex cursor-pointer items-center gap-2 text-sm text-slate-600">
+              <span
+                role="checkbox"
+                aria-checked={isAllYears}
+                tabIndex={0}
+                onClick={() => {
+                  if (isAllYears) {
                     setMinYear(String(MIN_VEHICLE_YEAR))
                     setMaxYear(CURRENT_YEAR)
+                  } else {
+                    setMinYear('')
+                    setMaxYear('')
                   }
                 }}
-                className="h-4 w-4 rounded border-slate-300 text-[#1A3C6E] focus:ring-[#1A3C6E]"
-              />
-              Moi nam
+                onKeyDown={(e) => {
+                  if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault()
+                    if (isAllYears) {
+                      setMinYear(String(MIN_VEHICLE_YEAR))
+                      setMaxYear(CURRENT_YEAR)
+                    } else {
+                      setMinYear('')
+                      setMaxYear('')
+                    }
+                  }
+                }}
+                className={`inline-flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded border-2 transition-colors ${
+                  isAllYears
+                    ? 'border-[#1A3C6E] bg-[#1A3C6E]'
+                    : 'border-slate-300 bg-white'
+                }`}
+              >
+                {isAllYears && (
+                  <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+              Mọi năm
             </label>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="number"
-                placeholder="Tu"
+                placeholder="Từ"
                 value={minYear}
                 min={MIN_VEHICLE_YEAR}
                 max={CURRENT_YEAR}
@@ -475,7 +518,7 @@ export function FilterPanel({
               />
               <input
                 type="number"
-                placeholder="Den"
+                placeholder="Đến"
                 value={maxYear}
                 min={MIN_VEHICLE_YEAR}
                 max={CURRENT_YEAR}
@@ -497,38 +540,38 @@ export function FilterPanel({
           <div>
             <label className="mb-3 flex items-center gap-2 text-sm font-semibold">
               <Settings2 className="h-5 w-5 text-[#1A3C6E]" />
-              Hop so
+              Hộp số
             </label>
             <div className="space-y-2">
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  name="gear"
-                  value=""
-                  checked={!selectedTransmission}
-                  onChange={() => setSelectedTransmission('')}
-                  className="text-[#1A3C6E] focus:ring-[#1A3C6E]"
-                />
-                Tat ca
-              </label>
-              {transmissionChoices.map((choice) => (
-                <label key={choice} className="flex cursor-pointer items-center gap-2">
-                  <input
-                    type="radio"
-                    name="gear"
-                    value={choice}
-                    checked={selectedTransmission === choice}
-                    onChange={() => setSelectedTransmission(choice)}
-                    className="text-[#1A3C6E] focus:ring-[#1A3C6E]"
-                  />
-                  {choice}
-                </label>
-              ))}
+              {(['', ...transmissionChoices] as string[]).map((choice) => {
+                const isSelected = choice === '' ? !selectedTransmission : selectedTransmission === choice
+                const label = choice === '' ? 'Tất cả' : choice
+                return (
+                  <label
+                    key={choice}
+                    className="flex cursor-pointer items-center gap-2 text-sm text-slate-700"
+                    onClick={() => setSelectedTransmission(choice)}
+                  >
+                    <span
+                      className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                        isSelected
+                          ? 'border-[#1A3C6E] bg-[#1A3C6E]'
+                          : 'border-slate-300 bg-white'
+                      }`}
+                    >
+                      {isSelected && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                      )}
+                    </span>
+                    {label}
+                  </label>
+                )
+              })}
             </div>
           </div>
 
           <Button className="w-full" onClick={handleApply}>
-            Tim kiem
+            Tìm kiếm
           </Button>
         </div>
       </div>

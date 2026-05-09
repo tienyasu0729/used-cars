@@ -37,9 +37,9 @@ import { usedCarPurchaseRequestService } from '@/services/usedCarPurchaseRequest
 import { vehicleService } from '@/services/vehicle.service'
 import { externalImageDisplayUrl } from '@/utils/externalImageDisplayUrl'
 import { formatPriceNumber } from '@/utils/format'
+import { usePricingDraftStorage } from '@/hooks/usePricingDraftStorage'
 import type {
   ImportValidationIssue,
-  ImportedVehiclePricingPayload,
   ManagerPricingEstimateResponse,
   UsedCarPurchaseRequestStatus,
 } from '@/types/pricing.types'
@@ -160,6 +160,8 @@ export function ManagerVehiclePricingPage() {
   const excelInputRef = useRef<HTMLInputElement>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
   const pickedRef = useRef<PickedImage[]>([])
+  const skipSubcategoryResetRef = useRef(false)
+  const draftRestoredRef = useRef(false)
   const [pickedImages, setPickedImages] = useState<PickedImage[]>([])
   const [cloudReady, setCloudReady] = useState(false)
   const [categoryId, setCategoryId] = useState(0)
@@ -182,6 +184,8 @@ export function ManagerVehiclePricingPage() {
   const [requestedPurchasePrice, setRequestedPurchasePrice] = useState(0)
   const [managerNote, setManagerNote] = useState('')
   const [requestStatusFilter, setRequestStatusFilter] = useState<'all' | UsedCarPurchaseRequestStatus>('all')
+
+  const { saveDraft, loadDraft, clearDraft, getCachedUploadUrl, setCachedUploadUrl } = usePricingDraftStorage()
 
   const { user } = useAuthStore()
   const {
@@ -255,9 +259,64 @@ export function ManagerVehiclePricingPage() {
   useEffect(() => {
     if (categoryId > 0) {
       void fetchSubcategories(categoryId)
-      setSubcategoryId(0)
+      if (!skipSubcategoryResetRef.current) {
+        setSubcategoryId(0)
+      }
+      skipSubcategoryResetRef.current = false
     }
   }, [categoryId, fetchSubcategories])
+
+  // Restore draft từ sessionStorage sau khi categories đã load
+  useEffect(() => {
+    if (draftRestoredRef.current) return
+    if (categories.length === 0) return // chờ categories load xong
+    const draft = loadDraft()
+    if (!draft || draft.categoryId <= 0) return
+    draftRestoredRef.current = true
+    skipSubcategoryResetRef.current = true
+    setCategoryId(draft.categoryId)
+    void fetchSubcategories(draft.categoryId).then(() => {
+      setSubcategoryId(draft.subcategoryId)
+    })
+    setTitle(draft.title)
+    setYear(draft.year)
+    setMileage(draft.mileage)
+    setFuel(draft.fuel)
+    setTransmission(draft.transmission)
+    setBodyStyle(draft.bodyStyle)
+    setOrigin(draft.origin)
+    setDescription(draft.description)
+    if (draft.imageRows.length > 0) setImageRows(draft.imageRows)
+    if (draft.latestValuation) setLatestValuation(draft.latestValuation)
+    if (draft.requestedPurchasePrice > 0) setRequestedPurchasePrice(draft.requestedPurchasePrice)
+    if (draft.managerNote) setManagerNote(draft.managerNote)
+    setImportIssues([{ level: 'warning', message: 'Đã khôi phục dữ liệu từ phiên làm việc trước.' }])
+  }, [categories, fetchSubcategories, loadDraft])
+
+  // Auto-save draft mỗi khi form state thay đổi (chỉ khi đã có dữ liệu thực)
+  useEffect(() => {
+    if (!title && categoryId <= 0) return
+    saveDraft({
+      categoryId,
+      subcategoryId,
+      title,
+      year,
+      mileage,
+      fuel,
+      transmission,
+      bodyStyle,
+      origin,
+      description,
+      imageRows,
+      latestValuation,
+      requestedPurchasePrice,
+      managerNote,
+    })
+  }, [
+    categoryId, subcategoryId, title, year, mileage, fuel, transmission,
+    bodyStyle, origin, description, imageRows, latestValuation,
+    requestedPurchasePrice, managerNote, saveDraft,
+  ])
 
   useEffect(() => {
     pickedRef.current = pickedImages
@@ -471,7 +530,10 @@ export function ManagerVehiclePricingPage() {
           invalidRowCount += 1
           continue
         }
-        const uploadedUrl = await uploadManagerImage(file)
+        // Dùng lại URL đã upload nếu cùng file (dedup theo name+size+lastModified)
+        const cachedUrl = getCachedUploadUrl(file)
+        const uploadedUrl = cachedUrl ?? await uploadManagerImage(file)
+        if (!cachedUrl) setCachedUploadUrl(file, uploadedUrl)
         nextRows.push({
           url: uploadedUrl,
           declaredGroup,
@@ -479,7 +541,6 @@ export function ManagerVehiclePricingPage() {
           captionBy: String(row.captionBy ?? 'manager').trim() || 'manager',
           captionType: String(row.captionType ?? 'user_note').trim() || 'user_note',
         })
-      }
 
       const extraFolderFileCount = selectedFolderFiles.filter((file) => !matchedFileNames.has(file.name)).length
       if (extraFolderFileCount > 0) {
@@ -505,6 +566,7 @@ export function ManagerVehiclePricingPage() {
         return
       }
 
+      skipSubcategoryResetRef.current = true
       setCategoryId(resolvedCategoryId)
       await fetchSubcategories(resolvedCategoryId)
       setSubcategoryId(resolvedSubcategoryId)
@@ -529,7 +591,7 @@ export function ManagerVehiclePricingPage() {
     } finally {
       setIsImportingBundle(false)
     }
-  }, [cloudReady, fetchSubcategories, selectedExcelFile, selectedFolderFiles, toast])
+  }, [cloudReady, fetchSubcategories, getCachedUploadUrl, setCachedUploadUrl, selectedExcelFile, selectedFolderFiles, toast])
 
   const handleSendApproval = useCallback(async () => {
     if (!latestValuation) {
@@ -562,6 +624,8 @@ export function ManagerVehiclePricingPage() {
         requestedPurchasePrice,
         managerNote: managerNote.trim() || null,
       })
+      // Xóa draft sau khi gửi duyệt thành công
+      clearDraft()
     } catch (error) {
       if (error instanceof Error) {
         toast.addToast('error', error.message)
@@ -570,6 +634,7 @@ export function ManagerVehiclePricingPage() {
   }, [
     bodyStyle,
     categoryId,
+    clearDraft,
     createRequestMutation,
     description,
     effectiveBranchId,
