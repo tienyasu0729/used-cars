@@ -1,25 +1,35 @@
+
 name: Deploy Frontend
+
 on:
+
   push:
-    branches:
-      - main
+
+    branches: [main]
+
 jobs:
+
   deploy:
+
     runs-on: ubuntu-latest
+
     steps:
-      - name: Deploy frontend
-        uses: appleboy/ssh-action@master
+
+      - uses: appleboy/ssh-action@v1.0.3
+
         with:
+
           host: ${{ secrets.HOST }}
+
           username: ${{ secrets.USERNAME }}
+
           key: ${{ secrets.SSH_KEY }}
+
           port: ${{ secrets.PORT }}
+
+          command_timeout: 10m
+
           script: |
-            export PATH=$PATH:/root/.nvm/versions/node/v24.15.0/bin
-            cd /var/www/used-cars
-            git reset --hard
-            git pull origin main
-            npm install
-            npm run build
-            npm install -g serve
-            pm2 reload used-cars || pm2 start serve --name used-cars -- -s dist -l 3000
+
+            export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && cd /var/www/frontend/app && git reset --hard && git pull origin main && npm ci && npm run build && rm -rf /var/www/frontend/dist/* && cp -r dist/* /var/www/frontend/dist/ && nginx -s reload
+
