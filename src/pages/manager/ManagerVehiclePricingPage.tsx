@@ -541,6 +541,7 @@ export function ManagerVehiclePricingPage() {
           captionBy: String(row.captionBy ?? 'manager').trim() || 'manager',
           captionType: String(row.captionType ?? 'user_note').trim() || 'user_note',
         })
+      }
 
       const extraFolderFileCount = selectedFolderFiles.filter((file) => !matchedFileNames.has(file.name)).length
       if (extraFolderFileCount > 0) {
