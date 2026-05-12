@@ -7,7 +7,7 @@ const K = {
   vnpayOn: 'vnpay_enabled',
   zaloOn: 'zalopay_enabled',
   cashOn: 'cash_enabled',
-  minDep: 'payment_min_deposit',
+  minDepPercent: 'payment_min_deposit_percent',
   resHrs: 'payment_reservation_hours',
 } as const
 
@@ -22,7 +22,7 @@ export function ConfigPaymentTab() {
   const [vnpayEnabled, setVnpayEnabled] = useState(false)
   const [zaloEnabled, setZaloEnabled] = useState(false)
   const [cashEnabled, setCashEnabled] = useState(true)
-  const [minDeposit, setMinDeposit] = useState('10000000')
+  const [minDeposit, setMinDeposit] = useState('10')
   const [reservationHours, setReservationHours] = useState('48')
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export function ConfigPaymentTab() {
     } else {
       setCashEnabled(readBool(m[K.cashOn]))
     }
-    setMinDeposit(m[K.minDep] || '10000000')
+    setMinDeposit(m[K.minDepPercent] || '10')
     setReservationHours(m[K.resHrs] || '48')
   }, [data])
 
@@ -45,7 +45,7 @@ export function ConfigPaymentTab() {
         { key: K.vnpayOn, value: vnpayEnabled ? 'true' : 'false' },
         { key: K.zaloOn, value: zaloEnabled ? 'true' : 'false' },
         { key: K.cashOn, value: cashEnabled ? 'true' : 'false' },
-        { key: K.minDep, value: minDeposit },
+        { key: K.minDepPercent, value: minDeposit },
         { key: K.resHrs, value: reservationHours },
       ])
       toast.addToast('success', 'Đã lưu cấu hình thanh toán.')
@@ -101,7 +101,7 @@ export function ConfigPaymentTab() {
         <h3 className="mb-1 text-lg font-semibold text-slate-900">Đặt cọc</h3>
         <div className="mt-4 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-600">Tiền cọc tối thiểu (VNĐ)</label>
+            <label className="mb-1 block text-sm font-medium text-slate-600">Tỷ lệ cọc tối thiểu (% giá xe)</label>
             <input
               type="text"
               inputMode="numeric"
@@ -109,6 +109,7 @@ export function ConfigPaymentTab() {
               onChange={(e) => setMinDeposit(e.target.value)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2"
             />
+            <p className="mt-1 text-xs text-slate-500">Ví dụ: nhập 10 nghĩa là khách phải cọc ít nhất 10% giá xe</p>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-600">Giữ chỗ (giờ)</label>

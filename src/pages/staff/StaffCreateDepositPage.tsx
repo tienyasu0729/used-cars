@@ -12,6 +12,7 @@ import { useToastStore } from '@/store/toastStore'
 import { useQueryClient } from '@tanstack/react-query'
 import { notifyInventoryChanged } from '@/utils/inventorySync'
 import { Button } from '@/components/ui'
+import { CurrencyInput } from '@/components/ui/CurrencyInput'
 import { CustomerSearchSelect } from '@/features/staff/components/CustomerSearchSelect'
 import { VehicleSearchSelect } from '@/features/staff/components/VehicleSearchSelect'
 import { usePaymentDepositMethods } from '@/hooks/usePaymentDepositMethods'
@@ -168,19 +169,13 @@ export function StaffCreateDepositPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Số tiền đặt cọc (VND) <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">₫</span>
-                <input
-                  type="number"
-                  {...form.register('amount', { valueAsNumber: true })}
-                  placeholder="Ví dụ: 20,000,000"
-                  className="w-full rounded-lg border border-slate-200 py-2 pl-8 pr-3 text-sm"
-                />
-              </div>
-              {form.formState.errors.amount && (
-                <p className="mt-1 text-xs text-red-600">{form.formState.errors.amount.message}</p>
-              )}
+              <CurrencyInput
+                label="Số tiền đặt cọc (VNĐ) *"
+                value={form.watch('amount') || 0}
+                onChange={(v) => form.setValue('amount', v, { shouldValidate: true })}
+                error={form.formState.errors.amount?.message}
+              />
+              <input type="hidden" {...form.register('amount', { valueAsNumber: true })} />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Ngày đặt cọc <span className="text-red-500">*</span></label>
@@ -293,7 +288,7 @@ export function StaffCreateDepositPage() {
           <Info className="h-5 w-5 shrink-0 text-[#1A3C6E]" />
           <div>
             <p className="text-sm font-semibold text-slate-900">Quy định đặt cọc</p>
-            <p className="text-xs text-slate-600">Số tiền tối thiểu là 1,000,000 VND cho mỗi xe.</p>
+            <p className="text-xs text-slate-600">Số tiền tối thiểu là 10% giá xe cho mỗi lần đặt cọc.</p>
           </div>
         </div>
         <div className="flex gap-3 rounded-lg bg-amber-50 p-4">

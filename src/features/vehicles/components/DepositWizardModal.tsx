@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Modal } from '@/components/ui'
 import { Input } from '@/components/ui'
 import { Button } from '@/components/ui'
+import { CurrencyInput } from '@/components/ui/CurrencyInput'
 import { useAuthStore } from '@/store/authStore'
 import { useToastStore } from '@/store/toastStore'
 import { depositApi } from '@/services/depositApi'
@@ -75,6 +76,11 @@ export function DepositWizardModal({
   const { user } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const queryClient = useQueryClient()
+  const { data: pmCfg, isLoading: pmLoading } = usePaymentDepositMethods(isOpen && !!user?.id)
+
+  const depositPercent = pmCfg?.depositPercent ?? 10
+  const computedMinDeposit = vehiclePrice ? Math.ceil(vehiclePrice * depositPercent / 100) : 0
+  const computedDefaultAmount = defaultAmount ?? (computedMinDeposit || 0)
 
   const schema = useMemo(() => {
     return z
@@ -102,6 +108,12 @@ export function DepositWizardModal({
               path: ['amount'],
             })
           }
+        } else if (computedMinDeposit > 0 && data.amount < computedMinDeposit) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Tối thiểu ${depositPercent}% giá xe (${formatPrice(computedMinDeposit)})`,
+            path: ['amount'],
+          })
         } else if (data.amount < 1000000) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -110,7 +122,7 @@ export function DepositWizardModal({
           })
         }
       })
-  }, [orderId, depositAmount, remainingAmount])
+  }, [orderId, depositAmount, remainingAmount, computedMinDeposit])
 
   const {
     register,
@@ -122,13 +134,12 @@ export function DepositWizardModal({
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      amount: defaultAmount ?? 10000000,
+      amount: computedDefaultAmount,
       paymentMethod: 'vnpay',
     },
   })
 
   const amount = watch('amount')
-  const { data: pmCfg, isLoading: pmLoading } = usePaymentDepositMethods(isOpen && !!user?.id)
 
   /** Cổng online đã ghi trên đơn (VNPay/ZaloPay) — không cho khách đổi sang cổng khác. */
   const lockedOrderGateway = useMemo(() => {
@@ -166,10 +177,10 @@ export function DepositWizardModal({
     const first = onlineMethodOptions[0]?.value ?? 'vnpay'
     const method = lockedOrderGateway != null ? lockedOrderGateway : first
     reset({
-      amount: defaultAmount ?? 10000000,
+      amount: computedDefaultAmount,
       paymentMethod: method,
     })
-  }, [isOpen, defaultAmount, reset, onlineMethodOptions, lockedOrderGateway])
+  }, [isOpen, computedDefaultAmount, reset, onlineMethodOptions, lockedOrderGateway])
 
   /** Giữ đúng cổng theo đơn khi đã khóa (bước 3 không còn radio). */
   useEffect(() => {
@@ -378,12 +389,18 @@ export function DepositWizardModal({
             defaultValue={user?.name}
             readOnly
           />
-          <Input
-            label={orderId != null ? 'Số tiền thanh toán (VND)' : 'Số tiền cọc (VND)'}
-            type="number"
-            {...register('amount', { valueAsNumber: true })}
+          <CurrencyInput
+            label={orderId != null ? 'Số tiền thanh toán (VNĐ)' : 'Số tiền cọc (VNĐ)'}
+            value={amount || 0}
+            onChange={(v) => setValue('amount', v, { shouldValidate: true })}
             error={errors.amount?.message}
           />
+          <input type="hidden" {...register('amount', { valueAsNumber: true })} />
+          {orderId == null && computedMinDeposit > 0 && (
+            <p className="text-xs text-slate-500">
+              Tối thiểu {depositPercent}% giá xe = {formatPrice(computedMinDeposit)}
+            </p>
+          )}
           {orderId != null && (depositAmount != null || remainingAmount != null) && (
             <p className="text-xs text-slate-500">
               Chỉ được nhập đúng một trong các mức:{' '}

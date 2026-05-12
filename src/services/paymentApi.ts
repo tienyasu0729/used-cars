@@ -71,6 +71,7 @@ export interface PaymentDepositMethods {
   cash: boolean
   vnpay: boolean
   zalopay: boolean
+  depositPercent: number
 }
 
 export interface PaymentUrlPayload {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { Car, Loader2, Pencil } from 'lucide-react'
 import { formatPrice, formatPriceNumber } from '@/utils/format'
+import { CurrencyInput } from '@/components/ui/CurrencyInput'
 import type { Vehicle } from '@/types/vehicle.types'
 import { usePaymentDepositMethods } from '@/hooks/usePaymentDepositMethods'
 
@@ -74,12 +75,10 @@ export function CreateOrderStepDetails({
             <p className="mb-2 text-xs text-slate-500">
               Mặc định = giá niêm yết − cọc đã xác nhận (nếu có). Có thể chỉnh nếu cần.
             </p>
-            <input
-              type="number"
-              min={1}
-              value={totalPrice || ''}
-              onChange={(e) => onTotalPriceChange(Number(e.target.value) || 0)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            <CurrencyInput
+              label=""
+              value={totalPrice || 0}
+              onChange={(v) => onTotalPriceChange(v)}
             />
             <p className="mt-1 text-xs font-medium text-slate-700">{formatPrice(totalPrice)}</p>
             {vehiclePrice > 0 && (
