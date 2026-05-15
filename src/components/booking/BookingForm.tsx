@@ -4,6 +4,9 @@ import { useCreateBooking } from '@/hooks/useCreateBooking'
 import { normalizeTimeSlot } from '@/services/booking.service'
 import type { AvailableSlot } from '@/types/booking.types'
 import { SlotPicker } from './SlotPicker'
+import { OtpVerificationStep } from '@/components/otp/OtpVerificationStep'
+import { maskPhone } from '@/utils/maskPhone'
+import { useAuthStore } from '@/store/authStore'
 
 interface BookingFormProps {
   vehicleId: number
@@ -34,6 +37,7 @@ function isPastTime(slot: AvailableSlot): boolean {
 export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
   const { slots, isLoading, fetchSlots } = useAvailableSlots()
   const { createBooking, isSubmitting, error, errorCode, setError } = useCreateBooking()
+  const { user } = useAuthStore()
 
   const today = useMemo(() => new Date(), [])
   const min = useMemo(() => toYmdLocal(today), [today])
@@ -42,6 +46,10 @@ export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
   const [bookingDate, setBookingDate] = useState(() => toYmdLocal(new Date()))
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [note, setNote] = useState('')
+  const [showOtp, setShowOtp] = useState(false)
+  const [phoneInput, setPhoneInput] = useState('')
+
+  const phone = user?.phone || phoneInput || ''
 
   useEffect(() => {
     void fetchSlots(branchId, bookingDate, vehicleId)
@@ -63,26 +71,40 @@ export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
   const visibleSlots = useMemo(() => slots.filter((slot) => !isPastTime(slot)), [slots])
   const noFutureSlots = visibleSlots.length === 0 && slots.some(isPastTime)
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const validateForm = (): boolean => {
     setError(null)
     if (closedForDay) {
       setError('Chi nhánh không làm việc vào ngày hoặc khung giờ này. Vui lòng chọn ngày khác.')
-      return
+      return false
     }
     if (noFutureSlots) {
       setError('Không còn khung giờ hợp lệ trong ngày này. Vui lòng chọn ngày khác.')
-      return
+      return false
     }
     if (!selectedSlot) {
       setError('Vui lòng chọn khung giờ.')
-      return
+      return false
     }
+    if (!phone) {
+      setError('Vui lòng nhập số điện thoại để xác thực OTP.')
+      return false
+    }
+    return true
+  }
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!validateForm()) return
+    setShowOtp(true)
+  }
+
+  const handleOtpVerified = async () => {
     const fresh = await fetchSlots(branchId, bookingDate, vehicleId)
     const picked = fresh.find(
-      (s) => normalizeTimeSlot(s.slotTime) === normalizeTimeSlot(selectedSlot),
+      (s) => normalizeTimeSlot(s.slotTime) === normalizeTimeSlot(selectedSlot!),
     )
     if (!picked || !picked.isBookable || picked.availableCount <= 0) {
+      setShowOtp(false)
       setError('Khung giờ này vừa hết chỗ. Vui lòng chọn giờ khác.')
       return
     }
@@ -90,9 +112,28 @@ export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
       vehicleId,
       branchId,
       bookingDate,
-      timeSlot: selectedSlot,
+      timeSlot: selectedSlot!,
       note: note.trim() || undefined,
     })
+  }
+
+  const handleOtpBack = () => {
+    setShowOtp(false)
+  }
+
+  if (showOtp) {
+    return (
+      <div className="space-y-4">
+        <OtpVerificationStep
+          phone={phone}
+          maskedPhone={maskPhone(phone)}
+          referenceType="booking"
+          onVerified={handleOtpVerified}
+          onBack={handleOtpBack}
+        />
+        {error && <p className="text-sm text-red-600">{error}</p>}
+      </div>
+    )
   }
 
   return (
@@ -134,6 +175,19 @@ export function BookingForm({ vehicleId, branchId }: BookingFormProps) {
           placeholder="Yêu cầu đặc biệt (tùy chọn)"
         />
       </div>
+      {!user?.phone && (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Số điện thoại</label>
+          <input
+            type="tel"
+            value={phoneInput}
+            onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ''))}
+            maxLength={10}
+            placeholder="Nhập số điện thoại để xác thực OTP"
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          />
+        </div>
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"

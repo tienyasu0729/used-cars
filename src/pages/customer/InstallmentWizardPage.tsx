@@ -12,6 +12,7 @@ import { formatPriceNumber } from '@/utils/format'
 import { navigateToPaymentUrl } from '@/utils/paymentNavigation'
 import { resolveUploadPublicUrl } from '@/utils/mediaUrl'
 import { isoDateToDdMmYyyy } from '@/utils/dateDdMmYyyy'
+import { maskPhone } from '@/utils/maskPhone'
 import { setPaymentReturnContext } from '@/services/paymentApi'
 import { WizardProgressBar } from '@/features/installment/WizardProgressBar'
 import { useInstallmentDraft } from '@/features/installment/useInstallmentDraft'
@@ -33,6 +34,7 @@ import { StepFinancial } from '@/features/installment/steps/StepFinancial'
 import { StepLoanDetails } from '@/features/installment/steps/StepLoanDetails'
 import { StepCommitment } from '@/features/installment/steps/StepCommitment'
 import { StepReview } from '@/features/installment/steps/StepReview'
+import { OtpVerificationStep } from '@/components/otp/OtpVerificationStep'
 
 const ALL_FIELDS: (keyof FullInstallmentData)[] = [
   'fullName', 'identityNumber', 'phoneNumber', 'email', 'dob',
@@ -70,6 +72,7 @@ export function InstallmentWizardPage() {
   } = useInstallmentDraft(vehicleId)
 
   const [step, setStep] = useState(1)
+  const [showOtp, setShowOtp] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [uploadedDocs, setUploadedDocs] = useState<InstallmentDocumentDTO[]>([])
   const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>([])
@@ -304,6 +307,11 @@ export function InstallmentWizardPage() {
       return
     }
 
+    setShowOtp(true)
+  }
+
+  const handleOtpVerified = async () => {
+    setShowOtp(false)
     try {
       await submitApplication(form.getValues())
       setSubmitted(true)
@@ -403,6 +411,18 @@ export function InstallmentWizardPage() {
           />
         )}
 
+        {showOtp && step === 7 && (
+          <div className="mt-6">
+            <OtpVerificationStep
+              phone={form.getValues('phoneNumber')}
+              maskedPhone={maskPhone(form.getValues('phoneNumber'))}
+              referenceType="installment"
+              onVerified={handleOtpVerified}
+              onBack={() => setShowOtp(false)}
+            />
+          </div>
+        )}
+
         {needsDepositFlow && (
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
             <p className="font-semibold">Cần đặt cọc trước khi gửi hồ sơ trả góp</p>
@@ -434,41 +454,43 @@ export function InstallmentWizardPage() {
           </div>
         )}
 
-        <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-6">
-          <button
-            type="button"
-            onClick={goBack}
-            disabled={step === 1}
-            className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <ChevronLeft className="h-4 w-4" /> Quay lại
-          </button>
-          <div className="flex items-center gap-3">
-            {isSaving && <span className="flex items-center gap-1.5 text-xs text-slate-400"><Save className="h-3.5 w-3.5 animate-pulse" />Đang lưu...</span>}
-            {step < WIZARD_STEPS.length ? (
-              <button
-                type="button"
-                onClick={goNext}
-                className="flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary/90"
-              >
-                Tiếp theo <ChevronRight className="h-4 w-4" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-600/20 transition-colors hover:bg-emerald-700 disabled:opacity-60"
-              >
-                {uploadingDocs ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Đang tải tài liệu...</>
-                ) : (
-                  <><Send className="h-4 w-4" /> Gửi hồ sơ</>
-                )}
-              </button>
-            )}
+        {!showOtp && (
+          <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-6">
+            <button
+              type="button"
+              onClick={goBack}
+              disabled={step === 1}
+              className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" /> Quay lại
+            </button>
+            <div className="flex items-center gap-3">
+              {isSaving && <span className="flex items-center gap-1.5 text-xs text-slate-400"><Save className="h-3.5 w-3.5 animate-pulse" />Đang lưu...</span>}
+              {step < WIZARD_STEPS.length ? (
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary/90"
+                >
+                  Tiếp theo <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-sm shadow-emerald-600/20 transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                >
+                  {uploadingDocs ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Đang tải tài liệu...</>
+                  ) : (
+                    <><Send className="h-4 w-4" /> Gửi hồ sơ</>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

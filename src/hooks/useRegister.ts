@@ -1,48 +1,84 @@
-/**
- * useRegister Hook — Xử lý toàn bộ logic đăng ký tài khoản
- * 
- * Flow:
- * 1. User submit form → hook gọi authService.register()
- * 2. Thành công → set isSuccess = true (component ẩn form, hiện thông báo)
- * 3. Thất bại → parse lỗi validation từng field / lỗi chung
- * 
- * Tại sao không auto-login sau register:
- * Backend trả HTTP 201 với message thành công, không trả token.
- * User cần verify email trước (dù backend chưa implement email gửi thật).
- */
-
 import { useState, useCallback } from 'react'
 import authService from '@/services/auth.service'
+import { otpService } from '@/services/otp.service'
 import type { RegisterRequest, ApiErrorResponse } from '@/types/auth.types'
+import type { OtpErrorResponse, RequestOtpResponse } from '@/types/otp.types'
 
 interface UseRegisterReturn {
-  /** Gọi hàm này khi submit form đăng ký */
-  register: (registerData: RegisterRequest) => Promise<void>
-  /** true khi đang gọi API register */
+  register: (registerData: RegisterRequest) => Promise<boolean>
+  requestRegistrationOtp: (phone: string, email?: string) => Promise<RequestOtpResponse | null>
   isLoading: boolean
-  /** Lỗi chung (ví dụ: "Đăng ký thất bại") */
+  isRequestingOtp: boolean
   error: string | null
-  /** Lỗi theo từng field (ví dụ: { email: "Email đã tồn tại" }) */
   fieldErrors: Record<string, string>
-  /** true khi đăng ký thành công — dùng để ẩn form, hiện thông báo */
   isSuccess: boolean
-  /** Message thành công từ server */
   successMessage: string
-  /** Xóa tất cả lỗi */
   clearErrors: () => void
-  /** Reset toàn bộ state về ban đầu (dùng khi user muốn thử lại) */
   resetState: () => void
+}
+
+function mapOtpErrorToMessage(err: OtpErrorResponse): string {
+  switch (err.errorCode) {
+    case 'STAFF_PHONE_EXISTS':
+      return 'Số điện thoại đã được sử dụng bởi tài khoản khác.'
+    case 'OTP_RATE_LIMITED':
+      return `Bạn đã yêu cầu quá nhiều mã OTP. Vui lòng thử lại sau ${err.retryAfterSeconds ?? 0} giây.`
+    case 'OTP_ALREADY_EXISTS':
+      return 'Mã OTP đã được gửi. Vui lòng kiểm tra tin nhắn SMS.'
+    case 'OTP_INVALID_CODE':
+      return `Mã OTP không chính xác. Bạn còn ${err.remainingAttempts ?? 0} lần thử.`
+    case 'OTP_EXPIRED':
+      return 'Mã OTP đã hết hạn. Vui lòng yêu cầu mã mới.'
+    case 'OTP_EXHAUSTED':
+      return 'Đã vượt quá số lần thử cho phép. Vui lòng yêu cầu mã mới.'
+    default:
+      return err.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.'
+  }
 }
 
 export function useRegister(): UseRegisterReturn {
   const [isLoading, setIsLoading] = useState(false)
+  const [isRequestingOtp, setIsRequestingOtp] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [isSuccess, setIsSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
-  const register = useCallback(async (registerData: RegisterRequest) => {
-    // Reset state cũ trước khi gọi API
+  const requestRegistrationOtp = useCallback(async (phone: string, email?: string): Promise<RequestOtpResponse | null> => {
+    setError(null)
+    setFieldErrors({})
+    setIsRequestingOtp(true)
+
+    try {
+      const response = await otpService.requestOtp(phone, 'registration', undefined, email)
+      setIsRequestingOtp(false)
+      return response
+    } catch (err) {
+      const apiError = err as ApiErrorResponse
+      setIsRequestingOtp(false)
+
+      if (apiError.errorCode === 'VALIDATION_FAILED' && apiError.errors && apiError.errors.length > 0) {
+        const parsedFieldErrors: Record<string, string> = {}
+        apiError.errors.forEach((e) => {
+          parsedFieldErrors[e.field] = e.message
+        })
+        setFieldErrors(parsedFieldErrors)
+        setError(apiError.message || 'Thông tin đăng ký không hợp lệ.')
+        return null
+      }
+
+      if (apiError.errorCode === 'VALIDATION_FAILED') {
+        setError(apiError.message || 'Thông tin đăng ký không hợp lệ.')
+        return null
+      }
+
+      const otpError = err as OtpErrorResponse
+      setError(mapOtpErrorToMessage(otpError))
+      return null
+    }
+  }, [])
+
+  const register = useCallback(async (registerData: RegisterRequest): Promise<boolean> => {
     setError(null)
     setFieldErrors({})
     setIsSuccess(false)
@@ -51,31 +87,40 @@ export function useRegister(): UseRegisterReturn {
 
     try {
       const result = await authService.register(registerData)
-
-      // Đăng ký thành công → hiện thông báo, ẩn form
       setIsSuccess(true)
       setSuccessMessage(result.message)
+      return true
     } catch (err) {
       const apiError = err as ApiErrorResponse
 
       if (apiError.errorCode === 'VALIDATION_FAILED' && apiError.errors) {
-        // Parse lỗi từng field (VD: email đã tồn tại, phone sai format)
         const parsedFieldErrors: Record<string, string> = {}
         apiError.errors.forEach((validationError) => {
           parsedFieldErrors[validationError.field] = validationError.message
         })
         setFieldErrors(parsedFieldErrors)
 
-        // Nếu có lỗi email trùng, hiện thêm message chung rõ ràng
         if (parsedFieldErrors['email']) {
           setError(`Email: ${parsedFieldErrors['email']}`)
         }
+      } else if (apiError.errorCode === 'VALIDATION_FAILED') {
+        setError(apiError.message || 'Đăng ký thất bại. Vui lòng thử lại sau.')
+        if (apiError.message?.includes('Email')) {
+          setFieldErrors({ email: apiError.message })
+        }
+      } else if (apiError.errorCode === 'STAFF_PHONE_EXISTS') {
+        setFieldErrors({ phone: 'Số điện thoại đã được sử dụng bởi tài khoản khác.' })
+        setError('Số điện thoại đã được sử dụng bởi tài khoản khác.')
+      } else if (apiError.errorCode === 'OTP_RATE_LIMITED') {
+        const otpErr = err as unknown as OtpErrorResponse
+        setError(mapOtpErrorToMessage(otpErr))
+      } else if (['OTP_INVALID_CODE', 'OTP_EXPIRED', 'OTP_EXHAUSTED'].includes(apiError.errorCode)) {
+        const otpErr = err as unknown as OtpErrorResponse
+        setError(mapOtpErrorToMessage(otpErr))
       } else {
-        // Lỗi khác (server error, network, v.v.)
         setError(apiError.message || 'Đăng ký thất bại. Vui lòng thử lại sau.')
       }
-
-      console.error('[useRegister] Register failed:', apiError)
+      return false
     } finally {
       setIsLoading(false)
     }
@@ -92,11 +137,14 @@ export function useRegister(): UseRegisterReturn {
     setIsSuccess(false)
     setSuccessMessage('')
     setIsLoading(false)
+    setIsRequestingOtp(false)
   }, [])
 
   return {
     register,
+    requestRegistrationOtp,
     isLoading,
+    isRequestingOtp,
     error,
     fieldErrors,
     isSuccess,

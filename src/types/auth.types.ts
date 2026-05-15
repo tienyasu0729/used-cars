@@ -21,6 +21,7 @@ export interface RegisterRequest {
   email: string
   phone: string
   password: string
+  otpCode?: string
 }
 
 /** Body gửi lên POST /auth/change-password (cần JWT). `newPassword`: 8–100 ký tự — khớp `ChangePasswordRequest` / `RegisterRequest.password`. */
