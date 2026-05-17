@@ -10,7 +10,7 @@ const REQUEST_OTP_ENDPOINTS: Record<OtpReferenceType, string> = {
   registration: '/auth/register/request-otp',
 }
 
-const VERIFY_OTP_ENDPOINTS: Record<Exclude<OtpReferenceType, 'booking' | 'registration'>, string> = {
+const VERIFY_OTP_ENDPOINTS: Record<string, string> = {
   deposit: '/deposits/verify-otp',
   installment: '/installments/otp/verify',
 }

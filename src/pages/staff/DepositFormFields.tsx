@@ -5,6 +5,7 @@ import { CustomerSearchSelect } from '@/features/staff/components/CustomerSearch
 import { VehicleSearchSelect } from '@/features/staff/components/VehicleSearchSelect'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ShowroomCustomerData } from '@/features/staff/components/ShowroomCustomerModal'
+import type { Vehicle } from '@/types/vehicle.types'
 
 interface FormData {
   vehicleId: string
@@ -18,7 +19,7 @@ interface FormData {
 
 interface DepositFormFieldsProps {
   form: UseFormReturn<FormData>
-  filteredVehicles: { id: number; deleted?: boolean; [key: string]: unknown }[]
+  filteredVehicles: Vehicle[]
   filteredCustomers: { id: string; name: string; phone?: string; email?: string }[]
   showroomCustomer: ShowroomCustomerData | null
   customerError?: string
